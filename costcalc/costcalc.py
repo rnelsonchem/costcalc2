@@ -20,7 +20,7 @@ plt.rc('figure', dpi=150)
 
 class GenericCost(object):
     # Not meant to be instantiated directly
-    def rxn_cost(self, amp=1.0):
+    def rxn_cost(self, prod=self.final_prod, amp=1.0):
         '''A recrusive function for calculating the cost of an arbitrary
         reaction route.
         
@@ -61,7 +61,7 @@ class GenericCost(object):
             # Set that ratio
             new_amp = data.loc[cpd, 'kg/kg rxn']
             # Run the cost calculation for the unknown compound
-            cst = self.rxn_cost(amp*new_amp)
+            cst = self.rxn_cost(cpd, amp*new_amp)
             # Set the calculated cost in the larger data table
             self.fulldata.loc[(prod, cpd), 'Cost'] = cst
 
