@@ -6,8 +6,7 @@ synthetic route. This package is intended for Python versions >= 3.
 ## Requirements
 
 * Python >= 3
-
-* Pandas >= 0.15.2 
-
-
-
+* Numpy >= 1.17
+* Pandas >= 0.25
+* Matplotlib >= 3.0
+* gspread >= 3.0
