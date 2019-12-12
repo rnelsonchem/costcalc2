@@ -163,8 +163,6 @@ class ColabCost(GenericCost):
         self.rxn_data_setup()
         cost = self.rxn_cost(final_prod)
 
-        return cost
-
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
         # Grab the Google sheet handle, pull down all values and make a DataFrame
