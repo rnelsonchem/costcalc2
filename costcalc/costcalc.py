@@ -161,7 +161,9 @@ class ColabCost(GenericCost):
         self._materials_read()
         self._rxn_read()
         self.rxn_data_setup()
-        self.rxn_cost(final_prod)
+        cost = self.rxn_cost(final_prod)
+
+        return cost
 
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
