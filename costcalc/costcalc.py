@@ -89,7 +89,7 @@ class GenericCost(object):
         
         # Return the calculated product cost, which is required for the recurisive 
         # nature of the algorithm
-        #return data.loc[prod, 'RM cost/kg rxn']
+        return data.loc[prod, 'RM cost/kg rxn']
 
     
     def rxn_data_setup(self, ):
