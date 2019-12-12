@@ -204,6 +204,32 @@ class ColabCost(GenericCost):
         
         self.rxns = rxns
         
-    def download_excel(self, fname):
+    def excel_download(self, fname):
         self.fulldata.to_excel(fname)
         files.download(fname)
+
+    def value_mod(self, cpd, vals, scan_type='Cost', step=None):
+        '''Manually set/scan the cost/equiv of a given material.'''
+        # If a single value was given, convert to a list
+        # Set this flag to undo the list at the end of the function
+        val_list = True
+        if isinstance(vals, (float, int)):
+            vals = [vals,]
+            val_list = False
+        
+        all_costs = []
+        for val in vals:
+            self.moddata = fulldata.copy()
+            
+            if not step:
+                self.moddata.loc[(slice(None), cpd), scan_type] = val
+            else: 
+                self.moddata.loc[(step, cpd), scan_type] = val
+                
+            int_cost = self.rxn_cost(self.final_prod)
+            all_costs.append(int_cost)
+            
+        if val_list == False:
+            all_costs = all_costs[0]
+        
+        return all_costs
