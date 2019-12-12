@@ -12,6 +12,8 @@ import gspread
 from oauth2client.client import GoogleCredentials
 from google.colab import auth
 
+from google.colab import files
+
 # Set up some plotting stuff for the notebooks
 plt.style.use('ggplot')
 plt.rc('figure', dpi=150)
@@ -201,3 +203,6 @@ class ColabCost(GenericCost):
         
         self.rxns = rxns
         
+    def download_excel(self, fname):
+        self.fulldata.to_excel(fname)
+        files.download(fname)
