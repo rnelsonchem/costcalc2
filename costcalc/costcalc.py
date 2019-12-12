@@ -147,12 +147,13 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
-    def __init__(self, materials_sheet_key, rxn_sheet_key, materials_worksheet=0, 
-            rxn_worksheet=0):
+    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod
+            materials_worksheet=0, rxn_worksheet=0):
         self._materials_sheet_key = materials_sheet_key
         self._materials_worksheet = materials_worksheet
         self._rxn_sheet_key = rxn_sheet_key
         self._rxn_worksheet = rxn_worksheet
+        self.final_prod = final_prod
 
         # Authenticate the Colab environment 
         auth.authenticate_user()
@@ -161,6 +162,7 @@ class ColabCost(GenericCost):
         self._materials_read()
         self._rxn_read()
         self.rxn_data_setup()
+        self.rxn_cost()
 
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
