@@ -20,7 +20,7 @@ plt.rc('figure', dpi=150)
 
 class GenericCost(object):
     # Not meant to be instantiated directly
-    def rxn_cost(self, prod=self.final_prod, amp=1.0):
+    def rxn_cost(self, prod, amp=1.0):
         '''A recrusive function for calculating the cost of an arbitrary
         reaction route.
         
@@ -28,8 +28,7 @@ class GenericCost(object):
         
         amp : float The number is an amplifier for masses of materials, for
         example. You shouldn't need to change this.  '''
-        data = self.fulldata.loc[self.final_prod]
-        prod = self.final_prod
+        data = self.fulldata.loc[prod]
 
         # Kg of nonsolvent materials used per equivalent
         amount_kg = data['Equiv']*data['MW']#/(data['Density'])
@@ -162,7 +161,7 @@ class ColabCost(GenericCost):
         self._materials_read()
         self._rxn_read()
         self.rxn_data_setup()
-        self.rxn_cost()
+        self.rxn_cost(final_prod)
 
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
