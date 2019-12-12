@@ -219,7 +219,7 @@ class ColabCost(GenericCost):
         
         all_costs = []
         for val in vals:
-            self.moddata = fulldata.copy()
+            self.moddata = self.fulldata.copy()
             
             if not step:
                 self.moddata.loc[(slice(None), cpd), scan_type] = val
