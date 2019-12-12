@@ -163,6 +163,8 @@ class ColabCost(GenericCost):
         self.rxn_data_setup()
         cost = self.rxn_cost(final_prod)
 
+        self._fdcopy = self.fulldata.copy()
+
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
         # Grab the Google sheet handle, pull down all values and make a DataFrame
@@ -219,16 +221,18 @@ class ColabCost(GenericCost):
         
         all_costs = []
         for val in vals:
-            self.moddata = self.fulldata.copy()
             
             if not step:
-                self.moddata.loc[(slice(None), cpd), scan_type] = val
+                self.fulldata.loc[(slice(None), cpd), scan_type] = val
             else: 
-                self.moddata.loc[(step, cpd), scan_type] = val
+                self.fulldata.loc[(step, cpd), scan_type] = val
                 
             int_cost = self.rxn_cost(self.final_prod)
             all_costs.append(int_cost)
-            
+        
+        self.moddata = self.fulldata.copy()
+        self.fulldata = self._fdcopy.copy()
+
         if val_list == False:
             all_costs = all_costs[0]
         
