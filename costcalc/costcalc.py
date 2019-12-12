@@ -158,7 +158,7 @@ class ColabCost(GenericCost):
 
         self._materials_read()
         self._rxn_read()
-        self._rxn_data_
+        self._rxn_data_setup()
 
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
@@ -182,7 +182,7 @@ class ColabCost(GenericCost):
         
         self.materials = mats
         
-    def rxn_gsheet_read(auth, sheet_key, worksheet=0):
+    def rxn_read(auth, sheet_key, worksheet=0):
         '''Read a Google Sheet of rxn info and merge with materials.'''
         rxn_sh = self._gc.open_by_key(self._rxn_sheet_key)
         ws = rxn_sh.get_worksheet(self._rxn_worksheet)
