@@ -61,7 +61,7 @@ class GenericCost(object):
             # Set that ratio
             new_amp = data.loc[cpd, 'kg/kg rxn']
             # Run the cost calculation for the unknown compound
-            cst = rxn_cost(amp*new_amp)
+            cst = self.rxn_cost(amp*new_amp)
             # Set the calculated cost in the larger data table
             self.fulldata.loc[(prod, cpd), 'Cost'] = cst
 
