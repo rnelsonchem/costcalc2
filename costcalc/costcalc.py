@@ -199,5 +199,5 @@ class ColabCost(GenericCost):
         rxns['Volumes'] = pd.to_numeric(rxns['Volumes'])
         rxns['Sol Recyc'] = pd.to_numeric(rxns['Sol Recyc'])
         
-        self.rxns()
+        self.rxns
         
