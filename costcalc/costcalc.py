@@ -5,11 +5,16 @@ Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 import gspread
 
 from oauth2client.client import GoogleCredentials
 from google.colab import auth
+
+# Set up some plotting stuff for the notebooks
+plt.style.use('ggplot')
+plt.rc('figure', dpi=150)
 
 class GenericCost(object):
     # Not meant to be instantiated directly
