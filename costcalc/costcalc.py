@@ -163,7 +163,7 @@ class ColabCost(GenericCost):
     def _materials_read(self,):
         '''Read a materials Google sheet.'''
         # Grab the Google sheet handle, pull down all values and make a DataFrame
-        mat_sh = self._gc.open_by_key(sheet_key)
+        mat_sh = self._gc.open_by_key(self._materials_sheet_key)
         ws = mat_sh.get_worksheet(self._materials_worksheet)
         vals = ws.get_all_values()
         mats = pd.DataFrame(data=vals[1:], columns=vals[0])
@@ -184,7 +184,7 @@ class ColabCost(GenericCost):
         
     def rxn_gsheet_read(auth, sheet_key, worksheet=0):
         '''Read a Google Sheet of rxn info and merge with materials.'''
-        rxn_sh = self._gc.open_by_key(sheet_key)
+        rxn_sh = self._gc.open_by_key(self._rxn_sheet_key)
         ws = rxn_sh.get_worksheet(self._rxn_worksheet)
         vals = ws.get_all_values()
         rxns = pd.DataFrame(data=vals[1:], columns=vals[0])
