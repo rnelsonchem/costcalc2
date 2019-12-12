@@ -3,6 +3,7 @@ Chemical Reaction Cost Cacluation Routines.
 Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -208,6 +209,9 @@ class ColabCost(GenericCost):
         
     def excel_download(self, fname):
         self.fulldata.to_excel(fname)
+        # There seems to be a bit of a lag before you can download
+        # the file
+        time.sleep(2)
         files.download(fname)
 
     def value_mod(self, cpd, vals, scan_type='Cost', step=None):
