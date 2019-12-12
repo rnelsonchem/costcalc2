@@ -147,7 +147,7 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
-    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod
+    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod,
             materials_worksheet=0, rxn_worksheet=0):
         self._materials_sheet_key = materials_sheet_key
         self._materials_worksheet = materials_worksheet
