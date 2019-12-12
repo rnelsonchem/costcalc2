@@ -212,8 +212,6 @@ class ColabCost(GenericCost):
 
     def value_mod(self, cpd, vals, scan_type='Cost', step=None):
         '''Manually set/scan the cost/equiv of a given material.'''
-        self.rxn_data_setup()
-
         # If a single value was given, convert to a list
         # Set this flag to undo the list at the end of the function
         val_list = True
@@ -223,6 +221,7 @@ class ColabCost(GenericCost):
         
         all_costs = []
         for val in vals:
+            self.rxn_data_setup()
             
             if not step:
                 self.fulldata.loc[(slice(None), cpd), scan_type] = val
