@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import gspread
 
-import oauth2client.client import GoogleCredentials
+from oauth2client.client import GoogleCredentials
 from google.colab import auth
 
 class GenericCost(object):
