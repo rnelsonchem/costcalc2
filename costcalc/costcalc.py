@@ -147,31 +147,52 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
-    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod,
-            materials_worksheet=0, rxn_worksheet=0):
-        self._materials_sheet_key = materials_sheet_key
-        self._materials_worksheet = materials_worksheet
+    def __init__(self, materials_sheet_keys, rxn_sheet_key, final_prod,
+            materials_worksheets=0, rxn_worksheet=0, ):
         self._rxn_sheet_key = rxn_sheet_key
         self._rxn_worksheet = rxn_worksheet
         self.final_prod = final_prod
+        
+        if isinstance(materials_sheet_keys, str):
+            self._mat_keys = [materials_sheet_keys, ]
+            self._mat_worksheets = [materials_worksheets, ]
+        elif isinstance(materials_sheet_keys, (list, tuple)):     
+            if not isinstance(materials_worksheets, (list, tuple)):
+                materials_worksheets = [materials_worksheets,]*\
+                    len(materials_sheet_keys)
+            self._mat_keys = materials_sheet_keys
+            self._mat_worksheets = materials_worksheets
+
+        self._materials_build()                
 
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
 
-        self._materials_read()
+        mats = [self._materials_read(),]
+        for extra in extra_mat_keys:
+            mats.append()
+        
+        
         self._rxn_read()
         self.rxn_data_setup()
         self.cost = self.rxn_cost(final_prod)
         self.rxn_data_post()
 
         self._fdcopy = self.fulldata.copy()
+        
+    def _materials_build(self, ):
+        mats = []
+        for key, sheet in zip(self._mat_keys, self._mat_worksheets):
+            mat = self._materials_read(key, sheet)
+            mats.append(mat)
+        self._mats = mats
 
-    def _materials_read(self,):
+    def _materials_read(self, mat_key, wsheet):
         '''Read a materials Google sheet.'''
         # Grab the Google sheet handle, pull down all values and make a DataFrame
-        mat_sh = self._gc.open_by_key(self._materials_sheet_key)
-        ws = mat_sh.get_worksheet(self._materials_worksheet)
+        mat_sh = self._gc.open_by_key(mat_key)
+        ws = mat_sh.get_worksheet(wsheet)
         vals = ws.get_all_values()
         mats = pd.DataFrame(data=vals[1:], columns=vals[0])
         
@@ -187,7 +208,7 @@ class ColabCost(GenericCost):
         mats['Cost'] = pd.to_numeric(mats['Cost'])
         mats['Date'] = pd.to_datetime(mats['Date'])
         
-        self.materials = mats
+        return mats
         
     def _rxn_read(self, ):
         '''Read a Google Sheet of rxn info and merge with materials.'''
