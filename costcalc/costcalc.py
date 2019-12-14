@@ -168,19 +168,23 @@ class ColabCost(GenericCost):
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
         
         self._materials_build()                
-        # self._rxn_read()
-        # self.rxn_data_setup()
-        # self.cost = self.rxn_cost(final_prod)
-        # self.rxn_data_post()
+        self._rxn_read()
+        self.rxn_data_setup()
+        self.cost = self.rxn_cost(final_prod)
+        self.rxn_data_post()
 
-        # self._fdcopy = self.fulldata.copy()
+        self._fdcopy = self.fulldata.copy()
         
     def _materials_build(self, ):
         mats = []
         for key, sheet in zip(self._mat_keys, self._mat_worksheets):
             mat = self._materials_read(key, sheet)
             mats.append(mat)
-        self._mats = mats
+        materials = pd.concat(mats).reset_index(drop=True)
+        
+        if materials.duplicated('Compound').any():
+            raise ValueError('Duplicated materials will cause errors')
+        self.materials = materials
 
     def _materials_read(self, mat_key, wsheet):
         '''Read a materials Google sheet.'''
