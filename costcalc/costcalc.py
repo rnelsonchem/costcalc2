@@ -133,8 +133,8 @@ class GenericCost(object):
         prod = self.final_prod
         # Calculate % overall costs relative to the prod
         prod_cost = self.fulldata.loc[(prod, prod), 'RM cost/kg rxn'] 
-        fulldata['% RM cost/kg prod'] = \
-                fulldata['RM cost/kg prod']*100/prod_cost
+        self.fulldata['% RM cost/kg prod'] = \
+                self.fulldata['RM cost/kg prod']*100/prod_cost
         
         # Remove the cost and %s for cost-calculated materials
         # This is necessary so that this column adds up to 100%
@@ -162,7 +162,8 @@ class ColabCost(GenericCost):
         self._materials_read()
         self._rxn_read()
         self.rxn_data_setup()
-        cost = self.rxn_cost(final_prod)
+        self.cost = self.rxn_cost(final_prod)
+        self.rxn_data_post()
 
         self._fdcopy = self.fulldata.copy()
 
