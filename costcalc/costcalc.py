@@ -163,23 +163,17 @@ class ColabCost(GenericCost):
             self._mat_keys = materials_sheet_keys
             self._mat_worksheets = materials_worksheets
 
-        self._materials_build()                
-
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
-
-        mats = [self._materials_read(),]
-        for extra in extra_mat_keys:
-            mats.append()
         
-        
-        self._rxn_read()
-        self.rxn_data_setup()
-        self.cost = self.rxn_cost(final_prod)
-        self.rxn_data_post()
+        self._materials_build()                
+        # self._rxn_read()
+        # self.rxn_data_setup()
+        # self.cost = self.rxn_cost(final_prod)
+        # self.rxn_data_post()
 
-        self._fdcopy = self.fulldata.copy()
+        # self._fdcopy = self.fulldata.copy()
         
     def _materials_build(self, ):
         mats = []
