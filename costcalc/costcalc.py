@@ -32,7 +32,8 @@ class GenericCost(object):
         empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
                 '% RM cost/kg rxn', 'RM cost/kg prod', '% RM cost/kg prod',
                 ]
-        self.fulldata[empty_cols] = np.nan
+        for col in empty_cols:
+            self.fulldata[col] = np.nan
         
         # Run the costing and set the cost attribute
         self.cost = self.rxn_cost(self.final_prod)
