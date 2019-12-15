@@ -184,7 +184,7 @@ class ColabCost(GenericCost):
         
     def _materials_build(self, ):
         '''This function combines the materials DataFrames.'''
-        materials = self._materials_read(self._materials_key,
+        materials = self._materials_read(self._materials_sheet_key,
                 self._materials_sheet)
 
         # If an alternative materials key is given, combine that materials
