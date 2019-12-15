@@ -21,6 +21,8 @@ plt.rc('figure', dpi=150)
 
 class GenericCost(object):
     # Not meant to be instantiated directly
+    # Any object classes inheriting from this class must define a variable
+    # called `final_prod`, which must be the final product of the reaction 
     def calc_cost(self, ):
         '''This function combines the reaction costing algorithm and a post
         processing function, which calculates some additional values.
