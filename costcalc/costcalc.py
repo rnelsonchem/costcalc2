@@ -25,7 +25,7 @@ class GenericCost(object):
         '''This function combines the reaction costing algorithm and a post
         processing function, which calculates some additional values.
         '''
-        self.rxn_cost(self.final_prod)
+        self.cost = self.rxn_cost(self.final_prod)
         self.rxn_data_post()
         
     def rxn_cost(self, prod, amp=1.0):
