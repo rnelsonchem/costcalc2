@@ -27,7 +27,16 @@ class GenericCost(object):
         '''This function combines the reaction costing algorithm and a post
         processing function, which calculates some additional values.
         '''
+        # Create a bunch of columns that will be populated during cost
+        # calculation. 
+        empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
+                '% RM cost/kg rxn', 'RM cost/kg prod', '% RM cost/kg prod',
+                ]
+        self.fulldata[empty_cols] = np.nan
+        
+        # Run the costing and set the cost attribute
         self.cost = self.rxn_cost(self.final_prod)
+        # Post process the DataFrame
         self.rxn_data_post()
         
     def rxn_cost(self, prod, amp=1.0):
@@ -111,9 +120,12 @@ class GenericCost(object):
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
         
-        For example, columns are added for caculated values. Some values are
-        set to null.  Etc. This also cleans things up for a rerun of the cost
-        analysis.  
+        This method creates the `fulldata` DataFrame by merging the materials
+        and reaction sheets. If there is a missing material, you'll get a
+        printed error. Materials that are marked as being cost calculated will
+        have their costs deleted, so they will need reactions defined in order
+        to reset their costs. This function also serves as a "reset" of sorts,
+        because it regenerates the `fulldata` DataFrame, if necessary.
         '''
         fulldata = pd.merge(self.materials, self.rxns, on='Compound', how='right')
         if fulldata['MW'].isna().any():
@@ -128,16 +140,6 @@ class GenericCost(object):
         # Set the costs to NaN for materials that will have costs calculated 
         cost_recalc_mask = ~fulldata['Cost calc'].isna()
         fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
-        
-        # Create a bunch of columns that will be populated later during cost
-        # calculation
-        #fulldata['Amount_kg'] = np.nan
-        fulldata['kg/kg rxn'] = np.nan
-        #fulldata['RM cost/eqivs'] = np.nan
-        fulldata['RM cost/kg rxn'] = np.nan
-        fulldata['% RM cost/kg rxn'] = np.nan
-        fulldata['RM cost/kg prod'] = np.nan
-        fulldata['% RM cost/kg prod'] = np.nan
         
         self.fulldata = fulldata
 
