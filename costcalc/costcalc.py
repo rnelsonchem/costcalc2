@@ -21,6 +21,13 @@ plt.rc('figure', dpi=150)
 
 class GenericCost(object):
     # Not meant to be instantiated directly
+    def calc_cost(self, ):
+        '''This function combines the reaction costing algorithm and a post
+        processing function, which calculates some additional values.
+        '''
+        self.rxn_cost(self.final_prod)
+        self.rxn_data_post()
+        
     def rxn_cost(self, prod, amp=1.0):
         '''A recursive function for calculating the cost of an arbitrary
         reaction route.
@@ -159,10 +166,12 @@ class ColabCost(GenericCost):
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
         
+        # Fix the final product info
+        self.final_prod = final_prod
+
         # Set up the reaction DataFrame
         self._rxn_key = rxn_key
         self._rxn_sheet = rxn_sheet
-        self.final_prod = final_prod
         self._rxn_read()
         
         # Create the Materials DataFrame from a main sheet and an optional
@@ -175,11 +184,6 @@ class ColabCost(GenericCost):
 
         # Combine the reaction/materials sheets, add the new columns
         self.rxn_data_setup()
-        # Run the costing/post processing
-        self.cost = self.rxn_cost(final_prod)
-        self.rxn_data_post()
-        # Make a copy of the costing data for plotting
-        self._fdcopy = self.fulldata.copy()
         
     def _materials_build(self, ):
         '''This function combines the materials DataFrames.'''
