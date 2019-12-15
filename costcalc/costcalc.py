@@ -153,23 +153,22 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
-    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod,
-            materials_worksheet=0, rxn_worksheet=0, alt_mat_key=None,
-            alt_mat_sheet=0):
+    def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
+            rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
         
         # Set up the reaction DataFrame
-        self._rxn_sheet_key = rxn_sheet_key
-        self._rxn_worksheet = rxn_worksheet
+        self._rxn_key = rxn_key
+        self._rxn_sheet = rxn_sheet
         self.final_prod = final_prod
         self._rxn_read()
         
         # Create the Materials DataFrame from a main sheet and an optional
         # alternate sheet.
-        self._material_sheet_key = materials_sheet_key
-        self._materials_worksheet = materials_worksheet
+        self._materials_key = materials_key
+        self._materials_sheet = materials_sheet
         self._alt_mat_key = alt_mat_key
         self._alt_mat_sheet = alt_mat_sheet
         self._materials_build()                
@@ -184,7 +183,7 @@ class ColabCost(GenericCost):
         
     def _materials_build(self, ):
         '''This function combines the materials DataFrames.'''
-        materials = self._materials_read(self._materials_sheet_key,
+        materials = self._materials_read(self._materials_key,
                 self._materials_sheet)
 
         # If an alternative materials key is given, combine that materials
@@ -228,8 +227,8 @@ class ColabCost(GenericCost):
         
     def _rxn_read(self, ):
         '''Read a Google Sheet of rxn info and merge with materials.'''
-        rxn_sh = self._gc.open_by_key(self._rxn_sheet_key)
-        ws = rxn_sh.get_worksheet(self._rxn_worksheet)
+        rxn_sh = self._gc.open_by_key(self._rxn_key)
+        ws = rxn_sh.get_worksheet(self._rxn_sheet)
         vals = ws.get_all_values()
         rxns = pd.DataFrame(data=vals[1:], columns=vals[0])
         
