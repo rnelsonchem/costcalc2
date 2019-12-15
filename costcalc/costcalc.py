@@ -153,8 +153,9 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
-    def __init__(self, materials_sheet_keys, rxn_sheet_key, final_prod,
-            materials_worksheets=0, rxn_worksheet=0, ):
+    def __init__(self, materials_sheet_key, rxn_sheet_key, final_prod,
+            materials_worksheet=0, rxn_worksheet=0, alt_mat_key=None,
+            alt_mat_sheet=0):
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
@@ -165,16 +166,12 @@ class ColabCost(GenericCost):
         self.final_prod = final_prod
         self._rxn_read()
         
-        # Create the reaction DataFrame
-        if isinstance(materials_sheet_keys, str):
-            self._mat_keys = [materials_sheet_keys, ]
-            self._mat_worksheets = [materials_worksheets, ]
-        elif isinstance(materials_sheet_keys, (list, tuple)):     
-            if not isinstance(materials_worksheets, (list, tuple)):
-                materials_worksheets = [materials_worksheets,]*\
-                    len(materials_sheet_keys)
-            self._mat_keys = materials_sheet_keys
-            self._mat_worksheets = materials_worksheets
+        # Create the Materials DataFrame from a main sheet and an optional
+        # alternate sheet.
+        self._material_sheet_key = materials_sheet_key
+        self._materials_worksheet = materials_worksheet
+        self._alt_mat_key = alt_mat_key
+        self._alt_mat_sheet = alt_mat_sheet
         self._materials_build()                
 
         # Combine the reaction/materials sheets, add the new columns
@@ -187,17 +184,23 @@ class ColabCost(GenericCost):
         
     def _materials_build(self, ):
         '''This function combines the materials DataFrames.'''
-        mats = []
-        for key, sheet in zip(self._mat_keys, self._mat_worksheets):
-            mat = self._materials_read(key, sheet)
-            mats.append(mat)
-        # Concatenate the sheets 
-        materials = pd.concat(mats).reset_index(drop=True)
-        
-        # If the two materials sheets have the same materials, it could cause
-        # some problems
-        if materials.duplicated('Compound').any():
-            raise ValueError('Duplicated materials will cause errors')
+        materials = self._materials_read(self._materials_key,
+                self._materials_sheet)
+
+        # If an alternative materials key is given, combine that materials
+        # sheet with the main one
+        if self._alt_mat_key:
+            alt_mats = self._materials_read(self._alt_mat_key,
+                    self._alt_mat_sheet)
+            # Concatenate the sheets. Reset the index so that it is
+            # consecutively numbered
+            materials = pd.concat([materials, alt_mats])\
+                    .reset_index(drop=True)
+            # If the two materials sheets have any of the same materials, it
+            # could cause some problems. Throw an error if this is the case
+            if materials.duplicated('Compound').any():
+                raise ValueError('Duplicated materials will cause errors')
+
         # Set the final materials sheet
         self.materials = materials
 
