@@ -22,13 +22,19 @@ plt.rc('figure', dpi=150)
 class GenericCost(object):
     # Not meant to be instantiated directly
     def rxn_cost(self, prod, amp=1.0):
-        '''A recrusive function for calculating the cost of an arbitrary
+        '''A recursive function for calculating the cost of an arbitrary
         reaction route.
         
         This is the workhorse function of the whole process.
         
-        amp : float The number is an amplifier for masses of materials, for
-        example. You shouldn't need to change this.  '''
+        prod : str
+            The name of the reaction to cost. This should also be the name of
+            the final product for that reaction.
+
+        amp : float 
+            The number is an amplifier for masses of materials, for
+            example. You shouldn't need to change this.  
+        '''
         data = self.fulldata.loc[prod]
 
         # Kg of nonsolvent materials used per equivalent
@@ -149,10 +155,17 @@ class GenericCost(object):
 class ColabCost(GenericCost):
     def __init__(self, materials_sheet_keys, rxn_sheet_key, final_prod,
             materials_worksheets=0, rxn_worksheet=0, ):
+        # Authenticate the Colab environment 
+        auth.authenticate_user()
+        self._gc = gspread.authorize(GoogleCredentials.get_application_default())
+        
+        # Set up the reaction DataFrame
         self._rxn_sheet_key = rxn_sheet_key
         self._rxn_worksheet = rxn_worksheet
         self.final_prod = final_prod
+        self._rxn_read()
         
+        # Create the reaction DataFrame
         if isinstance(materials_sheet_keys, str):
             self._mat_keys = [materials_sheet_keys, ]
             self._mat_worksheets = [materials_worksheets, ]
@@ -162,28 +175,30 @@ class ColabCost(GenericCost):
                     len(materials_sheet_keys)
             self._mat_keys = materials_sheet_keys
             self._mat_worksheets = materials_worksheets
-
-        # Authenticate the Colab environment 
-        auth.authenticate_user()
-        self._gc = gspread.authorize(GoogleCredentials.get_application_default())
-        
         self._materials_build()                
-        self._rxn_read()
+
+        # Combine the reaction/materials sheets, add the new columns
         self.rxn_data_setup()
+        # Run the costing/post processing
         self.cost = self.rxn_cost(final_prod)
         self.rxn_data_post()
-
+        # Make a copy of the costing data for plotting
         self._fdcopy = self.fulldata.copy()
         
     def _materials_build(self, ):
+        '''This function combines the materials DataFrames.'''
         mats = []
         for key, sheet in zip(self._mat_keys, self._mat_worksheets):
             mat = self._materials_read(key, sheet)
             mats.append(mat)
+        # Concatenate the sheets 
         materials = pd.concat(mats).reset_index(drop=True)
         
+        # If the two materials sheets have the same materials, it could cause
+        # some problems
         if materials.duplicated('Compound').any():
             raise ValueError('Duplicated materials will cause errors')
+        # Set the final materials sheet
         self.materials = materials
 
     def _materials_read(self, mat_key, wsheet):
@@ -230,7 +245,7 @@ class ColabCost(GenericCost):
     def excel_download(self, fname):
         self.fulldata.to_excel(fname)
         # There seems to be a bit of a lag before you can download
-        # the file
+        # the file, this delay might fix some of the errors this causes
         time.sleep(2)
         files.download(fname)
 
@@ -245,19 +260,29 @@ class ColabCost(GenericCost):
         
         all_costs = []
         for val in vals:
+            # You'll need to reset some of the columns, luckily we have a copy
+            # of the main DataFrame
             self.rxn_data_setup()
-            
+           
+            # Set the value. The first one sets all values w/ the compound
+            # name. The second one sets only a the values for a specific
+            # reaction.
             if not step:
                 self.fulldata.loc[(slice(None), cpd), scan_type] = val
             else: 
                 self.fulldata.loc[(step, cpd), scan_type] = val
                 
+            # Cost this modified version, append the cost to the list
             int_cost = self.rxn_cost(self.final_prod)
             all_costs.append(int_cost)
         
+        # Make a modified DataFrame copy for later
         self.moddata = self.fulldata.copy()
+        # Reset the original costing DataFrame
         self.fulldata = self._fdcopy.copy()
 
+        # When a single value was used, return just that one value. Otherwise,
+        # a list will be returned
         if val_list == False:
             all_costs = all_costs[0]
         
