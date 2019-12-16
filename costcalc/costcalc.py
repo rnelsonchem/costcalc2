@@ -64,16 +64,19 @@ class GenericCost(object):
         mask = ~data['Volumes'].isna()
         # Which material are the volumes relative to? What is the kg?
         amt_rel = amount_kg[data.loc[mask, 'Relative']].values
-        # Calculate the mass of solvent. Take into account the solvent recycyling 
-        amount_kg[mask] = data.loc[mask, 'Volumes']*data.loc[mask, 'Density']*(1 - 
-                data.loc[mask, 'Sol Recyc'])*amt_rel
+        # Calculate the mass of solvent. Take into account the solvent 
+        # recycyling 
+        # kg sol = Volume*Density*(1-Recycle)*(kg SM)
+        amount_kg[mask] = data.loc[mask, 'Volumes']*data.loc[mask, 'Density']\
+            *(1 - data.loc[mask, 'Sol Recyc'])*amt_rel
         
         # Set the kg amounts in the large data table
         self.fulldata.loc[prod, 'kg/kg rxn'] = \
                 (amount_kg/amount_kg[prod]).values
 
-        # Calculate unknown costs. Looks for any empty values in the "Cost" column
-        #unknown_cost = ~data['Cost calc'].isna()
+        # Calculate unknown costs. Looks for any empty values in the "Cost" 
+        # column
+        # unknown_cost = ~data['Cost calc'].isna()
         unknown_cost = data['Cost'].isna()
         # This is recursive. The final cost per kg of product will be
         # amplified by each subsequent step, which is where the new_amp
@@ -105,16 +108,18 @@ class GenericCost(object):
         self.fulldata.loc[(prod, prod), '% RM cost/kg rxn'] = np.nan
         
         # These are the costs for ultimate product
-        # For one reaction amp=1, so the individual rxn cost = ultimate rxn cost
-        # However, for feeder reactions this will get amplified by each step   
+        # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
+        # cost. However, for feeder reactions this will get amplified by 
+        # each step   
         self.fulldata.loc[prod, 'RM cost/kg prod'] = \
                 self.fulldata.loc[prod, 'RM cost/kg rxn'].values*amp
         
         # Set the "Cost" to the calculated value
-        self.fulldata.loc[(prod, prod), 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
+        self.fulldata.loc[(prod, prod), 'Cost'] = \
+                data.loc[prod, 'RM cost/kg rxn']
         
-        # Return the calculated product cost, which is required for the recurisive 
-        # nature of the algorithm
+        # Return the calculated product cost, which is required for the 
+        # recurisive nature of the algorithm
         return data.loc[prod, 'RM cost/kg rxn']
 
     
@@ -128,7 +133,8 @@ class GenericCost(object):
         to reset their costs. This function also serves as a "reset" of sorts,
         because it regenerates the `fulldata` DataFrame, if necessary.
         '''
-        fulldata = pd.merge(self.materials, self.rxns, on='Compound', how='right')
+        fulldata = pd.merge(self.materials, self.rxns, on='Compound', 
+                            how='right')
         if fulldata['MW'].isna().any():
             # raise ValueError('You are missing a material from a rxn.')
             print('There is a mismatch between the reaction and materials file.')
@@ -214,7 +220,8 @@ class ColabCost(GenericCost):
 
     def _materials_read(self, mat_key, wsheet):
         '''Read a materials Google sheet.'''
-        # Grab the Google sheet handle, pull down all values and make a DataFrame
+        # Grab the Google sheet handle, pull down all values and make a 
+        # DataFrame
         mat_sh = self._gc.open_by_key(mat_key)
         ws = mat_sh.get_worksheet(wsheet)
         vals = ws.get_all_values()
