@@ -152,11 +152,10 @@ class GenericCost(object):
         cost_recalc_mask = ~fulldata['Cost calc'].isna()
         fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
         
+        self.fulldata = fulldata
+        
         # Add the empty columns
         self._column_clear()
-        
-        self.fulldata = fulldata
-
 
     def rxn_data_post(self,):
         '''Calculate the % costs of the raw materials for a route.
