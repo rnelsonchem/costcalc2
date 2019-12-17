@@ -36,8 +36,12 @@ class GenericCost(object):
         to reset their costs. This function also serves as a "reset" of sorts,
         because it regenerates the `fulldata` DataFrame, if necessary.
         '''
-        fulldata = pd.merge(self.materials, self.rxns, on='Compound', 
-                            how='right')
+        mat_drops = ['Notes', 'CAS Num']
+        rxn_drops = ['Notes',]
+        fulldata = pd.merge(self.materials.drop(mat_drops, axis=1), 
+                            self.rxns.drop(rxn_drops, axis=1), 
+                            on='Compound', how='right')
+        
         if fulldata['MW'].isna().any():
             # raise ValueError('You are missing a material from a rxn.')
             print('There is a mismatch between the reaction and materials file.')
