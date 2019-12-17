@@ -315,7 +315,10 @@ class ColabCost(GenericCost):
         if isinstance(vals, (float, int)):
             vals = [vals,]
             val_list = False
-        
+       
+        # I need a copy of the full data set in order to reset for each
+        # iteration. Otherwise, I was noticing some issues.
+        fd_copy = self.fulldata.copy()
         all_costs = []
         for val in vals:
             self.value_mod(cpd, val, scan_type, step)
@@ -324,6 +327,8 @@ class ColabCost(GenericCost):
             # Remove the added value from the modified variable list. This
             # should make things behave more like folks expect.
             self._mod_vals.pop()
+            # Reset the full data set 
+            self.fulldata = fd_copy.copy()
 
         # When a single value was used, return just that one value. Otherwise,
         # a list will be returned
