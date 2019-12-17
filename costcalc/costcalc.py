@@ -26,18 +26,36 @@ class GenericCost(object):
     def __init__(self, final_prod):
         self.final_prod = final_prod        
 
-
-    def calc_cost(self, ):
-        '''This function combines the reaction costing algorithm and a post
-        processing function, which calculates some additional values.
+    def rxn_data_setup(self, ):
+        '''Setup the full data set for the upcoming cost calculations. 
+        
+        This method creates the `fulldata` DataFrame by merging the materials
+        and reaction sheets. If there is a missing material, you'll get a
+        printed error. Materials that are marked as being cost calculated will
+        have their costs deleted, so they will need reactions defined in order
+        to reset their costs. This function also serves as a "reset" of sorts,
+        because it regenerates the `fulldata` DataFrame, if necessary.
         '''
-        # Prep the DataFrame
+        fulldata = pd.merge(self.materials, self.rxns, on='Compound', 
+                            how='right')
+        if fulldata['MW'].isna().any():
+            # raise ValueError('You are missing a material from a rxn.')
+            print('There is a mismatch between the reaction and materials file.')
+            print('Material missing from materials sheet.')
+
+        fulldata.set_index(['Prod', 'Compound'], inplace=True)
+        # This is necessary so that slices of the DataFrame are views and not copies
+        fulldata = fulldata.sort_index()
+        
+        # Save the full data set
+        self.fulldata = fulldata
+
+        # Add a modified variable placeholder. This will store modified
+        # values for later processing
+        self._mod_vals = []
+        # Add the empty columns
         self._column_clear()
-        # Run the costing and set the cost attribute
-        self.cost = self.rxn_cost(self.final_prod)
-        # Post process the DataFrame
-        self.rxn_data_post()
-    
+
     def _column_clear(self, ):
         # Set the costs to NaN for materials that will have costs calculated 
         cost_recalc_mask = ~self.fulldata['Cost calc'].isna()
@@ -54,7 +72,69 @@ class GenericCost(object):
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
+
+    def value_mod(self, cpd, val, scan_type='Cost', step=None):
+        '''Set the cost/equiv of a given material.
         
+        This method will set a value, such as Cost or Equivalents, 
+        in the full data set. It will *NOT* recalculate the cost; this must
+        be done as a separate step.
+        '''
+        self._mod_vals.append( (cpd, val, scan_type, step) )
+            
+    def _set_val(self, cpd, val, scan_type, step):
+        # Set the value. The first one sets all values w/ the compound
+        # name. The second one sets only a the values for a specific
+        # reaction.
+        if not step:
+            self.fulldata.loc[(slice(None), cpd), scan_type] = val
+        else: 
+            self.fulldata.loc[(step, cpd), scan_type] = val
+
+    def value_scan(self, cpd, vals, scan_type='Cost', step=None):
+        '''Scan the cost/equiv of a given material.
+        
+        This method *WILL* recalculate the cost; the final recalculation will
+        be stored in the object instance attributes.
+        '''
+        # If a single value was given, convert to a list
+        # Set this flag to undo the list at the end of the function
+        val_list = True
+        if isinstance(vals, (float, int)):
+            vals = [vals,]
+            val_list = False
+       
+        # I need a copy of the full data set in order to reset for each
+        # iteration. Otherwise, I was noticing some issues.
+        fd_copy = self.fulldata.copy()
+        all_costs = []
+        for val in vals:
+            self.value_mod(cpd, val, scan_type, step)
+            self.calc_cost()
+            all_costs.append(self.cost)
+            # Remove the added value from the modified variable list. This
+            # should make things behave more like folks expect.
+            self._mod_vals.pop()
+            # Reset the full data set 
+            self.fulldata = fd_copy.copy()
+
+        # When a single value was used, return just that one value. Otherwise,
+        # a list will be returned
+        if val_list == False:
+            all_costs = all_costs[0]
+        
+        return all_costs
+
+    def calc_cost(self, ):
+        '''This function combines the reaction costing algorithm and a post
+        processing function, which calculates some additional values.
+        '''
+        # Prep the DataFrame
+        self._column_clear()
+        # Run the costing and set the cost attribute
+        self.cost = self.rxn_cost(self.final_prod)
+        # Post process the DataFrame
+        self.rxn_data_post()
         
     def rxn_cost(self, prod, amp=1.0):
         '''A recursive function for calculating the cost of an arbitrary
@@ -137,38 +217,7 @@ class GenericCost(object):
         # Return the calculated product cost, which is required for the 
         # recurisive nature of the algorithm
         return data.loc[prod, 'RM cost/kg rxn']
-
     
-    def rxn_data_setup(self, ):
-        '''Setup the full data set for the upcoming cost calculations. 
-        
-        This method creates the `fulldata` DataFrame by merging the materials
-        and reaction sheets. If there is a missing material, you'll get a
-        printed error. Materials that are marked as being cost calculated will
-        have their costs deleted, so they will need reactions defined in order
-        to reset their costs. This function also serves as a "reset" of sorts,
-        because it regenerates the `fulldata` DataFrame, if necessary.
-        '''
-        fulldata = pd.merge(self.materials, self.rxns, on='Compound', 
-                            how='right')
-        if fulldata['MW'].isna().any():
-            # raise ValueError('You are missing a material from a rxn.')
-            print('There is a mismatch between the reaction and materials file.')
-            print('Material missing from materials sheet.')
-
-        fulldata.set_index(['Prod', 'Compound'], inplace=True)
-        # This is necessary so that slices of the DataFrame are views and not copies
-        fulldata = fulldata.sort_index()
-        
-        # Save the full data set
-        self.fulldata = fulldata
-
-        # Add a modified variable placeholder. This will store modified
-        # values for later processing
-        self._mod_vals = []
-        # Add the empty columns
-        self._column_clear()
-
     def rxn_data_post(self,):
         '''Calculate the % costs of the raw materials for a route.
         '''
@@ -285,54 +334,4 @@ class ColabCost(GenericCost):
         time.sleep(2)
         files.download(fname)
         
-    def value_mod(self, cpd, val, scan_type='Cost', step=None):
-        '''Set the cost/equiv of a given material.
-        
-        This method will set a value, such as Cost or Equivalents, 
-        in the full data set. It will *NOT* recalculate the cost; this must
-        be done as a separate step.
-        '''
-        self._mod_vals.append( (cpd, val, scan_type, step) )
-            
-    def _set_val(self, cpd, val, scan_type, step):
-        # Set the value. The first one sets all values w/ the compound
-        # name. The second one sets only a the values for a specific
-        # reaction.
-        if not step:
-            self.fulldata.loc[(slice(None), cpd), scan_type] = val
-        else: 
-            self.fulldata.loc[(step, cpd), scan_type] = val
 
-    def value_scan(self, cpd, vals, scan_type='Cost', step=None):
-        '''Scan the cost/equiv of a given material.
-        
-        This method *WILL* recalculate the cost; the final recalculation will
-        be stored in the object instance attributes.
-        '''
-        # If a single value was given, convert to a list
-        # Set this flag to undo the list at the end of the function
-        val_list = True
-        if isinstance(vals, (float, int)):
-            vals = [vals,]
-            val_list = False
-       
-        # I need a copy of the full data set in order to reset for each
-        # iteration. Otherwise, I was noticing some issues.
-        fd_copy = self.fulldata.copy()
-        all_costs = []
-        for val in vals:
-            self.value_mod(cpd, val, scan_type, step)
-            self.calc_cost()
-            all_costs.append(self.cost)
-            # Remove the added value from the modified variable list. This
-            # should make things behave more like folks expect.
-            self._mod_vals.pop()
-            # Reset the full data set 
-            self.fulldata = fd_copy.copy()
-
-        # When a single value was used, return just that one value. Otherwise,
-        # a list will be returned
-        if val_list == False:
-            all_costs = all_costs[0]
-        
-        return all_costs
