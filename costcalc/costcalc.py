@@ -23,6 +23,10 @@ class GenericCost(object):
     # Not meant to be instantiated directly
     # Any object classes inheriting from this class must define a variable
     # called `final_prod`, which must be the final product of the reaction 
+    def __init__(self, final_prod):
+        self.final_prod = final_prod        
+
+
     def calc_cost(self, ):
         '''This function combines the reaction costing algorithm and a post
         processing function, which calculates some additional values.
@@ -35,6 +39,14 @@ class GenericCost(object):
         self.rxn_data_post()
     
     def _column_clear(self, ):
+        # Set the costs to NaN for materials that will have costs calculated 
+        cost_recalc_mask = ~self.fulldata['Cost calc'].isna()
+        self.fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
+
+        # Modify stored mod variables
+        for mod in self._mod_vals:
+            self._set_val(*mod)
+
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
         empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
@@ -148,12 +160,12 @@ class GenericCost(object):
         # This is necessary so that slices of the DataFrame are views and not copies
         fulldata = fulldata.sort_index()
         
-        # Set the costs to NaN for materials that will have costs calculated 
-        cost_recalc_mask = ~fulldata['Cost calc'].isna()
-        fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
-        
+        # Save the full data set
         self.fulldata = fulldata
-        
+
+        # Add a modified variable placeholder. This will store modified
+        # values for later processing
+        self._mod_vals = []
         # Add the empty columns
         self._column_clear()
 
@@ -179,13 +191,13 @@ class GenericCost(object):
 class ColabCost(GenericCost):
     def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
+        # Fix the final product and setup a mod variable
+        super(ColabCost, self).__init__(final_prod)
+
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
         
-        # Fix the final product info
-        self.final_prod = final_prod
-
         # Set up the reaction DataFrame
         self._rxn_key = rxn_key
         self._rxn_sheet = rxn_sheet
@@ -280,11 +292,9 @@ class ColabCost(GenericCost):
         in the full data set. It will *NOT* recalculate the cost; this must
         be done as a separate step.
         '''
-        # Check if a costing has been done by looking at one of the calculated
-        # Columns to test if it is not all NaN. If so, clear those columns.
-        if ~self.fulldata['RM cost/kg prod'].isna().all():
-            self._column_clear()
+        self._mod_vals.append( (cpd, val, scan_type, step) )
             
+    def _set_val(self, cpd, val, scan_type, step):
         # Set the value. The first one sets all values w/ the compound
         # name. The second one sets only a the values for a specific
         # reaction.
@@ -292,10 +302,13 @@ class ColabCost(GenericCost):
             self.fulldata.loc[(slice(None), cpd), scan_type] = val
         else: 
             self.fulldata.loc[(step, cpd), scan_type] = val
-        
 
     def value_scan(self, cpd, vals, scan_type='Cost', step=None):
-        '''Scan the cost/equiv of a given material.'''
+        '''Scan the cost/equiv of a given material.
+        
+        This method *WILL* recalculate the cost; the final recalculation will
+        be stored in the object instance attributes.
+        '''
         # If a single value was given, convert to a list
         # Set this flag to undo the list at the end of the function
         val_list = True
@@ -303,17 +316,17 @@ class ColabCost(GenericCost):
             vals = [vals,]
             val_list = False
         
-        # It will probably be best to re-use a copy of the full data set for 
-        # each iteration
-        fd_copy = self.fulldata.copy()
         all_costs = []
+        popped = False
         for val in vals:
-            # This resets the full data set. Redundant on the first iteration, 
-            # but probably necessary for the subsequent iterations.
-            self.fulldata = fd_copy.copy()
+            if popped:
+                self._mod_vals.pop()
             self.value_mod(cpd, val, scan_type, step)
             self.calc_cost()
             all_costs.append(self.cost)
+            # I need this so the intermediate values are removed from the
+            # modified value list, but the last one is saved.
+            popped = True
 
         # When a single value was used, return just that one value. Otherwise,
         # a list will be returned
