@@ -317,16 +317,13 @@ class ColabCost(GenericCost):
             val_list = False
         
         all_costs = []
-        popped = False
         for val in vals:
-            if popped:
-                self._mod_vals.pop()
             self.value_mod(cpd, val, scan_type, step)
             self.calc_cost()
             all_costs.append(self.cost)
-            # I need this so the intermediate values are removed from the
-            # modified value list, but the last one is saved.
-            popped = True
+            # Remove the added value from the modified variable list. This
+            # should make things behave more like folks expect.
+            self._mod_vals.pop()
 
         # When a single value was used, return just that one value. Otherwise,
         # a list will be returned
