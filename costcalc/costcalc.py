@@ -304,7 +304,7 @@ class ColabCost(GenericCost):
         mats['MW'] = pd.to_numeric(mats['MW'])
         mats['Density'] = pd.to_numeric(mats['Density'])
         mats['Cost'] = pd.to_numeric(mats['Cost'])
-        mats['Date'] = pd.to_datetime(mats['Date'])
+        #mats['Date'] = pd.to_datetime(mats['Date'])
         
         return mats
         
