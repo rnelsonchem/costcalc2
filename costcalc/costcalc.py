@@ -120,12 +120,9 @@ class GenericCost(object):
         fd_copy = self.fulldata.copy()
         all_costs = []
         for val in vals:
-            self.value_mod(cpd, val, scan_type, step)
+            self._set_val(cpd, val, scan_type, step)
             self.calc_cost()
             all_costs.append(self.cost)
-            # Remove the added value from the modified variable list. This
-            # should make things behave more like folks expect.
-            self._mod_vals.pop()
             # Reset the full data set 
             self.fulldata = fd_copy.copy()
 
