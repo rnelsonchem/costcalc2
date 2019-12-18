@@ -223,8 +223,12 @@ class GenericCost(object):
                 data.loc[prod, 'RM cost/kg rxn']
         
         # Return the calculated product cost, which is required for the 
-        # recurisive nature of the algorithm
-        return data.loc[prod, 'RM cost/kg rxn']
+        # recurisive nature of the algorithm. In addition, an optional OPEX
+        # may be added to take into acount production costs of the cpd
+        if np.isnan(data.loc[prod, 'OPEX']):
+            return data.loc[prod, 'RM cost/kg rxn']
+        else:
+            return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, 'OPEX']
     
     def rxn_data_post(self,):
         '''Calculate the % costs of the raw materials for a route.
