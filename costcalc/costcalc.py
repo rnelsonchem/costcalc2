@@ -10,10 +10,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import gspread
 
-from oauth2client.client import GoogleCredentials
-from google.colab import auth
-
-from google.colab import files
 
 # Set up some plotting stuff for the notebooks
 plt.style.use('ggplot')
@@ -252,6 +248,16 @@ class GenericCost(object):
 class ColabCost(GenericCost):
     def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
+        # Do some imports that are only possible in the Colab environment
+        # This should prevent these from running in a non-Colab environment
+        from oauth2client.client import GoogleCredentials
+        from google.colab import auth
+        from google.colab import files
+        # These will have to be made global
+        global GoogleCredentials
+        global auth
+        global files
+
         # Fix the final product and setup a mod variable
         super(ColabCost, self).__init__(final_prod)
 
