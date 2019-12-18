@@ -42,10 +42,17 @@ class GenericCost(object):
                             self.rxns.drop(rxn_drops, axis=1), 
                             on='Compound', how='right')
         
+        # Check for a missing material -- Everything should have a MW
         if fulldata['MW'].isna().any():
             # raise ValueError('You are missing a material from a rxn.')
             print('There is a mismatch between the reaction and materials file.')
-            print('Material missing from materials sheet.')
+            print('Material might be missing from materials sheet.')
+            
+        # Check for a missing cost, which is not being calculated
+        # This is a tricky error because the costing will run just fine with 
+        # NaNs. Check for this by looking for NaN in both Cost and Calc columns
+        if (fulldata['Cost calc'].isna() & fulldata['Cost'].isna()).any():
+            print('You are missing a material cost that is not being calculated.')
 
         fulldata.set_index(['Prod', 'Compound'], inplace=True)
         # This is necessary so that slices of the DataFrame are views and not copies
