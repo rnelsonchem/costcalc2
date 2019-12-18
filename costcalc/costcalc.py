@@ -332,6 +332,7 @@ class ColabCost(GenericCost):
         rxns['Equiv'] = pd.to_numeric(rxns['Equiv'])
         rxns['Volumes'] = pd.to_numeric(rxns['Volumes'])
         rxns['Sol Recyc'] = pd.to_numeric(rxns['Sol Recyc'])
+        rxns['OPEX'] = pd.to_numeric(rxns['OPEX'])
         
         self.rxns = rxns
         
