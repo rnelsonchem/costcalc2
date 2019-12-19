@@ -16,10 +16,18 @@ plt.style.use('ggplot')
 plt.rc('figure', dpi=150)
 
 class GenericCost(object):
-    # Not meant to be instantiated directly
-    # Any object classes inheriting from this class must define a variable
-    # called `final_prod`, which must be the final product of the reaction 
+    '''Base costing class. 
+
+    Not meant to be instantiated directly, but defines some common functions
+    for any subclasses.
+
+    Attributes
+    ----------
+    final_prod : str
+        Defines the final product name for costing calculations.
+    '''
     def __init__(self, final_prod):
+        # This is a common attribute for all subclasses.
         self.final_prod = final_prod        
 
     def rxn_data_setup(self, ):
