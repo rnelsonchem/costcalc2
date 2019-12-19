@@ -132,15 +132,15 @@ class GenericCost(object):
         # unchanged.
         self._column_clear()
             
-    def _set_val(self, cpd, val, scan_type, step):
+    def _set_val(self, cpd, val, val_type, step):
         '''Set a modified value in the `fulldata` DataFrame
         '''
         # The first one sets all values w/ the compound name. The second one
         # sets only a value for a specific reaction.
         if not step:
-            self.fulldata.loc[(slice(None), cpd), scan_type] = val
+            self.fulldata.loc[(slice(None), cpd), val_type] = val
         else: 
-            self.fulldata.loc[(step, cpd), scan_type] = val
+            self.fulldata.loc[(step, cpd), val_type] = val
 
     def value_scan(self, cpd, vals, scan_type='Cost', step=None):
         '''Scan the cost/equiv of a given material.
