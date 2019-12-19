@@ -33,12 +33,10 @@ class GenericCost(object):
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
         
-        This method creates the `fulldata` DataFrame by merging the materials
-        and reaction sheets. If there is a missing material, you'll get a
-        printed error. Materials that are marked as being cost calculated will
-        have their costs deleted, so they will need reactions defined in order
-        to reset their costs. This function also serves as a "reset" of sorts,
-        because it regenerates the `fulldata` DataFrame, if necessary.
+        This method merges the materials and reaction sheets into a combined
+        DataFrame called `fulldata`. This function also serves as a "reset" of
+        sorts after a costing calculation, if you want to start over with a
+        different costing model.
         '''
         mat_drops = ['Notes', 'CAS Num']
         rxn_drops = ['Notes',]
@@ -72,6 +70,14 @@ class GenericCost(object):
         self._column_clear()
 
     def _column_clear(self, ):
+        '''Clear out calculated values.
+
+        This method will reset all the calculated values in the `fulldata`
+        DataFrame. This is perhaps not strictly necessary, but it should help
+        to avoid unwanted errors in recalculations due to old data still being
+        present. This is not the same as a reset, though, because manually
+        modified values with `value_mod` method will be re-modified. 
+        '''
         # Set the costs to NaN for materials that will have costs calculated 
         cost_recalc_mask = ~self.fulldata['Cost calc'].isna()
         self.fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
@@ -254,6 +260,14 @@ class GenericCost(object):
      
 
 class ColabCost(GenericCost):
+        ''' 
+        Notes
+        -----
+        If there is a missing material, you'll get a
+        printed error. Materials that are marked as being cost calculated will
+        have their costs deleted, so they will need reactions defined in order
+        to reset their costs. 
+        '''
     def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
         # Do some imports that are only possible in the Colab environment
