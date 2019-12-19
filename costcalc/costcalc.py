@@ -178,11 +178,13 @@ class GenericCost(object):
         fd_copy = self.fulldata.copy()
         all_costs = []
         for val in vals:
-            self._set_val(cpd, val, val_type, step)
+            self.value_mod(cpd, val, val_type, step)
             self.calc_cost()
             all_costs.append(self.cost)
             # Reset the full data set 
             self.fulldata = fd_copy.copy()
+            # Pop out the mod value, otherwise this list will get really long
+            self._mod_vals.pop()
 
         # When a single value was used, return just that one value. Otherwise,
         # a list will be returned
