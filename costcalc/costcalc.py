@@ -401,7 +401,8 @@ class ColabCost(GenericCost):
         self.rxn_data_setup()
         
     def _materials_build(self, ):
-        '''This function combines the materials DataFrames.'''
+        '''This function creates and combines the main and an optional
+        alternate materials sheets.'''
         materials = self._materials_read(self._materials_key,
                 self._materials_sheet)
 
@@ -423,7 +424,8 @@ class ColabCost(GenericCost):
         self.materials = materials
 
     def _materials_read(self, mat_key, wsheet):
-        '''Read a materials Google sheet.'''
+        '''Read a Google sheet that defines the materials used in costing.
+        '''
         # Grab the Google sheet handle, pull down all values and make a 
         # DataFrame
         mat_sh = self._gc.open_by_key(mat_key)
@@ -446,7 +448,8 @@ class ColabCost(GenericCost):
         return mats
         
     def _rxn_read(self, ):
-        '''Read a Google Sheet of rxn info and merge with materials.'''
+        '''Read a Google Sheet of reaction info.
+        '''
         rxn_sh = self._gc.open_by_key(self._rxn_key)
         ws = rxn_sh.get_worksheet(self._rxn_sheet)
         vals = ws.get_all_values()
