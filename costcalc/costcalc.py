@@ -142,7 +142,7 @@ class GenericCost(object):
         else: 
             self.fulldata.loc[(step, cpd), val_type] = val
 
-    def value_scan(self, cpd, vals, scan_type='Cost', step=None):
+    def value_scan(self, cpd, vals, val_type='Cost', step=None):
         '''Scan the cost/equiv of a given material.
         
         This method *WILL* recalculate the cost; the final recalculation will
@@ -160,7 +160,7 @@ class GenericCost(object):
         fd_copy = self.fulldata.copy()
         all_costs = []
         for val in vals:
-            self._set_val(cpd, val, scan_type, step)
+            self._set_val(cpd, val, val_type, step)
             self.calc_cost()
             all_costs.append(self.cost)
             # Reset the full data set 
