@@ -469,6 +469,13 @@ class ColabCost(GenericCost):
         self.rxns = rxns
         
     def excel_download(self, fname):
+        '''Download the costing DataFrame as an Excel file.
+
+        Note
+        ----
+        In some cases, this function will throw an error. It may be that
+        you'll need to run this again in order to get it to work. 
+        '''
         self.fulldata.to_excel(fname)
         # There seems to be a bit of a lag before you can download
         # the file, this delay might fix some of the errors this causes
