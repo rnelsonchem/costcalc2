@@ -192,8 +192,10 @@ class GenericCost(object):
         return all_costs
 
     def calc_cost(self, ):
-        '''This function combines the reaction costing algorithm and a post
-        processing function, which calculates some additional values.
+        '''Calculate the cost of the route. 
+        
+        This function combines the column clearing method, the reaction
+        costing algorithm, and a post processing function.
         '''
         # Prep the DataFrame
         self._column_clear()
