@@ -319,12 +319,51 @@ class GenericCost(object):
 
 class ColabCost(GenericCost):
         ''' 
+        Costing class designed for the Colab Python environment.
+
+        Parameters
+        ----------
+        materials_key : str
+            The Google Sheet key to a materials list. This value can be found
+            in the URL of the sheet.
+
+        rxn_key : str
+            The Google Sheet key to the reaction list. This value can be found
+            in the URL of the sheet.
+
+        final_prod : str
+            The name of the overall final product of this route. This should
+            be the same as a product from the reaction sheet.
+
+        materials_sheet : int, str, optional (default = 0)
+            The sheet to pull out of the materials Google Sheet. The default
+            (0) is the first sheet in the spreadsheet. You could use a
+            different number or a name if you want a different sheet from the
+            spreadsheet.
+
+        rxn_sheet : int, str, optional (default = 0)
+            See `materials_sheet` description, except this is for the reaction
+            Google Sheet.
+
+        alt_mat_key : str, optional (default = None)
+            A Google Sheet key for an optional, secondary materials sheet.
+            This is useful if you have separate master and user materials
+            sheets, for example.
+
+        alt_mat_sheet : int, str, optional (default = 0)
+            The sheet number/name for the secondary materials sheet. See
+            `materials_sheet` description. 
+
+        Attributes
+        ----------
+
+
         Notes
         -----
-        If there is a missing material, you'll get a
-        printed error. Materials that are marked as being cost calculated will
-        have their costs deleted, so they will need reactions defined in order
-        to reset their costs. 
+        If there is a missing material or reaction, you'll get a printed
+        error. Materials that are marked as being cost calculated will have
+        their costs deleted, so they will need reactions defined in order to
+        reset their costs. 
         '''
     def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
