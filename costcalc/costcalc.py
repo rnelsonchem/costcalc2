@@ -200,11 +200,11 @@ class GenericCost(object):
         # Prep the DataFrame
         self._column_clear()
         # Run the costing and set the cost attribute
-        self.cost = self.rxn_cost(self.final_prod)
+        self.cost = self._rxn_cost(self.final_prod)
         # Post process the DataFrame
-        self.rxn_data_post()
+        self._rxn_data_post()
         
-    def rxn_cost(self, prod, amp=1.0):
+    def _rxn_cost(self, prod, amp=1.0):
         '''The recursive cost calculating function. 
         
         This is the workhorse function of the whole process, but is not meant
@@ -260,7 +260,7 @@ class GenericCost(object):
             # Set that ratio
             new_amp = data.loc[cpd, 'kg/kg rxn']
             # Run the cost calculation for the unknown compound
-            cst = self.rxn_cost(cpd, amp*new_amp)
+            cst = self._rxn_cost(cpd, amp*new_amp)
             # Set the calculated cost in the larger data table
             self.fulldata.loc[(prod, cpd), 'Cost'] = cst
 
@@ -297,7 +297,7 @@ class GenericCost(object):
         else:
             return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, 'OPEX']
     
-    def rxn_data_post(self,):
+    def _rxn_data_post(self,):
         '''Calculate some values after the final cost of the reaction is
         determined. 
         '''
