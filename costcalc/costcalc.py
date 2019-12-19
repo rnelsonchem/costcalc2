@@ -143,10 +143,28 @@ class GenericCost(object):
             self.fulldata.loc[(step, cpd), val_type] = val
 
     def value_scan(self, cpd, vals, val_type='Cost', step=None):
-        '''Scan the cost/equiv of a given material.
+        '''Scan a range of values for a given material.
         
-        This method *WILL* recalculate the cost; the final recalculation will
-        be stored in the object instance attributes.
+        Parameters
+        ----------
+        See `value_mod` method description, except for the following.
+
+        vals : container of int/float values, int, float
+            This is the container of values for which to scan through. If you
+            want, this can be a single value, although the `value_mod` method
+            may be more appropriate for that. 
+
+        Returns
+        -------
+        list of floats
+            This is the costs associate with each value in the input
+            container. 
+
+        Notes
+        -----
+        Although this method recalculates the cost for every value, it does
+        not modify the original `fulldata` attribute. However, the `cost`
+        attribute will reflect the final cost calculation.
         '''
         # If a single value was given, convert to a list
         # Set this flag to undo the list at the end of the function
