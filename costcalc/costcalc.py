@@ -21,7 +21,7 @@ class GenericCost(object):
     Not meant to be instantiated directly, but defines some common functions
     for any subclasses.
 
-    Attributes
+    Parameters
     ----------
     final_prod : str
         Defines the final product name for costing calculations.
