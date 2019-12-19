@@ -298,7 +298,8 @@ class GenericCost(object):
             return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, 'OPEX']
     
     def rxn_data_post(self,):
-        '''Calculate the % costs of the raw materials for a route.
+        '''Calculate some values after the final cost of the reaction is
+        determined. 
         '''
         prod = self.final_prod
         # Calculate % overall costs relative to the prod
@@ -307,7 +308,7 @@ class GenericCost(object):
                 self.fulldata['RM cost/kg prod']*100/prod_cost
         
         # Remove the cost and %s for cost-calculated materials
-        # This is necessary so that this column adds up to 100%
+        # This is necessary so that this column adds up to 100% (w/o OPEX)
         mask = ~self.fulldata['Cost calc'].isna()
         self.fulldata.loc[mask, '% RM cost/kg prod'] = np.nan
         # This filters some of the costs which are simply the sum of raw materials
