@@ -473,8 +473,8 @@ class ColabCost(GenericCost):
 
         Note
         ----
-        In some cases, this function will throw an error. It may be that
-        you'll need to run this again in order to get it to work. 
+        In some cases, this function will throw an error. In that case, try
+        running this again in order to get it to work. 
         '''
         self.fulldata.to_excel(fname)
         # There seems to be a bit of a lag before you can download
