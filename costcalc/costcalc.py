@@ -133,9 +133,10 @@ class GenericCost(object):
         self._column_clear()
             
     def _set_val(self, cpd, val, scan_type, step):
-        # Set the value. The first one sets all values w/ the compound
-        # name. The second one sets only a the values for a specific
-        # reaction.
+        '''Set a modified value in the `fulldata` DataFrame
+        '''
+        # The first one sets all values w/ the compound name. The second one
+        # sets only a value for a specific reaction.
         if not step:
             self.fulldata.loc[(slice(None), cpd), scan_type] = val
         else: 
