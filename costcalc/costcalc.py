@@ -94,14 +94,43 @@ class GenericCost(object):
         for col in empty_cols:
             self.fulldata[col] = np.nan
 
-    def value_mod(self, cpd, val, scan_type='Cost', step=None):
-        '''Set the cost/equiv of a given material.
+    def value_mod(self, cpd, val, val_type='Cost', step=None):
+        '''Manually set a value for a given material.
+
+        Parameters
+        ----------
+        cpd : str
+            This the compound name for which the value will be modified.
+
+        val : int, float
+            This is the modified value for the parameter.
+
+        val_type : str, optional (Default = 'Cost')
+            This is the column name for the parameter that you'll be changing.
+            This must be for a non-calculated column, such as 'Cost', 'Equiv',
+            'OPEX', etc.
+
+        step : None, str, optional (Default = None)
+            The name of the reaction step for which this value will be
+            changed. If this is `None` (default), then all the values for the
+            given compound (`cpd`) will be set to the same value. This is
+            mostly important for something like `val_type`='Equiv'. Clearly,
+            you would only want to change the number of equivalents for a
+            specific reaction. If this parameter is left as `None`, the
+            equivalents for a given compound in all reactions will be set to
+            the same value.
         
-        This method will set a value, such as Cost or Equivalents, 
-        in the full data set. It will *NOT* recalculate the cost; this must
-        be done as a separate step.
+        Note
+        ----
+        This method will *NOT* recalculate the cost; this must be done as a
+        separate step.
         '''
-        self._mod_vals.append( (cpd, val, scan_type, step) )
+        # Store the values
+        self._mod_vals.append( (cpd, val, val_type, step) )
+        # This will clear out the old calculation data and set the modified
+        # value. Keeps folks from getting confused b/c calculated values are
+        # unchanged.
+        self._column_clear()
             
     def _set_val(self, cpd, val, scan_type, step):
         # Set the value. The first one sets all values w/ the compound
