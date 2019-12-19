@@ -205,19 +205,25 @@ class GenericCost(object):
         self.rxn_data_post()
         
     def rxn_cost(self, prod, amp=1.0):
-        '''A recursive function for calculating the cost of an arbitrary
-        reaction route.
+        '''The recursive cost calculating function. 
         
-        This is the workhorse function of the whole process.
+        This is the workhorse function of the whole process, but is not meant
+        to be called on its own. Typically, you'll want to call `calc_cost` to
+        get the costing information.
         
+        Parameters
+        ----------
         prod : str
             The name of the reaction to cost. This should also be the name of
             the final product for that reaction.
 
-        amp : float 
-            The number is an amplifier for masses of materials, for
-            example. You shouldn't need to change this.  
+        amp : float, optional (default = 1.0)
+            This number is an amplifier that increases some of the values,
+            e.g. masses of materials, based on how much material is being used
+            for the overall final product.   
         '''
+        # Select out the reaction of interest from the full data set. Saves
+        # some typing.
         data = self.fulldata.loc[prod]
 
         # Kg of nonsolvent materials used per equivalent
@@ -239,7 +245,8 @@ class GenericCost(object):
                 (amount_kg/amount_kg[prod]).values
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
-        # column
+        # column. Don't use the 'Cost calc' column directly, because some of
+        # the costs may have been manually set using the `value_mod` method
         # unknown_cost = ~data['Cost calc'].isna()
         unknown_cost = data['Cost'].isna()
         # This is recursive. The final cost per kg of product will be
