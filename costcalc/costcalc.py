@@ -308,10 +308,16 @@ class GenericCost(object):
         determined. 
         '''
         prod = self.final_prod
+        
+        # If an OPEX for the final reaction is given, add that to the cost
+        # of the final product
+        opex = self.fulldata.loc[(prod, prod), 'OPEX']
+        if not np.isnan(opex):
+            self.fulldata.loc[(prod, prod), 'Cost'] = self.cost
+                
         # Calculate % overall costs relative to the prod
-        prod_cost = self.fulldata.loc[(prod, prod), 'RM cost/kg rxn'] 
         self.fulldata['% RM cost/kg prod'] = \
-                self.fulldata['RM cost/kg prod']*100/prod_cost
+                self.fulldata['RM cost/kg prod']*100/self.cost
         
         # Remove the cost and %s for cost-calculated materials
         # This is necessary so that this column adds up to 100% (w/o OPEX)
@@ -380,9 +386,8 @@ class ColabCost(GenericCost):
     fulldata : DataFrame
         A DataFrame containing all the costing related values for the given 
         route. If the cost for the route has been calculated and an OPEX was 
-        given for the final step, the final product "Cost" *will* include
-        this additional OPEX cost. However, the "Cost" values for intermediate
-        materials will *not* include this value.
+        given, the product "Cost" values *will* include this additional OPEX 
+        cost. The "RM cost/kg rxn" value will be the cost without the OPEX.
 
     Notes
     -----
