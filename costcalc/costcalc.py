@@ -361,7 +361,28 @@ class ColabCost(GenericCost):
 
     Attributes
     ----------
-
+    final_prod : str
+        The name of the overall final product of this route.
+        
+    rxns : DataFrame
+        A DataFrame describing the original reactions in the given route. This 
+        is idential to the reactions Google Sheet, and is not changed by any 
+        of the helper functions in this class.
+        
+    materials : DataFrame
+        A DataFrame describing all of the known materials. This will contain
+        all of the materials from both of the given materials Google Sheets.
+        
+    cost : Numpy Float64
+        The final cost of the described route. This value *will* include OPEX
+        for the final reaction, if that value is given. 
+        
+    fulldata : DataFrame
+        A DataFrame containing all the costing related values for the given 
+        route. If the cost for the route has been calculated and an OPEX was 
+        given for the final step, the final product "Cost" *will* include
+        this additional OPEX cost. However, the "Cost" values for intermediate
+        materials will *not* include this value.
 
     Notes
     -----
