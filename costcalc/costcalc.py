@@ -458,18 +458,7 @@ class ColabCost(GenericCost):
     def _materials_read(self, mat_key, wsheet):
         '''Read a Google sheet that defines the materials used in costing.
         '''
-        # Grab the Google sheet handle, pull down all values and make a 
-        # DataFrame
-        mat_sh = self._gc.open_by_key(mat_key)
-        ws = mat_sh.get_worksheet(wsheet)
-        vals = ws.get_all_values()
-        mats = pd.DataFrame(data=vals[1:], columns=vals[0])
-        
-        # Convert empty cells to NaN
-        mask = (mats == '')
-        mats[mask] = np.nan
-        # Drop empty rows
-        mats.dropna(how='all', inplace=True)
+        mats = self._get_gsheet_vals(mat_key, wsheet)
         
         # Convert numeric/date columns
         mats['MW'] = pd.to_numeric(mats['MW'])
@@ -482,16 +471,8 @@ class ColabCost(GenericCost):
     def _rxn_read(self, ):
         '''Read a Google Sheet of reaction info.
         '''
-        rxn_sh = self._gc.open_by_key(self._rxn_key)
-        ws = rxn_sh.get_worksheet(self._rxn_sheet)
-        vals = ws.get_all_values()
-        rxns = pd.DataFrame(data=vals[1:], columns=vals[0])
-        
-        # Convert empty cells to NaN
-        mask = rxns == ''
-        rxns[mask] = np.nan
-        # Drop empty rows
-        rxns.dropna(how='all', inplace=True)
+        rxns = self._get_gsheet_vals(self._rxn_key,
+                                     self._rxn_sheet)
         
         rxns['Equiv'] = pd.to_numeric(rxns['Equiv'])
         rxns['Volumes'] = pd.to_numeric(rxns['Volumes'])
@@ -499,6 +480,29 @@ class ColabCost(GenericCost):
         rxns['OPEX'] = pd.to_numeric(rxns['OPEX'])
         
         self.rxns = rxns
+        
+    def _get_gsheet_vals(self, key, sheet):
+        '''General code for getting Google Sheet values and returning a 
+        DataFrame.
+        '''
+        # Grab the Google sheet handle, pull down all values and make a 
+        # DataFrame
+        gsh = self._gc.open_by_key(key)
+        # Differentiate between string and integer worksheets 
+        if isinstance(sheet, str):
+            ws = gsh.worksheet(sheet)
+        else:
+            ws = gsh.get_worksheet(sheet)
+        vals = ws.get_all_values()
+        val_df = pd.DataFrame(data=vals[1:], columns=vals[0])
+        
+        # Convert empty cells to NaN
+        mask = (val_df == '')
+        val_df[mask] = np.nan
+        # Drop empty rows
+        val_df.dropna(how='all', inplace=True)
+        
+        return val_df
         
     def excel_download(self, fname):
         '''Download the costing DataFrame as an Excel file.
