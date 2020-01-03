@@ -186,6 +186,10 @@ class GenericCost(object):
             # Pop out the mod value, otherwise this list will get really long
             self._mod_vals.pop()
 
+        # Reset the final cost
+        self.cost = self.fulldata.loc[(self.final_prod, self.final_prod), 
+                                  'RM cost/kg rxn']
+        
         # When a single value was used, return just that one value. Otherwise,
         # a list will be returned
         if val_list == False:
