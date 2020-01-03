@@ -5,7 +5,7 @@ with open('README.md') as file:
 
 setup(
     name = "costcalc2",
-    version = "0.1",
+    version = "0.2",
 
     description = "Cost calculations for synthetic chemical preparation routes",
     url = "https://github.com/rnelsonchem/costcalc2",
