@@ -326,6 +326,7 @@ class GenericCost(object):
         self.fulldata['% RM cost/kg prod'] = \
                 self.fulldata['RM cost/kg prod']*100/self.cost
         
+        # Filter out certain values to simplify full data set
         # Remove the cost and %s for cost-calculated materials
         # This is necessary so that this column adds up to 100% (w/o OPEX)
         mask = ~self.fulldata['Cost calc'].isna()
@@ -334,10 +335,11 @@ class GenericCost(object):
         # from eariler rxns. The sum of this column will now be equal to the cost
         # of the final product.
         self.fulldata.loc[mask, 'RM cost/kg prod'] = np.nan
-        
         # This filters out the kg/kg prod values that were calculated, so that
         # the sum of this column is the PMI
         self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
+        # But we are making 1 kg of final product so that needs to be reset
+        self.fulldata.loc[(prod, prod), 'kg/kg prod'] = 1.
 
         # PMI Calculations
         # First of all, calculate the PMI for each reaction individually
