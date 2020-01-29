@@ -530,7 +530,7 @@ class ColabCost(GenericCost):
         
         return val_df
         
-    def excel_download(self, fname):
+    def excel_download(self, fname, decimals=None):
         '''Download the costing DataFrame as an Excel file.
 
         Note
@@ -538,7 +538,18 @@ class ColabCost(GenericCost):
         In some cases, this function will throw an error. In that case, try
         running this again in order to get it to work. 
         '''
-        self.fulldata.to_excel(fname)
+        # Can set some keyword arguments here
+        kwargs = {}
+        # If decimals is given, set that value to the rounding for float
+        # formatting in the output
+        if decimals:
+            kwargs['float_format'] = '%.{:d}f'.format(decimals)
+        
+        # Create the excel file
+        with pd.ExcelWriter(fname) as writer:
+            self.fulldata.to_excel(writer, sheet_name='Route Cost', **kwargs)
+            self.pmi.to_excel(writer, sheet_name='PMI', **kwargs)
+            
         # There seems to be a bit of a lag before you can download
         # the file, this delay might fix some of the errors this causes
         time.sleep(2)
