@@ -246,7 +246,8 @@ class GenericCost(object):
         amount_kg[mask] = data.loc[mask, 'Volumes']*data.loc[mask, 'Density']\
             *(1 - data.loc[mask, 'Sol Recyc'])*amt_rel
         
-        # Set the kg amounts in the large data table
+        # Set the kg/rxn amounts in the large data table. This is normalized
+        # to make the product kg = 1
         self.fulldata.loc[prod, 'kg/kg rxn'] = \
                 (amount_kg/amount_kg[prod]).values
 
@@ -270,7 +271,7 @@ class GenericCost(object):
             # Set the calculated cost in the larger data table
             self.fulldata.loc[(prod, cpd), 'Cost'] = cst
 
-        # Normalize the cost for each materials to 1 kg of reaction product
+        # Calculate the cost for each material in the reaction
         self.fulldata.loc[prod, 'RM cost/kg rxn'] = \
                 (data['kg/kg rxn']*data['Cost']).values
         # The product cost will be the sum of all the reactant/solvent costs
