@@ -338,6 +338,21 @@ class GenericCost(object):
         # This filters out the kg/kg prod values that were calculated, so that
         # the sum of this column is the PMI
         self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
+
+        # PMI Calculations
+        # First of all, calculate the PMI for each reaction individually
+        gb = self.fulldata[['kg/kg rxn']].groupby('Prod')
+        rxn_pmi = gb.sum().rename(columns={'kg/kg rxn': 'PMI'})
+
+        # The full route PMI is not the sum of the above, but is the sum of
+        # the 'kg/kg prod' column. We need to make this into a DataFrame to
+        # merge with the per reaction values above
+        full_pmi = pd.DataFrame({'PMI': [self.fulldata['kg/kg prod'].sum()], 
+                                'Prod': ['Full Route']}
+                                ).set_index('Prod')
+
+        # Merge the per-reaction and full PMI
+        self.pmi = pd.concat([rxn_pmi, full_pmi])
      
 
 class ColabCost(GenericCost):
