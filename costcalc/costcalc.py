@@ -89,7 +89,7 @@ class GenericCost(object):
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
         empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                'RM cost/kg prod', '% RM cost/kg prod',
+                'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
@@ -295,6 +295,12 @@ class GenericCost(object):
         # Set the "Cost" to the calculated value
         self.fulldata.loc[(prod, prod), 'Cost'] = \
                 data.loc[prod, 'RM cost/kg rxn']
+
+        # This sets the number of kg of each material per kilogram of product
+        # This is done by multiplying the per reaction value by the amplifier
+        # This isn't necessary for costing, but we can use it for PMI
+        self.fulldata.loc[prod, 'kg/kg prod'] = \
+                self.fulldata.loc[prod, 'kg/kg rxn'].values*amp
         
         # Return the calculated product cost, which is required for the 
         # recurisive nature of the algorithm. In addition, an optional OPEX
@@ -328,6 +334,10 @@ class GenericCost(object):
         # from eariler rxns. The sum of this column will now be equal to the cost
         # of the final product.
         self.fulldata.loc[mask, 'RM cost/kg prod'] = np.nan
+        
+        # This filters out the kg/kg prod values that were calculated, so that
+        # the sum of this column is the PMI
+        self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
      
 
 class ColabCost(GenericCost):
