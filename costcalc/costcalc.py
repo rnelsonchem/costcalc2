@@ -89,7 +89,7 @@ class GenericCost(object):
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
         empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                '% RM cost/kg rxn', 'RM cost/kg prod', '% RM cost/kg prod',
+                'RM cost/kg prod', '% RM cost/kg prod',
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
