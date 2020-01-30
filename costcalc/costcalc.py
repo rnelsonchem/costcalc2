@@ -138,9 +138,15 @@ class GenericCost(object):
         # The first one sets all values w/ the compound name. The second one
         # sets only a value for a specific reaction.
         if not step:
-            self.fulldata.loc[(slice(None), cpd), val_type] = val
+            cells = (slice(None), cpd)
         else: 
-            self.fulldata.loc[(step, cpd), val_type] = val
+            cells = (step, cpd)
+            
+        self.fulldata.loc[cells, val_type] = val
+        # The "Cost calc" flag must be set to np.nan when setting a cost. 
+        # This is necessary for % RM cost calcs, e.g.
+        if val_type == 'Cost':
+            self.fulldata.loc[cells, 'Cost calc'] = np.nan
 
     def value_scan(self, cpd, vals, val_type='Cost', step=None):
         '''Scan a range of values for a given material.
