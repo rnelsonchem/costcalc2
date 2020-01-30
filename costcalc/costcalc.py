@@ -574,7 +574,7 @@ class ColabCost(GenericCost):
         
         return val_df
 
-    def excel_download(self, fname, decimals=None):
+    def excel_download(self, fname, decimals=2):
         '''Download the costing DataFrame as an Excel file.
 
         Note
