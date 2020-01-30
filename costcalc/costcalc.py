@@ -402,7 +402,25 @@ class GenericCost(object):
                 disp(self.fulldata)
             elif style == 'compact':
                 disp(self.fulldata[comp_col])
-            disp(self.pmi)                
+            disp(self.pmi)
+
+    def _df_combine(self, ):
+        '''Combine the DataFrames for saving/exporting.'''
+        # Copy the original DFs, and remove indexing
+        fd = self.fulldata.reset_index()
+        pmi = self.pmi.reset_index()
+        
+        # Combine the DFs. Set the index and then sort. Undo the multiindex
+        # So compound names can be fixed
+        concated = pd.concat([fd, pmi], sort=False)\
+                    .set_index(['Prod', 'Compound']).sort_index()\
+                    .reset_index()
+        
+        # Fix the compound names
+        concated['Compound'] = concated['Compound'].str.replace(self._pre, '')
+        
+        # Reset the index and return the DF
+        return concated.set_index(['Prod', 'Compound'])                
             
 
 class ColabCost(GenericCost):
