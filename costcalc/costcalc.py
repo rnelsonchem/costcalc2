@@ -614,11 +614,12 @@ class ColabCost(GenericCost):
         # formatting in the output
         if decimals:
             kwargs['float_format'] = '%.{:d}f'.format(decimals)
+            
+        fd = self._df_combine()
         
         # Create the excel file
         with pd.ExcelWriter(fname) as writer:
-            self.fulldata.to_excel(writer, sheet_name='Route Cost', **kwargs)
-            self.pmi.to_excel(writer, sheet_name='PMI', **kwargs)
+            fd.to_excel(writer, sheet_name='Route Cost', **kwargs)
             
         # There seems to be a bit of a lag before you can download
         # the file, this delay might fix some of the errors this causes
