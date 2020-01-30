@@ -15,6 +15,10 @@ import gspread
 plt.style.use('ggplot')
 plt.rc('figure', dpi=150)
 
+# Setting the display to print function
+# This gets changed for Jupyter Notebook sessions
+disp = print
+
 class GenericCost(object):
     '''Base costing class. 
 
@@ -361,7 +365,37 @@ class GenericCost(object):
 
         # Merge the per-reaction and full PMI
         self.pmi = pd.concat([rxn_pmi, full_pmi])
-     
+
+    def results(self, style='compact', decimals=2):
+        '''Print all the results of the costing calculation.
+        '''
+        # Print a string about the final cost of the product
+        if decimals:
+            dec_str = ':.{:d}f'.format(decimals)
+        else:
+            dec_str = ':f'
+        cost_str = 'The final cost of {} is ${' + dec_str + '}/kg.'
+        print(cost_str.format(self.final_prod, self.cost))
+            
+        # For compact display, these are the most important columns
+        comp_col = ['Cost', 'Equiv', 'Volumes', 'Sol Recyc', 'OPEX', 
+                    'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
+                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod']
+        
+        # Display the DataFrames for different permutations of kwargs
+        if decimals:
+            if style == 'full':
+                disp(self.fulldata.round(decimals))
+            elif style == 'compact':
+                disp(self.fulldata[comp_col].round(decimals))
+            disp(self.pmi.round(decimals))
+        else:
+            if style == 'full':
+                disp(self.fulldata)
+            elif style == 'compact':
+                disp(self.fulldata[comp_col])
+            disp(self.pmi)                
+            
 
 class ColabCost(GenericCost):
     '''Costing class designed for the Colab Python environment.
@@ -438,10 +472,12 @@ class ColabCost(GenericCost):
         from oauth2client.client import GoogleCredentials
         from google.colab import auth
         from google.colab import files
+        from IPython.display import display as disp
         # These will have to be made global
         global GoogleCredentials
         global auth
         global files
+        global disp
 
         # Fix the final product and setup a mod variable
         super(ColabCost, self).__init__(final_prod)
@@ -537,7 +573,7 @@ class ColabCost(GenericCost):
         val_df.dropna(how='all', inplace=True)
         
         return val_df
-        
+
     def excel_download(self, fname, decimals=None):
         '''Download the costing DataFrame as an Excel file.
 
