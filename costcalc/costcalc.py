@@ -352,19 +352,27 @@ class GenericCost(object):
         self.fulldata.loc[(prod, prod), 'kg/kg prod'] = 1.
 
         # PMI Calculations
+        # Need to append this prefix for sorting purposes
+        # There will be a funny column in this DF with these values...
+        self._pre = 'zzz*'
+        
         # First of all, calculate the PMI for each reaction individually
         gb = self.fulldata[['kg/kg rxn']].groupby('Prod')
-        rxn_pmi = gb.sum().rename(columns={'kg/kg rxn': 'PMI'})
-
+        rxn_pmi = gb.sum().reset_index()
+        rxn_pmi['Compound'] = self._pre + rxn_pmi['Prod'] + ' PMI'
+        
         # The full route PMI is not the sum of the above, but is the sum of
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
         # merge with the per reaction values above
-        full_pmi = pd.DataFrame({'PMI': [self.fulldata['kg/kg prod'].sum()], 
-                                'Prod': ['Full Route']}
-                                ).set_index('Prod')
+        df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
+                   'Prod': [self.final_prod],
+                   'Compound': [self._pre*2 + 'Full Route PMI']
+                   }
+        full_pmi = pd.DataFrame(df_vals)
 
         # Merge the per-reaction and full PMI
-        self.pmi = pd.concat([rxn_pmi, full_pmi])
+        self.pmi = pd.concat([rxn_pmi, full_pmi], 
+                             sort=False).set_index('Prod')
 
     def results(self, style='compact', decimals=2):
         '''Print all the results of the costing calculation.
