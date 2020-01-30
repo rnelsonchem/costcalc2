@@ -354,7 +354,7 @@ class GenericCost(object):
         # PMI Calculations
         # Need to append this prefix for sorting purposes
         # There will be a funny column in this DF with these values...
-        self._pre = 'zzz*'
+        self._pre = 'zzzz'
         
         # First of all, calculate the PMI for each reaction individually
         gb = self.fulldata[['kg/kg rxn']].groupby('Prod')
@@ -417,7 +417,7 @@ class GenericCost(object):
                     .reset_index()
         
         # Fix the compound names
-        concated['Compound'] = concated['Compound'].str.replace(self._pre, '')
+        concated['Compound'] = concated['Compound'].str.replace(self._pre, '*')
         
         # Reset the index and return the DF
         return concated.set_index(['Prod', 'Compound'])                
