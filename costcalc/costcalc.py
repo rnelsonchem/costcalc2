@@ -390,19 +390,19 @@ class GenericCost(object):
                     'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
                     'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod']
         
+        fd = self._df_combine()
+        
         # Display the DataFrames for different permutations of kwargs
         if decimals:
             if style == 'full':
-                disp(self.fulldata.round(decimals))
+                disp(fd.round(decimals))
             elif style == 'compact':
-                disp(self.fulldata[comp_col].round(decimals))
-            disp(self.pmi.round(decimals))
+                disp(fd[comp_col].round(decimals))
         else:
             if style == 'full':
-                disp(self.fulldata)
+                disp(fd)
             elif style == 'compact':
-                disp(self.fulldata[comp_col])
-            disp(self.pmi)
+                disp(fd[comp_col])
 
     def _df_combine(self, ):
         '''Combine the DataFrames for saving/exporting.'''
