@@ -4,6 +4,7 @@ Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
 import time
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -218,6 +219,8 @@ class GenericCost(object):
         This function combines the column clearing method, the reaction
         costing algorithm, and a post processing function.
         '''
+        # Save a time stamp so it can be displayed later
+        self._now = datetime.now().strftime('%Y-%m-%d')
         # Prep the DataFrame
         self._column_clear()
         # Run the costing and set the cost attribute
@@ -382,6 +385,9 @@ class GenericCost(object):
     def results(self, style='compact', decimals=2, fill='-'):
         '''Print all the results of the costing calculation.
         '''
+        # Print the time the calculation was run
+        print('As of', self._now, '--')
+        
         # Print a string about the final cost of the product
         if decimals:
             dec_str = ':.{:d}f'.format(decimals)
