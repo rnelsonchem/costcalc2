@@ -15,6 +15,11 @@ import gspread
 plt.style.use('ggplot')
 plt.rc('figure', dpi=150)
 
+# For future reference -- Can't use this in conjunction with "fillna" becuase
+# the DF doesn't display correctly 
+# Set Pandas precision
+#pd.set_option('precision', 2)
+
 # Setting the display to print function
 # This gets changed for Jupyter Notebook sessions
 disp = print
