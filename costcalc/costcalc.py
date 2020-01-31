@@ -393,16 +393,18 @@ class GenericCost(object):
         fd = self._df_combine()
         
         # Display the DataFrames for different permutations of kwargs
+        # The fillna removes NaN from the displayed tables in Notebook, but
+        # may goof up printing
         if decimals:
             if style == 'full':
-                disp(fd.round(decimals))
+                disp(fd.round(decimals).fillna(''))
             elif style == 'compact':
-                disp(fd[comp_col].round(decimals))
+                disp(fd[comp_col].round(decimals).fillna(''))
         else:
             if style == 'full':
-                disp(fd)
+                disp(fd.fillna(''))
             elif style == 'compact':
-                disp(fd[comp_col])
+                disp(fd[comp_col].fillna(''))
 
     def _df_combine(self, ):
         '''Combine the DataFrames for saving/exporting.'''
