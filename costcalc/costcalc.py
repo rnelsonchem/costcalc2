@@ -379,7 +379,7 @@ class GenericCost(object):
         self.pmi = pd.concat([rxn_pmi, full_pmi], 
                              sort=False).set_index('Prod')
 
-    def results(self, style='compact', decimals=2):
+    def results(self, style='compact', decimals=2, fill='-'):
         '''Print all the results of the costing calculation.
         '''
         # Print a string about the final cost of the product
@@ -402,14 +402,14 @@ class GenericCost(object):
         # may goof up printing
         if decimals:
             if style == 'full':
-                disp(fd.round(decimals).fillna(''))
+                disp(fd.round(decimals).fillna(fill))
             elif style == 'compact':
-                disp(fd[comp_col].round(decimals).fillna(''))
+                disp(fd[comp_col].round(decimals).fillna(fill))
         else:
             if style == 'full':
-                disp(fd.fillna(''))
+                disp(fd.fillna(fill))
             elif style == 'compact':
-                disp(fd[comp_col].fillna(''))
+                disp(fd[comp_col].fillna(fill))
 
     def _df_combine(self, ):
         '''Combine the DataFrames for saving/exporting.'''
