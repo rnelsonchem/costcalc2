@@ -480,6 +480,53 @@ class GenericCost(object):
         
         # Reset the index and return the DF
         return concated.set_index(['Prod', 'Compound'])                
+
+    def sensitivity(self, col='Equiv', frac=0.1, decimals=2):
+        '''Do a sensitivity analysis for the equivalents of reagents.
+        '''
+        # Make a new DF for sensitivity analysis
+        # Make values that are a certain percent above and below the current
+        # numbers
+        sens = self.fulldata[[col]].dropna()
+        sens['Val low'] = sens[col]*(1 - frac)
+        sens['Val high'] = sens[col]*(1 + frac)
+        
+        # Make copies the original values so they don't change
+        cost_save = self.cost
+        fd_save = self.fulldata.copy()
+
+        # Loop through the values and calculate the cost if these values
+        # increase or decease by the percent given
+        for step_cpd, vals in sens.iterrows():
+            step, cpd = step_cpd
+            # Low values
+            self.rxn_data_setup()
+            self.value_mod(cpd, vals['Val low'], val_type=col, step=step)
+            self.calc_cost()
+            cost_high = self.cost
+            cost_high_per = 100 - (self.cost*100./cost_save)
+
+            # High values
+            self.rxn_data_setup()
+            self.value_mod(cpd, vals['Val high'], val_type=col, step=step)
+            self.calc_cost()
+            cost_low = self.cost
+            cost_low_per = 100 - (self.cost*100./cost_save)
+
+            # Set the values in the sensitivity DataFrame
+            sens.loc[(step, cpd), 'Cost low'] = cost_high
+            sens.loc[(step, cpd), 'Cost high'] = cost_low
+            sens.loc[(step, cpd), '% low'] = cost_high_per
+            sens.loc[(step, cpd), '% high'] = cost_low_per
+
+        # Reset the original values
+        self.cost = cost_save
+        self.fulldata = fd_save.copy()
+        
+        if decimals:
+            return sens.round(decimals)
+        else:
+            return sens
             
 
 class ColabCost(GenericCost):
