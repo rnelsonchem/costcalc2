@@ -40,6 +40,12 @@ class GenericCost(object):
         # This is a common attribute for all subclasses.
         self.final_prod = final_prod        
 
+        # Combine the reaction/materials sheets, add the new columns
+        self.rxn_data_setup()
+
+        # Look for common errors in the input.
+        self._sanity_check()
+
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
         
@@ -48,26 +54,18 @@ class GenericCost(object):
         sorts after a costing calculation, if you want to start over with a
         different costing model.
         '''
+        # Merge the materials and reaction DataFrames. A few columns are
+        # dropped, which are not necessary for calculations
         mat_drops = ['Notes', 'CAS Num']
         rxn_drops = ['Notes',]
         fulldata = pd.merge(self.materials.drop(mat_drops, axis=1), 
                             self.rxns.drop(rxn_drops, axis=1), 
                             on='Compound', how='right')
-        
-        # Check for a missing material -- Everything should have a MW
-        if fulldata['MW'].isna().any():
-            # raise ValueError('You are missing a material from a rxn.')
-            print('There is a mismatch between the reaction and materials file.')
-            print('Material might be missing from materials sheet.')
-            
-        # Check for a missing cost, which is not being calculated
-        # This is a tricky error because the costing will run just fine with 
-        # NaNs. Check for this by looking for NaN in both Cost and Calc columns
-        if (fulldata['Cost calc'].isna() & fulldata['Cost'].isna()).any():
-            print('You are missing a material cost that is not being calculated.')
 
+        # Set MultiIndex
         fulldata.set_index(['Prod', 'Compound'], inplace=True)
-        # This is necessary so that slices of the DataFrame are views and not copies
+        # This is necessary so that slices of the DataFrame are views and not
+        # copies
         fulldata = fulldata.sort_index()
         
         # Save the full data set
@@ -78,6 +76,54 @@ class GenericCost(object):
         self._mod_vals = []
         # Add the empty columns
         self._column_clear()
+
+    def _sanity_check(self, ):
+        '''Run some sanity checks on the DataFrames to catch common errors.
+
+        Some of the errors are tricky for this code. These are some checks
+        that will throw some "sane" errors if things are not correct.
+        ''' 
+        # Check for a missing material -- Everything should have a MW
+        mw_mask = self.fulldata['MW'].isna()
+        if mw_mask.any():
+            print('You are missing a MW!!!')
+            print('May be a mismatch between the reaction and materials file.')
+            print('Material might be missing from materials sheet.')
+            print('Check these materials.')
+            disp(self.fulldata.loc[mw_mask, 'MW'])
+            raise ValueError('Yikes! Read the note above.')
+            
+        # Check for a missing cost, which is not being calculated
+        # This is a tricky error because the costing will run just fine with 
+        # NaNs. Check for this by looking for NaN in both Cost and Calc columns
+        cost_mask = (self.fulldata['Cost calc'].isna() & \
+                    self.fulldata['Cost'].isna())
+        if cost_mask.any():
+            print('You are missing a necessary material cost!!')
+            print('You may need a "y" in the "Cost calc" column?')
+            print('Check these columns.')
+            disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
+            raise ValueError('Yikes! Read the note above.')
+        
+        # Check for duplicated materials. This will probably be a big issue
+        # with two materials sheets.
+        dup_cpds = self.materials['Compound'].duplicated()
+        if dup_cpds.any():
+            print('You have a duplicate material!!!')
+            print("These compounds are duplicated in your materials sheet.")
+            disp(self.materials.loc[dup_cpds, 'Compound'])
+            raise ValueError('Yikes! Read the note above.')
+
+        # Check for duplicated materials in a single reaction.
+        dup_rxn = self.fulldata.loc[(self.final_prod, self.final_prod), 'MW']
+        if isinstance(dup_rxn, pd.Series):
+            print('You have a duplicated material in a single reaction.')
+            print('Check these lines:')
+            gb = self.fulldata.groupby(['Prod', 'Compound'])
+            for prod, group in gb:
+                if group.shape[0] > 1:
+                    disp(prod)
+            raise ValueError('Yikes! Read the note above.')
 
     def _column_clear(self, ):
         '''Clear out calculated values.
@@ -518,9 +564,6 @@ class ColabCost(GenericCost):
         global files
         global disp
 
-        # Fix the final product and setup a mod variable
-        super(ColabCost, self).__init__(final_prod)
-
         # Authenticate the Colab environment 
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
@@ -538,8 +581,8 @@ class ColabCost(GenericCost):
         self._alt_mat_sheet = alt_mat_sheet
         self._materials_build()                
 
-        # Combine the reaction/materials sheets, add the new columns
-        self.rxn_data_setup()
+        # Fix the final product and setup a mod variable
+        super(ColabCost, self).__init__(final_prod)
         
     def _materials_build(self, ):
         '''This function creates and combines the main and an optional
