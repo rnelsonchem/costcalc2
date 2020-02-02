@@ -491,7 +491,10 @@ class GenericCost(object):
         sens['Val low'] = sens[col]*(1 - frac)
         sens['Val high'] = sens[col]*(1 + frac)
         
-        # Make copies the original values so they don't change
+        # Re-run the costing under the current conditions, which resets the
+        # cost and fulldata variables. 
+        self.calc_cost()
+        # Make copies of these values so they don't change
         cost_save = self.cost
         fd_save = self.fulldata.copy()
 
