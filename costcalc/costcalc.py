@@ -34,8 +34,72 @@ class GenericCost(object):
 
     Parameters
     ----------
+    materials_file : str
+        A string defining where to find the materials list. This value can be
+        found in the URL of the sheet.
+
+    rxn_file : str
+        A string defining where to find the reaction list. This value can be found
+        in the URL of the sheet.
+
+    alt_mat_file : str, optional (default = None)
+        A string defining where to find for an optional, secondary materials
+        sheet.  This is useful if you have separate master and user materials
+        sheets, for example.
+
     final_prod : str
-        Defines the final product name for costing calculations.
+        Defines the final product name for costing calculations. This should
+        be the same name as the material/reaction sheet.
+
+    materials_sheet : int, str, optional (default = 0)
+        The sheet to pull out of the materials spreadsheet. The default
+        (0) is the first sheet in the spreadsheet. You could use a
+        different number or a name if you want a different sheet from the
+        spreadsheet.
+
+    rxn_sheet : int, str, optional (default = 0)
+        See `materials_sheet` description, except this is for the reaction
+        Google Sheet.
+
+    alt_mat_sheet : int, str, optional (default = 0)
+        The sheet number/name for the secondary materials sheet. See
+        `materials_sheet` description. 
+
+    Attributes
+    ----------
+    final_prod : str
+        The name of the overall final product of this route.
+        
+    rxns : DataFrame
+        A DataFrame describing the original reactions in the given route. This 
+        is idential to the reactions Google Sheet, and is not changed by any 
+        of the helper functions in this class.
+        
+    materials : DataFrame
+        A DataFrame describing all of the known materials. This will contain
+        all of the materials from both of the given materials Google Sheets.
+        
+    cost : Numpy Float64
+        The final cost of the described route. This value *will* include OPEX
+        for the final reaction, if that value is given. 
+        
+    fulldata : DataFrame
+        A DataFrame containing all the costing related values for the given 
+        route. If the cost for the route has been calculated and an OPEX was 
+        given, the product "Cost" values *will* include this additional OPEX 
+        cost. The "RM cost/kg rxn" value will be the cost without the OPEX.
+
+    pmi : DataFrame
+        A DataGrame containing the PMI for each reaction and the overall
+        route. There will be an extra column with a bunch of weird names. This
+        is necessary for sorting and can be ignored.
+
+    Notes
+    -----
+    If there is a missing material or reaction, you'll get a printed
+    error. Materials that are marked as being cost calculated will have
+    their costs deleted, so they will need reactions defined in order to
+    reset their costs.
     '''
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
@@ -601,6 +665,22 @@ class GenericCost(object):
             return sens.round(decimals)
         else:
             return sens
+
+    def _excel_save(self, fname, decimals=2):
+        '''Save the costing DataFrame as an Excel file.
+        '''
+        # Can set some keyword arguments here
+        kwargs = {}
+        # If decimals is given, set that value to the rounding for float
+        # formatting in the output
+        if decimals:
+            kwargs['float_format'] = '%.{:d}f'.format(decimals)
+            
+        fd = self._df_combine()
+        
+        # Create the excel file
+        with pd.ExcelWriter(fname) as writer:
+            fd.to_excel(writer, sheet_name='Route Cost', **kwargs)
             
 
 class ColabCost(GenericCost):
@@ -616,63 +696,14 @@ class ColabCost(GenericCost):
         The Google Sheet key to the reaction list. This value can be found
         in the URL of the sheet.
 
-    final_prod : str
-        The name of the overall final product of this route. This should
-        be the same as a product from the reaction sheet.
-
-    materials_sheet : int, str, optional (default = 0)
-        The sheet to pull out of the materials Google Sheet. The default
-        (0) is the first sheet in the spreadsheet. You could use a
-        different number or a name if you want a different sheet from the
-        spreadsheet.
-
-    rxn_sheet : int, str, optional (default = 0)
-        See `materials_sheet` description, except this is for the reaction
-        Google Sheet.
-
     alt_mat_key : str, optional (default = None)
         A Google Sheet key for an optional, secondary materials sheet.
         This is useful if you have separate master and user materials
         sheets, for example.
 
-    alt_mat_sheet : int, str, optional (default = 0)
-        The sheet number/name for the secondary materials sheet. See
-        `materials_sheet` description. 
-
-    Attributes
-    ----------
-    final_prod : str
-        The name of the overall final product of this route.
-        
-    rxns : DataFrame
-        A DataFrame describing the original reactions in the given route. This 
-        is idential to the reactions Google Sheet, and is not changed by any 
-        of the helper functions in this class.
-        
-    materials : DataFrame
-        A DataFrame describing all of the known materials. This will contain
-        all of the materials from both of the given materials Google Sheets.
-        
-    cost : Numpy Float64
-        The final cost of the described route. This value *will* include OPEX
-        for the final reaction, if that value is given. 
-        
-    fulldata : DataFrame
-        A DataFrame containing all the costing related values for the given 
-        route. If the cost for the route has been calculated and an OPEX was 
-        given, the product "Cost" values *will* include this additional OPEX 
-        cost. The "RM cost/kg rxn" value will be the cost without the OPEX.
-
-    Notes
-    -----
-    If there is a missing material or reaction, you'll get a printed
-    error. Materials that are marked as being cost calculated will have
-    their costs deleted, so they will need reactions defined in order to
-    reset their costs.
     '''
     def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
-
         # Do some imports that are only possible in the Colab environment
         # This should prevent these from running in a non-Colab environment
         from oauth2client.client import GoogleCredentials
@@ -695,6 +726,15 @@ class ColabCost(GenericCost):
         
     def _materials_read(self, mat_key, wsheet):
         '''Read a Google sheet that defines the materials used in costing.
+
+        Parameters
+        ----------
+        mat_key : str
+            The unique key for a Google spreadsheet that defines the
+            materials. 
+
+        wsheet : str or int
+            The specific sheet to extract from the Google spreadsheet. 
         '''
         mats = self._get_gsheet_vals(mat_key, wsheet)
 
@@ -747,24 +787,22 @@ class ColabCost(GenericCost):
     def excel_download(self, fname, decimals=2):
         '''Download the costing DataFrame as an Excel file.
 
+        Parameters
+        ----------
+        fname : str
+            The name you want to give to the Excel file.
+
+        decimals : str or None, optional (default = 2)
+            The number of decimal places to display in the Excel sheet. If
+            `None`, then the full precision will be saved. 
+
         Note
         ----
         In some cases, this function will throw an error. In that case, try
         running this again in order to get it to work. 
         '''
-        # Can set some keyword arguments here
-        kwargs = {}
-        # If decimals is given, set that value to the rounding for float
-        # formatting in the output
-        if decimals:
-            kwargs['float_format'] = '%.{:d}f'.format(decimals)
-            
-        fd = self._df_combine()
-        
-        # Create the excel file
-        with pd.ExcelWriter(fname) as writer:
-            fd.to_excel(writer, sheet_name='Route Cost', **kwargs)
-            
+        self._excel_save(fname, decimals)
+
         # There seems to be a bit of a lag before you can download
         # the file, this delay might fix some of the errors this causes
         time.sleep(2)
@@ -772,6 +810,8 @@ class ColabCost(GenericCost):
         
 
 class ExcelCost(GenericCost):
+    '''Costing class designed for local Excel spreadsheets.
+    '''
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
             alt_mat_sheet=0):
@@ -796,4 +836,26 @@ class ExcelCost(GenericCost):
         rxns = pd.read_excel(self._rxn_file, self._rxn_sheet)\
                         .dropna(how='all')
         self.rxns = rxns
+
+    def excel_save(self, fname, decimals=2):
+        '''Save the costing DataFrame as an Excel file.
+
+        Parameters
+        ----------
+        fname : str
+            The name you want to give to the Excel file.
+
+        decimals : str or None, optional (default = 2)
+            The number of decimal places to display in the Excel sheet. If
+            `None`, then the full precision will be saved. 
+
+        Note
+        ----
+        In some cases, this function will throw an error. In that case, try
+        running this again in order to get it to work. 
+        '''
+        self._excel_save(fname, decimals)
+
+
+            
 
