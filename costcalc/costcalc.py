@@ -171,7 +171,9 @@ class ExcelCost(object):
         different costing model.
         '''
         # Merge the materials and reaction DataFrames. A few columns are
-        # dropped, which are not necessary for calculations
+        # dropped, which are not necessary for calculations. The merge happens
+        # on the rxns DataFrame ('right'), which means that missing materials
+        # will be fairly obvious (no MW, e.g.).
         mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
         rxn_keeps = ['Prod', 'Compound', 'Equiv', 'Volumes', 'Relative', 
                      'Sol Recyc', 'Cost calc', 'OPEX',]
