@@ -9,7 +9,6 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import gspread
 
 
 # Set up some plotting stuff for the notebooks
@@ -656,11 +655,13 @@ class ColabCost(GenericCost):
         from oauth2client.client import GoogleCredentials
         from google.colab import auth
         from google.colab import files
+        import gspread
         from IPython.display import display as disp
         # These will have to be made global
         global GoogleCredentials
         global auth
         global files
+        global gspread
         global disp
 
         # Authenticate the Colab environment 
@@ -733,4 +734,30 @@ class ColabCost(GenericCost):
         time.sleep(2)
         files.download(fname)
         
+
+class ExcelCost(GenericCost):
+    def __init__(self, materials_file, rxn_file, final_prod,
+            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
+            alt_mat_sheet=0):
+
+        # Fix the final product and setup a mod variable
+        super(ExcelCost, self).__init__(materials_file, rxn_file, final_prod,
+                materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet)
+
+    def _materials_read(self, mat_file, wsheet):
+        '''Read an Excel file sheet that defines the materials used in
+        costing.
+        '''
+        # Read the file, drop NaN-only rows.
+        mats = pd.read_excel(mat_file, sheet_name=wsheet)\
+                        .dropna(how='all')
+        return mats
+
+    def _rxn_read(self, ):
+        '''Read an Excel sheet that defines the reactions.
+        '''
+        # Read the file, drop NaN-only rows.
+        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet)\
+                        .dropna(how='all')
+        self.rxns = rxns
 
