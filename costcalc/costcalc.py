@@ -172,10 +172,10 @@ class ExcelCost(object):
         '''
         # Merge the materials and reaction DataFrames. A few columns are
         # dropped, which are not necessary for calculations
-        mat_drops = ['Notes', 'CAS Num']
-        rxn_drops = ['Notes',]
-        fulldata = pd.merge(self.materials.drop(mat_drops, axis=1), 
-                            self.rxns.drop(rxn_drops, axis=1), 
+        mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
+        rxn_keeps = ['Prod', 'Compound', 'Equiv', 'Volumes', 'Relative', 
+                     'Sol Recyc', 'Cost calc', 'OPEX',]
+        fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
                             on='Compound', how='right')
 
         # Set MultiIndex
