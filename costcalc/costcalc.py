@@ -48,11 +48,6 @@ class GenericCost(object):
         self._rxn_sheet = rxn_sheet
         self._rxn_read()
 
-        # Set some rxns columns to numeric values
-        num_cols = ['Equiv', 'Volumes', 'Sol Recyc', 'OPEX']
-        for nc in num_cols:
-            self.rxns[nc] = pd.to_numeric(self.rxns[nc])
-        
         # Create the Materials DataFrame from a main sheet and an optional
         # alternate sheet.
         self._materials_file = materials_file
@@ -86,12 +81,6 @@ class GenericCost(object):
             # could cause some problems. Throw an error if this is the case
             if materials.duplicated('Compound').any():
                 raise ValueError('Duplicated materials will cause errors')
-
-        # Convert numeric/date columns
-        num_cols = ['MW', 'Density', 'Cost'] 
-        for nc in num_cols:
-            materials[nc] = pd.to_numeric(materials[nc])
-        #materials['Date'] = pd.to_datetime(materials['Date'])
 
         # Set the final materials sheet
         self.materials = materials
@@ -676,6 +665,14 @@ class ColabCost(GenericCost):
         '''Read a Google sheet that defines the materials used in costing.
         '''
         mats = self._get_gsheet_vals(mat_key, wsheet)
+
+        # Convert numeric/date columns. Everything is read from a Google sheet
+        # as strings
+        num_cols = ['MW', 'Density', 'Cost'] 
+        for nc in num_cols:
+            mats[nc] = pd.to_numeric(mats[nc])
+        #mats['Date'] = pd.to_datetime(mats['Date'])
+
         return mats
         
     def _rxn_read(self, ):
@@ -683,6 +680,13 @@ class ColabCost(GenericCost):
         '''
         rxns = self._get_gsheet_vals(self._rxn_file,
                                      self._rxn_sheet)
+
+        # Set some rxns columns to numeric values. Everything is read from a
+        # Google sheet as strings
+        num_cols = ['Equiv', 'Volumes', 'Sol Recyc', 'OPEX']
+        for nc in num_cols:
+            rxns[nc] = pd.to_numeric(rxns[nc])
+        
         self.rxns = rxns
         
     def _get_gsheet_vals(self, key, sheet):
