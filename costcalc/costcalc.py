@@ -10,6 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# Setting the display to print function
+# This gets changed for Jupyter Notebook/IPython sessions
+try:
+    from IPython.display import display as disp
+except:
+    disp = print
 
 # Set up some plotting stuff for the notebooks
 plt.style.use('ggplot')
@@ -19,10 +25,6 @@ plt.rc('figure', dpi=150)
 # the DF doesn't display correctly 
 # Set Pandas precision
 #pd.set_option('precision', 2)
-
-# Setting the display to print function
-# This gets changed for Jupyter Notebook sessions
-disp = print
 
 class GenericCost(object):
     '''Base costing class. 
@@ -656,13 +658,11 @@ class ColabCost(GenericCost):
         from google.colab import auth
         from google.colab import files
         import gspread
-        from IPython.display import display as disp
         # These will have to be made global
         global GoogleCredentials
         global auth
         global files
         global gspread
-        global disp
 
         # Authenticate the Colab environment 
         auth.authenticate_user()
