@@ -710,7 +710,7 @@ class ExcelCost(object):
         
         # Create the excel file
         with pd.ExcelWriter(fname) as writer:
-            fd.to_excel(writer, sheet_name='Route Cost', **kwargs)
+            fd.to_excel(writer, sheet_name='As of ' + self._now, **kwargs)
             
 
 class ColabCost(ExcelCost):
