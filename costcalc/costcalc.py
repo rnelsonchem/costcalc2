@@ -63,8 +63,9 @@ class GenericCost(object):
         self._sanity_check()
 
     def _materials_build(self, ):
-        '''This function creates and combines the main and an optional
-        alternate materials sheets.'''
+        '''Read and combine the main and an optional alternate materials
+        sheets.
+        '''
         materials = self._materials_read(self._materials_file,
                 self._materials_sheet)
 
@@ -85,8 +86,8 @@ class GenericCost(object):
         '''Setup the full data set for the upcoming cost calculations. 
         
         This method merges the materials and reaction sheets into a combined
-        DataFrame called `fulldata`. This function also serves as a "reset" of
-        sorts after a costing calculation, if you want to start over with a
+        DataFrame called `fulldata`. It also serves as a "reset" of sorts
+        after a costing calculation, if you want to start over with a
         different costing model.
         '''
         # Merge the materials and reaction DataFrames. A few columns are
@@ -115,8 +116,9 @@ class GenericCost(object):
     def _sanity_check(self, ):
         '''Run some sanity checks on the DataFrames to catch common errors.
 
-        Some of the errors are tricky for this code. These are some checks
-        that will throw some "sane" errors if things are not correct.
+        Some of the errors are tricky, and the error output is unhelpful.
+        These are some checks that will throw some "sane" errors if things are
+        not correct.
         ''' 
         # Check for a missing material -- Everything should have a MW
         mw_mask = self.fulldata['MW'].isna()
@@ -150,6 +152,8 @@ class GenericCost(object):
             raise ValueError('Yikes! Read the note above.')
 
         # Check for duplicated materials in a single reaction.
+        # When you select a single value from a reaction, you'll get a series
+        # and not a float, e.g.
         dup_rxn = self.fulldata.loc[(self.final_prod, self.final_prod), 'MW']
         if isinstance(dup_rxn, pd.Series):
             print('You have a duplicated material in a single reaction.')
@@ -260,8 +264,7 @@ class GenericCost(object):
         Notes
         -----
         Although this method recalculates the cost for every value, it does
-        not modify the original `fulldata` attribute. However, the `cost`
-        attribute will reflect the final cost calculation.
+        not modify the original `fulldata` or `cost` attributes. 
         '''
         # If a single value was given, convert to a list
         # Set this flag to undo the list at the end of the function
@@ -296,9 +299,6 @@ class GenericCost(object):
 
     def calc_cost(self, ):
         '''Calculate the cost of the route. 
-        
-        This function combines the column clearing method, the reaction
-        costing algorithm, and a post processing function.
         '''
         # Save a time stamp so it can be displayed later
         self._now = datetime.now().strftime('%Y-%m-%d')
@@ -412,6 +412,10 @@ class GenericCost(object):
     def _rxn_data_post(self,):
         '''Calculate some values after the final cost of the reaction is
         determined. 
+
+        This includes the final "% RM cost/kg prod", setting the final cost
+        with an optional OPEX, and all PMI calculations. Some values are
+        filtered out as well to make the column sums sensible.
         '''
         prod = self.final_prod
         
@@ -464,7 +468,23 @@ class GenericCost(object):
                              sort=False).set_index('Prod')
 
     def results(self, style='compact', decimals=2, fill='-'):
-        '''Print all the results of the costing calculation.
+        '''Print the results of the costing calculation.
+
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional ('-')
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
         '''
         # Print the time the calculation was run
         print('As of', self._now, '--')
@@ -482,6 +502,7 @@ class GenericCost(object):
                     'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
                     'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod']
         
+        # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
         
         # Display the DataFrames for different permutations of kwargs
@@ -499,7 +520,8 @@ class GenericCost(object):
                 disp(fd[comp_col].fillna(fill))
 
     def _df_combine(self, ):
-        '''Combine the DataFrames for saving/exporting.'''
+        '''Combine the fulldata and pmi DataFrames for saving/exporting.
+        '''
         # Copy the original DFs, and remove indexing
         fd = self.fulldata.reset_index()
         pmi = self.pmi.reset_index()
@@ -518,6 +540,20 @@ class GenericCost(object):
 
     def sensitivity(self, col='Equiv', frac=0.1, decimals=2):
         '''Do a sensitivity analysis for the equivalents of reagents.
+
+        Parameters
+        ----------
+        col : str, optional (Default = 'Equiv')
+            Which column from the `fulldata` DataFrame should be used for the
+            sensitivity analysis. 
+
+        frac : float, optional (Default = 0.1)
+            Fractional percentage to increase/decrease the values by before
+            recosting. The default is 0.1, which is the same as +/- 10%. 
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to display. If `None`, the full precision
+            DataFrame will be displayed.
         '''
         # Make a new DF for sensitivity analysis
         # Make values that are a certain percent above and below the current
