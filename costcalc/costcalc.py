@@ -36,15 +36,64 @@ class GenericCost(object):
     final_prod : str
         Defines the final product name for costing calculations.
     '''
-    def __init__(self, final_prod):
+    def __init__(self, materials_file, rxn_file, final_prod,
+            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
+            alt_mat_sheet=0):
         # This is a common attribute for all subclasses.
         self.final_prod = final_prod        
+
+        # Set up the reaction DataFrame
+        self._rxn_file = rxn_file
+        self._rxn_sheet = rxn_sheet
+        self._rxn_read()
+
+        # Set some rxns columns to numeric values
+        num_cols = ['Equiv', 'Volumes', 'Sol Recyc', 'OPEX']
+        for nc in num_cols:
+            self.rxns[nc] = pd.to_numeric(self.rxns[nc])
+        
+        # Create the Materials DataFrame from a main sheet and an optional
+        # alternate sheet.
+        self._materials_file = materials_file
+        self._materials_sheet = materials_sheet
+        self._alt_mat_file = alt_mat_file
+        self._alt_mat_sheet = alt_mat_sheet
+        self._materials_build()                
 
         # Combine the reaction/materials sheets, add the new columns
         self.rxn_data_setup()
 
         # Look for common errors in the input.
         self._sanity_check()
+
+    def _materials_build(self, ):
+        '''This function creates and combines the main and an optional
+        alternate materials sheets.'''
+        materials = self._materials_read(self._materials_file,
+                self._materials_sheet)
+
+        # If an alternative materials key is given, combine that materials
+        # sheet with the main one
+        if self._alt_mat_file:
+            alt_mats = self._materials_read(self._alt_mat_file,
+                    self._alt_mat_sheet)
+            # Concatenate the sheets. Reset the index so that it is
+            # consecutively numbered
+            materials = pd.concat([materials, alt_mats])\
+                    .reset_index(drop=True)
+            # If the two materials sheets have any of the same materials, it
+            # could cause some problems. Throw an error if this is the case
+            if materials.duplicated('Compound').any():
+                raise ValueError('Duplicated materials will cause errors')
+
+        # Convert numeric/date columns
+        num_cols = ['MW', 'Density', 'Cost'] 
+        for nc in num_cols:
+            materials[nc] = pd.to_numeric(materials[nc])
+        #materials['Date'] = pd.to_datetime(materials['Date'])
+
+        # Set the final materials sheet
+        self.materials = materials
 
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
@@ -618,69 +667,21 @@ class ColabCost(GenericCost):
         auth.authenticate_user()
         self._gc = gspread.authorize(GoogleCredentials.get_application_default())
         
-        # Set up the reaction DataFrame
-        self._rxn_key = rxn_key
-        self._rxn_sheet = rxn_sheet
-        self._rxn_read()
-        
-        # Create the Materials DataFrame from a main sheet and an optional
-        # alternate sheet.
-        self._materials_key = materials_key
-        self._materials_sheet = materials_sheet
-        self._alt_mat_key = alt_mat_key
-        self._alt_mat_sheet = alt_mat_sheet
-        self._materials_build()                
-
         # Fix the final product and setup a mod variable
-        super(ColabCost, self).__init__(final_prod)
+        super(ColabCost, self).__init__(materials_key, rxn_key, final_prod,
+                materials_sheet, rxn_sheet, alt_mat_key, alt_mat_sheet)
         
-    def _materials_build(self, ):
-        '''This function creates and combines the main and an optional
-        alternate materials sheets.'''
-        materials = self._materials_read(self._materials_key,
-                self._materials_sheet)
-
-        # If an alternative materials key is given, combine that materials
-        # sheet with the main one
-        if self._alt_mat_key:
-            alt_mats = self._materials_read(self._alt_mat_key,
-                    self._alt_mat_sheet)
-            # Concatenate the sheets. Reset the index so that it is
-            # consecutively numbered
-            materials = pd.concat([materials, alt_mats])\
-                    .reset_index(drop=True)
-            # If the two materials sheets have any of the same materials, it
-            # could cause some problems. Throw an error if this is the case
-            if materials.duplicated('Compound').any():
-                raise ValueError('Duplicated materials will cause errors')
-
-        # Set the final materials sheet
-        self.materials = materials
-
     def _materials_read(self, mat_key, wsheet):
         '''Read a Google sheet that defines the materials used in costing.
         '''
         mats = self._get_gsheet_vals(mat_key, wsheet)
-        
-        # Convert numeric/date columns
-        mats['MW'] = pd.to_numeric(mats['MW'])
-        mats['Density'] = pd.to_numeric(mats['Density'])
-        mats['Cost'] = pd.to_numeric(mats['Cost'])
-        #mats['Date'] = pd.to_datetime(mats['Date'])
-        
         return mats
         
     def _rxn_read(self, ):
         '''Read a Google Sheet of reaction info.
         '''
-        rxns = self._get_gsheet_vals(self._rxn_key,
+        rxns = self._get_gsheet_vals(self._rxn_file,
                                      self._rxn_sheet)
-        
-        rxns['Equiv'] = pd.to_numeric(rxns['Equiv'])
-        rxns['Volumes'] = pd.to_numeric(rxns['Volumes'])
-        rxns['Sol Recyc'] = pd.to_numeric(rxns['Sol Recyc'])
-        rxns['OPEX'] = pd.to_numeric(rxns['OPEX'])
-        
         self.rxns = rxns
         
     def _get_gsheet_vals(self, key, sheet):
