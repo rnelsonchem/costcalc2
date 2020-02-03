@@ -26,11 +26,10 @@ plt.rc('figure', dpi=150)
 # Set Pandas precision
 #pd.set_option('precision', 2)
 
-class GenericCost(object):
-    '''Base costing class. 
+class ExcelCost(object):
+    '''Costing class designed for local Excel spreadsheets.
 
-    Not meant to be instantiated directly, but defines some common functions
-    for any subclasses.
+    This can also act as the base class for other subclasses.
 
     Parameters
     ----------
@@ -104,7 +103,7 @@ class GenericCost(object):
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
             alt_mat_sheet=0):
-        # This is a common attribute for all subclasses.
+        # We need to store this for costing
         self.final_prod = final_prod        
 
         # Set up the reaction DataFrame
@@ -126,6 +125,14 @@ class GenericCost(object):
         # Look for common errors in the input.
         self._sanity_check()
 
+    def _rxn_read(self, ):
+        '''Read an Excel sheet that defines the reactions.
+        '''
+        # Read the file, drop NaN-only rows.
+        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet)\
+                        .dropna(how='all')
+        self.rxns = rxns
+
     def _materials_build(self, ):
         '''Read and combine the main and an optional alternate materials
         sheets.
@@ -145,6 +152,15 @@ class GenericCost(object):
 
         # Set the final materials sheet
         self.materials = materials
+
+    def _materials_read(self, mat_file, wsheet):
+        '''Read an Excel file sheet that defines the materials used in
+        costing.
+        '''
+        # Read the file, drop NaN-only rows.
+        mats = pd.read_excel(mat_file, sheet_name=wsheet)\
+                        .dropna(how='all')
+        return mats
 
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
@@ -666,8 +682,22 @@ class GenericCost(object):
         else:
             return sens
 
-    def _excel_save(self, fname, decimals=2):
+    def excel_save(self, fname, decimals=2):
         '''Save the costing DataFrame as an Excel file.
+
+        Parameters
+        ----------
+        fname : str
+            The name you want to give to the Excel file.
+
+        decimals : str or None, optional (default = 2)
+            The number of decimal places to display in the Excel sheet. If
+            `None`, then the full precision will be saved. 
+
+        Note
+        ----
+        In some cases, this function will throw an error. In that case, try
+        running this again in order to get it to work. 
         '''
         # Can set some keyword arguments here
         kwargs = {}
@@ -683,7 +713,7 @@ class GenericCost(object):
             fd.to_excel(writer, sheet_name='Route Cost', **kwargs)
             
 
-class ColabCost(GenericCost):
+class ColabCost(ExcelCost):
     '''Costing class designed for the Colab Python environment.
 
     Parameters
@@ -784,7 +814,7 @@ class ColabCost(GenericCost):
         
         return val_df
 
-    def excel_download(self, fname, decimals=2):
+    def excel_save(self, fname, decimals=2):
         '''Download the costing DataFrame as an Excel file.
 
         Parameters
@@ -801,61 +831,11 @@ class ColabCost(GenericCost):
         In some cases, this function will throw an error. In that case, try
         running this again in order to get it to work. 
         '''
-        self._excel_save(fname, decimals)
+        super(ColabCost, self).excel_save(fname, decimals)
 
         # There seems to be a bit of a lag before you can download
         # the file, this delay might fix some of the errors this causes
         time.sleep(2)
         files.download(fname)
         
-
-class ExcelCost(GenericCost):
-    '''Costing class designed for local Excel spreadsheets.
-    '''
-    def __init__(self, materials_file, rxn_file, final_prod,
-            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
-            alt_mat_sheet=0):
-
-        # Fix the final product and setup a mod variable
-        super(ExcelCost, self).__init__(materials_file, rxn_file, final_prod,
-                materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet)
-
-    def _materials_read(self, mat_file, wsheet):
-        '''Read an Excel file sheet that defines the materials used in
-        costing.
-        '''
-        # Read the file, drop NaN-only rows.
-        mats = pd.read_excel(mat_file, sheet_name=wsheet)\
-                        .dropna(how='all')
-        return mats
-
-    def _rxn_read(self, ):
-        '''Read an Excel sheet that defines the reactions.
-        '''
-        # Read the file, drop NaN-only rows.
-        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet)\
-                        .dropna(how='all')
-        self.rxns = rxns
-
-    def excel_save(self, fname, decimals=2):
-        '''Save the costing DataFrame as an Excel file.
-
-        Parameters
-        ----------
-        fname : str
-            The name you want to give to the Excel file.
-
-        decimals : str or None, optional (default = 2)
-            The number of decimal places to display in the Excel sheet. If
-            `None`, then the full precision will be saved. 
-
-        Note
-        ----
-        In some cases, this function will throw an error. In that case, try
-        running this again in order to get it to work. 
-        '''
-        self._excel_save(fname, decimals)
-
-
-            
 
