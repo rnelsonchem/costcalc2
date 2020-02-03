@@ -77,10 +77,6 @@ class GenericCost(object):
             # consecutively numbered
             materials = pd.concat([materials, alt_mats])\
                     .reset_index(drop=True)
-            # If the two materials sheets have any of the same materials, it
-            # could cause some problems. Throw an error if this is the case
-            if materials.duplicated('Compound').any():
-                raise ValueError('Duplicated materials will cause errors')
 
         # Set the final materials sheet
         self.materials = materials
