@@ -147,7 +147,7 @@ class ExcelCost(object):
                     self._alt_mat_sheet)
             # Concatenate the sheets. Reset the index so that it is
             # consecutively numbered
-            materials = pd.concat([materials, alt_mats])\
+            materials = pd.concat([materials, alt_mats], sort=False)\
                     .reset_index(drop=True)
 
         # Set the final materials sheet
