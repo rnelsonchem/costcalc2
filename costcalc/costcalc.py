@@ -383,7 +383,7 @@ class ExcelCost(object):
         '''Calculate the cost of the route. 
         '''
         # Save a time stamp so it can be displayed later
-        self._now = datetime.now().strftime('%Y-%m-%d')
+        self._now = pd.Timestamp.now('US/Eastern').strftime('%Y-%m-%d %H:%M')
         # Prep the DataFrame
         self._column_clear()
         # Run the costing and set the cost attribute
@@ -710,9 +710,11 @@ class ExcelCost(object):
             
         fd = self._df_combine()
         
-        # Create the excel file
+        # Create the excel file. Can only save with the date and not the time
         with pd.ExcelWriter(fname) as writer:
-            fd.to_excel(writer, sheet_name='As of ' + self._now, **kwargs)
+            fd.to_excel(writer, 
+                        sheet_name='As of ' + self._now.split()[0], 
+                        **kwargs)
             
 
 class ColabCost(ExcelCost):
