@@ -379,6 +379,17 @@ class ExcelCost(object):
         
         return all_costs
 
+    def swap(self, cpd_old, cpd_new):
+        # Remove the MultiIndex
+        fd_rst = self.fulldata.reset_index()
+
+        # Swap out the compound names
+        cpd_mask = fd_rst['Compound'] == cpd_old
+        fd_rst.loc[cpd_mask, 'Compound'] = cpd_new
+
+        # Reset index and fulldata attribute
+        self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
+
     def calc_cost(self, ):
         '''Calculate the cost of the route. 
         '''
