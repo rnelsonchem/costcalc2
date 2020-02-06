@@ -396,8 +396,12 @@ class ExcelCost(object):
         # Process the fulldata array
         # First, remove the MultiIndex
         fd_rst = self.fulldata.reset_index()
-        # Swap out the compound names
+        # Check for the requested compound
         cpd_mask = fd_rst['Compound'] == cpd_old
+        if not cpd_mask.any():
+            raise ValueError("Oops! '" + cpd_old + "' isn't in your "
+                            "current route.")
+        # Swap out the compound names
         fd_rst.loc[cpd_mask, 'Compound'] = cpd_new
         # Reset index and fulldata attribute
         self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
