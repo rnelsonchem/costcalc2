@@ -380,15 +380,32 @@ class ExcelCost(object):
         return all_costs
 
     def swap(self, cpd_old, cpd_new):
-        # Remove the MultiIndex
-        fd_rst = self.fulldata.reset_index()
+        # If the new compound is a string, look in the materials database
+        if isinstance(cpd_new, str):
+            mat_mask = self.materials.Compound == cpd_new
+            # Throw an error if it is not there
+            if not mat_mask.any():
+                raise ValueError("Oops! Your new compound isn't in the"
+                                " materials list.")
+            # There should only be one entry, so we'll select that one
+            mat_vals = self.materials[mat_mask].iloc[0]
+            mw = mat_vals['MW']
+            density = mat_vals['Density']
+            cost = mat_vals['Cost']
 
+        # Process the fulldata array
+        # First, remove the MultiIndex
+        fd_rst = self.fulldata.reset_index()
         # Swap out the compound names
         cpd_mask = fd_rst['Compound'] == cpd_old
         fd_rst.loc[cpd_mask, 'Compound'] = cpd_new
-
         # Reset index and fulldata attribute
         self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
+
+        # Set the values using `value_mod`
+        self.value_mod(cpd_new, mw, val_type='MW')
+        self.value_mod(cpd_new, density, val_type='Density')
+        self.value_mod(cpd_new, cost)
 
     def calc_cost(self, ):
         '''Calculate the cost of the route. 
