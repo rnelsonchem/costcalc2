@@ -380,6 +380,33 @@ class ExcelCost(object):
         return all_costs
 
     def swap(self, cpd_old, cpd_new, step=None):
+        '''Swap one compound for another in the route.
+
+        Parameters
+        ----------
+        cpd_old : str
+            This is the name of the compound that you want to remove from the
+            route costing.
+
+        cpd_new : str or Cost class
+            This can either be the name of the new compound to add into the
+            route or a Cost class instance, such as ExcelCost. If it is just a
+            name, the material properties will be pulled out of the materials
+            database. If the Cost class instance is used, the the final
+            product information will be pulled from there. (In that case,
+            then, the `cost_calc` method must have been run on that instance
+            to define the final cost of that material.
+
+        step : str or None, optional (default = None)
+            This is the name of a particular step to do the swap. The default
+            (None) is to swap all instances of the particular compound.
+
+        Note
+        ----
+            If you swap out a compound that was marked to have its cost
+            calculated, this method will switch off this feature, which is
+            most likely what was intended. 
+        '''
         # If the new compound is a string, look in the materials database
         if isinstance(cpd_new, str):
             mat_mask = self.materials.Compound == cpd_new
