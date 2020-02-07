@@ -389,9 +389,19 @@ class ExcelCost(object):
                                 " materials list.")
             # There should only be one entry, so we'll select that one
             mat_vals = self.materials[mat_mask].iloc[0]
+            # Set some values that will be used for updating
+            cpd_name = cpd_new
             mw = mat_vals['MW']
             density = mat_vals['Density']
             cost = mat_vals['Cost']
+        # If the new compound is a costing instance...
+        elif isinstance(cpd_new, (ExcelCost, ColabCost)):
+            # The value selection is a little different
+            cpd_name = cpd_new.final_prod
+            cpd_loc = (cpd_new.final_prod, cpd_new.final_prod)
+            mw = cpd_new.fulldata.loc[cpd_loc, 'MW']
+            density = cpd_new.fulldata.loc[cpd_loc, 'Density']
+            cost = cpd_new.fulldata.loc[cpd_loc, 'Cost']
 
         # Process the fulldata array
         # First, remove the MultiIndex
@@ -402,14 +412,14 @@ class ExcelCost(object):
             raise ValueError("Oops! '" + cpd_old + "' isn't in your "
                             "current route.")
         # Swap out the compound names
-        fd_rst.loc[cpd_mask, 'Compound'] = cpd_new
+        fd_rst.loc[cpd_mask, 'Compound'] = cpd_name
         # Reset index and fulldata attribute
         self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
 
         # Set the values using `value_mod`
-        self.value_mod(cpd_new, mw, val_type='MW')
-        self.value_mod(cpd_new, density, val_type='Density')
-        self.value_mod(cpd_new, cost)
+        self.value_mod(cpd_name, mw, val_type='MW')
+        self.value_mod(cpd_name, density, val_type='Density')
+        self.value_mod(cpd_name, cost)
 
     def calc_cost(self, ):
         '''Calculate the cost of the route. 
