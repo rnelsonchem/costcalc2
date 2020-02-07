@@ -394,6 +394,7 @@ class ExcelCost(object):
             mw = mat_vals['MW']
             density = mat_vals['Density']
             cost = mat_vals['Cost']
+        
         # If the new compound is a costing instance...
         elif isinstance(cpd_new, (ExcelCost, ColabCost)):
             # The value selection is a little different
@@ -402,6 +403,11 @@ class ExcelCost(object):
             mw = cpd_new.fulldata.loc[cpd_loc, 'MW']
             density = cpd_new.fulldata.loc[cpd_loc, 'Density']
             cost = cpd_new.fulldata.loc[cpd_loc, 'Cost']
+        
+        # Else you've added the wrong kind of new compound
+        else:
+            raise ValueError("Oops!! Your new compound is not "
+                            "of the correct type.")
 
         # Process the fulldata array
         # First, remove the MultiIndex
