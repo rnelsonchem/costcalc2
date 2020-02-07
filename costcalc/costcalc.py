@@ -379,7 +379,7 @@ class ExcelCost(object):
         
         return all_costs
 
-    def swap(self, cpd_old, cpd_new):
+    def swap(self, cpd_old, cpd_new, step=None):
         # If the new compound is a string, look in the materials database
         if isinstance(cpd_new, str):
             mat_mask = self.materials.Compound == cpd_new
@@ -414,6 +414,10 @@ class ExcelCost(object):
         fd_rst = self.fulldata.reset_index()
         # Check for the requested compound
         cpd_mask = fd_rst['Compound'] == cpd_old
+        # If a particular step is chosen, select only that step
+        if step:
+            cpd_mask = cpd_mask & (fd_rst['Prod'] == step)
+
         if not cpd_mask.any():
             raise ValueError("Oops! '" + cpd_old + "' isn't in your "
                             "current route.")
@@ -423,9 +427,9 @@ class ExcelCost(object):
         self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
 
         # Set the values using `value_mod`
-        self.value_mod(cpd_name, mw, val_type='MW')
-        self.value_mod(cpd_name, density, val_type='Density')
-        self.value_mod(cpd_name, cost)
+        self.value_mod(cpd_name, mw, val_type='MW', step=step)
+        self.value_mod(cpd_name, density, val_type='Density', step=step)
+        self.value_mod(cpd_name, cost, step=step)
 
     def calc_cost(self, ):
         '''Calculate the cost of the route. 
