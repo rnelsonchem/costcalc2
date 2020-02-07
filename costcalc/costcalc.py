@@ -175,13 +175,13 @@ class ExcelCost(object):
         # on the rxns DataFrame ('right'), which means that missing materials
         # will be fairly obvious (no MW, e.g.).
         mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
-        rxn_keeps = ['Prod', 'Compound', 'Equiv', 'Volumes', 'Relative', 
+        rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative', 
                      'Sol Recyc', 'Cost calc', 'OPEX',]
         fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
                             on='Compound', how='right')
 
         # Set MultiIndex
-        fulldata.set_index(['Prod', 'Compound'], inplace=True)
+        fulldata.set_index(['Step', 'Compound'], inplace=True)
         # This is necessary so that slices of the DataFrame are views and not
         # copies
         fulldata = fulldata.sort_index()
@@ -215,14 +215,14 @@ class ExcelCost(object):
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
         # NaNs. Check for this by looking for NaN in both Cost and Calc columns
-        cost_mask = (self.fulldata['Cost calc'].isna() & \
-                    self.fulldata['Cost'].isna())
-        if cost_mask.any():
-            print('You are missing a necessary material cost!!')
-            print('You may need a "y" in the "Cost calc" column?')
-            print('Check these columns.')
-            disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
-            raise ValueError('Yikes! Read the note above.')
+        # cost_mask = (self.fulldata['Cost calc'].isna() & \
+        #             self.fulldata['Cost'].isna())
+        # if cost_mask.any():
+        #     print('You are missing a necessary material cost!!')
+        #     print('You may need a "y" in the "Cost calc" column?')
+        #     print('Check these columns.')
+        #     disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
+        #     raise ValueError('Yikes! Read the note above.')
         
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
@@ -236,15 +236,15 @@ class ExcelCost(object):
         # Check for duplicated materials in a single reaction.
         # When you select a single value from a reaction, you'll get a series
         # and not a float, e.g.
-        dup_rxn = self.fulldata.loc[(self.final_prod, self.final_prod), 'MW']
-        if isinstance(dup_rxn, pd.Series):
-            print('You have a duplicated material in a single reaction.')
-            print('Check these lines:')
-            gb = self.fulldata.groupby(['Prod', 'Compound'])
-            for prod, group in gb:
-                if group.shape[0] > 1:
-                    disp(prod)
-            raise ValueError('Yikes! Read the note above.')
+        # dup_rxn = self.fulldata.loc[(self.final_prod, self.final_prod), 'MW']
+        # if isinstance(dup_rxn, pd.Series):
+        #     print('You have a duplicated material in a single reaction.')
+        #     print('Check these lines:')
+        #     gb = self.fulldata.groupby(['Prod', 'Compound'])
+        #     for prod, group in gb:
+        #         if group.shape[0] > 1:
+        #             disp(prod)
+        #     raise ValueError('Yikes! Read the note above.')
 
     def _column_clear(self, ):
         '''Clear out calculated values.
