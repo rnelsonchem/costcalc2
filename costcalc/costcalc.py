@@ -746,7 +746,6 @@ class ExcelCost(object):
         for step_cpd, vals in sens.iterrows():
             step, cpd = step_cpd
             # Low values
-            self.rxn_data_setup()
             self.value_mod(cpd, vals['Val low'], val_type=col, step=step)
             self.calc_cost()
             cost_low = self.cost
@@ -755,7 +754,6 @@ class ExcelCost(object):
             self._mod_vals.pop()
 
             # High values
-            self.rxn_data_setup()
             self.value_mod(cpd, vals['Val high'], val_type=col, step=step)
             self.calc_cost()
             cost_high = self.cost
@@ -768,9 +766,10 @@ class ExcelCost(object):
             sens.loc[(step, cpd), '% low'] = cost_low_per
             sens.loc[(step, cpd), '% high'] = cost_high_per
 
-        # Reset the original values
-        self.cost = cost_save
-        self.fulldata = fd_save.copy()
+            # Reset the original values.  This is necessary so the next step
+            # in the loop starts from the original position.
+            self.cost = cost_save
+            self.fulldata = fd_save.copy()
         
         if decimals:
             return sens.round(decimals)
