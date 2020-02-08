@@ -175,13 +175,17 @@ class ExcelCost(object):
         # on the rxns DataFrame ('right'), which means that missing materials
         # will be fairly obvious (no MW, e.g.).
         mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
-        rxn_keeps = ['Prod', 'Compound', 'Equiv', 'Volumes', 'Relative', 
+        rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative', 
                      'Sol Recyc', 'Cost calc', 'OPEX',]
         fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
                             on='Compound', how='right')
 
+        # Find the step number for the final product. 
+        fp_mask = fulldata.Compound == self.final_prod
+        self._fp_idx = fulldata.loc[fp_mask, 'Cost calc'].iloc[0]
+
         # Set MultiIndex
-        fulldata.set_index(['Prod', 'Compound'], inplace=True)
+        fulldata.set_index(['Step', 'Compound'], inplace=True)
         # This is necessary so that slices of the DataFrame are views and not
         # copies
         fulldata = fulldata.sort_index()
@@ -236,7 +240,7 @@ class ExcelCost(object):
         # Check for duplicated materials in a single reaction.
         # When you select a single value from a reaction, you'll get a series
         # and not a float, e.g.
-        dup_rxn = self.fulldata.loc[(self.final_prod, self.final_prod), 'MW']
+        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), 'MW']
         if isinstance(dup_rxn, pd.Series):
             print('You have a duplicated material in a single reaction.')
             print('Check these lines:')
