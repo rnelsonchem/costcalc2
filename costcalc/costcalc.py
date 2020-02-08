@@ -129,7 +129,8 @@ class ExcelCost(object):
         '''Read an Excel sheet that defines the reactions.
         '''
         # Read the file, drop NaN-only rows.
-        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet)\
+        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet,
+                            dtype={'Step':str, 'Cost calc':str})\
                         .dropna(how='all')
         self.rxns = rxns
 
@@ -620,8 +621,7 @@ class ExcelCost(object):
         # First of all, calculate the PMI for each reaction individually
         gb = self.fulldata[['kg/kg rxn']].groupby('Step')
         rxn_pmi = gb.sum().reset_index()
-        rxn_pmi['Compound'] = self._pre + 'Step ' + \
-                rxn_pmi['Step'].astype(str) + ' PMI'
+        rxn_pmi['Compound'] = self._pre + 'Step ' + rxn_pmi['Step'] + ' PMI'
         
         # The full route PMI is not the sum of the above, but is the sum of
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
