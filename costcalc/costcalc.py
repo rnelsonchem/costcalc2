@@ -375,7 +375,7 @@ class ExcelCost(object):
             self._mod_vals.pop()
 
         # Reset the final cost
-        self.cost = self.fulldata.loc[(self.final_prod, self.final_prod), 
+        self.cost = self.fulldata.loc[(self._fp_idx, self.final_prod), 
                                   'RM cost/kg rxn']
         
         # When a single value was used, return just that one value. Otherwise,
