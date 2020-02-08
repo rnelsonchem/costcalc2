@@ -432,7 +432,7 @@ class ExcelCost(object):
         elif isinstance(cpd_new, (ExcelCost, ColabCost)):
             # The value selection is a little different
             cpd_name = cpd_new.final_prod
-            cpd_loc = (cpd_new.final_prod, cpd_new.final_prod)
+            cpd_loc = (cpd_new._fp_idx, cpd_new.final_prod)
             mw = cpd_new.fulldata.loc[cpd_loc, 'MW']
             density = cpd_new.fulldata.loc[cpd_loc, 'Density']
             cost = cpd_new.fulldata.loc[cpd_loc, 'Cost']
@@ -457,7 +457,7 @@ class ExcelCost(object):
         # Swap out the compound names
         fd_rst.loc[cpd_mask, 'Compound'] = cpd_name
         # Reset index and fulldata attribute
-        self.fulldata = fd_rst.set_index(['Prod', 'Compound'])
+        self.fulldata = fd_rst.set_index(['Step', 'Compound'])
 
         # Set the values using `value_mod`
         self.value_mod(cpd_name, mw, val_type='MW', step=step)
