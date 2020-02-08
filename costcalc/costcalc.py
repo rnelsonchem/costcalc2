@@ -4,7 +4,6 @@ Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
 import time
-from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
