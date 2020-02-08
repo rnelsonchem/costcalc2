@@ -627,7 +627,7 @@ class ExcelCost(object):
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
         # merge with the per reaction values above
         df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
-                   'Step': [self.final_prod],
+                   'Step': [self._fp_idx],
                    'Compound': [self._pre*2 + 'Full Route PMI']
                    }
         full_pmi = pd.DataFrame(df_vals)
@@ -698,14 +698,14 @@ class ExcelCost(object):
         # Combine the DFs. Set the index and then sort. Undo the multiindex
         # So compound names can be fixed
         concated = pd.concat([fd, pmi], sort=False)\
-                    .set_index(['Prod', 'Compound']).sort_index()\
+                    .set_index(['Step', 'Compound']).sort_index()\
                     .reset_index()
         
         # Fix the compound names
         concated['Compound'] = concated['Compound'].str.replace(self._pre, '*')
         
         # Reset the index and return the DF
-        return concated.set_index(['Prod', 'Compound'])                
+        return concated.set_index(['Step', 'Compound'])                
 
     def sensitivity(self, col='Equiv', frac=0.1, decimals=2):
         '''Do a sensitivity analysis for the equivalents of reagents.
