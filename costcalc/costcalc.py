@@ -449,7 +449,7 @@ class ExcelCost(object):
         cpd_mask = fd_rst['Compound'] == cpd_old
         # If a particular step is chosen, select only that step
         if step:
-            cpd_mask = cpd_mask & (fd_rst['Prod'] == step)
+            cpd_mask = cpd_mask & (fd_rst['Step'] == str(step))
 
         if not cpd_mask.any():
             raise ValueError("Oops! '" + cpd_old + "' isn't in your "
