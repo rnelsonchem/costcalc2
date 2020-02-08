@@ -292,15 +292,14 @@ class ExcelCost(object):
             This must be for a non-calculated column, such as 'Cost', 'Equiv',
             'OPEX', etc.
 
-        step : None, str, optional (Default = None)
-            The name of the reaction step for which this value will be
-            changed. If this is `None` (default), then all the values for the
-            given compound (`cpd`) will be set to the same value. This is
-            mostly important for something like `val_type`='Equiv'. Clearly,
-            you would only want to change the number of equivalents for a
-            specific reaction. If this parameter is left as `None`, the
-            equivalents for a given compound in all reactions will be set to
-            the same value.
+        step : None, int, optional (Default = None)
+            The reaction step number for which this value will be changed. If
+            this is `None` (default), then all the values for the given
+            compound (`cpd`) will be set to the same value. This is mostly
+            important for something like `val_type`='Equiv'. Clearly, you
+            would only want to change the number of equivalents for a specific
+            reaction. If this parameter is left as `None`, the equivalents for
+            a given compound in all reactions will be set to the same value.
         
         Note
         ----
@@ -403,8 +402,8 @@ class ExcelCost(object):
             then, the `cost_calc` method must have been run on that instance
             to define the final cost of that material.
 
-        step : str or None, optional (default = None)
-            This is the name of a particular step to do the swap. The default
+        step : int or None, optional (default = None)
+            This is the step number for which to do the swap. The default
             (None) is to swap all instances of the particular compound.
 
         Note
@@ -488,6 +487,10 @@ class ExcelCost(object):
         prod : str
             The name of the reaction to cost. This should also be the name of
             the final product for that reaction.
+
+        step : str
+            The step number for which to calculate the cost. Even though the
+            step numbers are numbers, this needs to be given as a string.
 
         amp : float, optional (default = 1.0)
             This number is an amplifier that increases some of the values,
