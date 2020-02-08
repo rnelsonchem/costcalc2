@@ -470,11 +470,11 @@ class ExcelCost(object):
         # Prep the DataFrame
         self._column_clear()
         # Run the costing and set the cost attribute
-        self.cost = self._rxn_cost(self.final_prod)
+        self.cost = self._rxn_cost(self.final_prod, self._fp_idx)
         # Post process the DataFrame
         self._rxn_data_post()
         
-    def _rxn_cost(self, prod, amp=1.0):
+    def _rxn_cost(self, prod, step, amp=1.0):
         '''The recursive cost calculating function. 
         
         This is the workhorse function of the whole process, but is not meant
@@ -494,7 +494,7 @@ class ExcelCost(object):
         '''
         # Select out the reaction of interest from the full data set. Saves
         # some typing.
-        data = self.fulldata.loc[prod]
+        data = self.fulldata.loc[step]
 
         # Kg of nonsolvent materials used per equivalent
         amount_kg = data['Equiv']*data['MW']#/(data['Density'])
@@ -512,7 +512,7 @@ class ExcelCost(object):
         
         # Set the kg/rxn amounts in the large data table. This is normalized
         # to make the product kg = 1
-        self.fulldata.loc[prod, 'kg/kg rxn'] = \
+        self.fulldata.loc[step, 'kg/kg rxn'] = \
                 (amount_kg/amount_kg[prod]).values
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
@@ -530,41 +530,43 @@ class ExcelCost(object):
             # The amounts needed will be amplified by the appropriate kg ratio.
             # Set that ratio
             new_amp = data.loc[cpd, 'kg/kg rxn']
+            # The new step is needed as well
+            new_stp = data.loc[cpd, 'Cost calc']
             # Run the cost calculation for the unknown compound
-            cst = self._rxn_cost(cpd, amp*new_amp)
+            cst = self._rxn_cost(cpd, new_stp, amp*new_amp)
             # Set the calculated cost in the larger data table
-            self.fulldata.loc[(prod, cpd), 'Cost'] = cst
+            self.fulldata.loc[(step, cpd), 'Cost'] = cst
 
         # Calculate the cost for each material in the reaction
-        self.fulldata.loc[prod, 'RM cost/kg rxn'] = \
+        self.fulldata.loc[step, 'RM cost/kg rxn'] = \
                 (data['kg/kg rxn']*data['Cost']).values
         # The product cost will be the sum of all the reactant/solvent costs
-        self.fulldata.loc[(prod, prod), 'RM cost/kg rxn'] = \
+        self.fulldata.loc[(step, prod), 'RM cost/kg rxn'] = \
                 data['RM cost/kg rxn'].sum()
         
         # Calculate % costs for individual rxn
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
         p_rm_cost = data['RM cost/kg rxn']*100/data.loc[prod, 'RM cost/kg rxn']
-        self.fulldata.loc[prod, '% RM cost/kg rxn'] = p_rm_cost.values
+        self.fulldata.loc[step, '% RM cost/kg rxn'] = p_rm_cost.values
         # Remove the % cost for the rxn product
-        self.fulldata.loc[(prod, prod), '% RM cost/kg rxn'] = np.nan
+        self.fulldata.loc[(step, prod), '% RM cost/kg rxn'] = np.nan
         
         # These are the costs for ultimate product
         # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
         # cost. However, for feeder reactions this will get amplified by 
         # each step   
-        self.fulldata.loc[prod, 'RM cost/kg prod'] = \
-                self.fulldata.loc[prod, 'RM cost/kg rxn'].values*amp
+        self.fulldata.loc[step, 'RM cost/kg prod'] = \
+                self.fulldata.loc[step, 'RM cost/kg rxn'].values*amp
         
         # Set the "Cost" to the calculated value
-        self.fulldata.loc[(prod, prod), 'Cost'] = \
+        self.fulldata.loc[(step, prod), 'Cost'] = \
                 data.loc[prod, 'RM cost/kg rxn']
 
         # This sets the number of kg of each material per kilogram of product
         # This is done by multiplying the per reaction value by the amplifier
         # This isn't necessary for costing, but we can use it for PMI
-        self.fulldata.loc[prod, 'kg/kg prod'] = \
-                self.fulldata.loc[prod, 'kg/kg rxn'].values*amp
+        self.fulldata.loc[step, 'kg/kg prod'] = \
+                self.fulldata.loc[step, 'kg/kg rxn'].values*amp
         
         # Return the calculated product cost, which is required for the 
         # recurisive nature of the algorithm. In addition, an optional OPEX
@@ -583,12 +585,13 @@ class ExcelCost(object):
         filtered out as well to make the column sums sensible.
         '''
         prod = self.final_prod
+        step = self._fp_idx
         
         # If an OPEX for the final reaction is given, add that to the cost
         # of the final product
-        opex = self.fulldata.loc[(prod, prod), 'OPEX']
+        opex = self.fulldata.loc[(step, prod), 'OPEX']
         if not np.isnan(opex):
-            self.fulldata.loc[(prod, prod), 'Cost'] = self.cost
+            self.fulldata.loc[(step, prod), 'Cost'] = self.cost
                 
         # Calculate % overall costs relative to the prod
         self.fulldata['% RM cost/kg prod'] = \
@@ -607,7 +610,7 @@ class ExcelCost(object):
         # the sum of this column is the PMI
         self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
         # But we are making 1 kg of final product so that needs to be reset
-        self.fulldata.loc[(prod, prod), 'kg/kg prod'] = 1.
+        self.fulldata.loc[(step, prod), 'kg/kg prod'] = 1.
 
         # PMI Calculations
         # Need to append this prefix for sorting purposes
@@ -615,22 +618,23 @@ class ExcelCost(object):
         self._pre = 'zzzz'
         
         # First of all, calculate the PMI for each reaction individually
-        gb = self.fulldata[['kg/kg rxn']].groupby('Prod')
+        gb = self.fulldata[['kg/kg rxn']].groupby('Step')
         rxn_pmi = gb.sum().reset_index()
-        rxn_pmi['Compound'] = self._pre + rxn_pmi['Prod'] + ' PMI'
+        rxn_pmi['Compound'] = self._pre + 'Step ' + \
+                rxn_pmi['Step'].astype(str) + ' PMI'
         
         # The full route PMI is not the sum of the above, but is the sum of
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
         # merge with the per reaction values above
         df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
-                   'Prod': [self.final_prod],
+                   'Step': [self.final_prod],
                    'Compound': [self._pre*2 + 'Full Route PMI']
                    }
         full_pmi = pd.DataFrame(df_vals)
 
         # Merge the per-reaction and full PMI
         self.pmi = pd.concat([rxn_pmi, full_pmi], 
-                             sort=False).set_index('Prod')
+                             sort=False).set_index('Step')
 
     def results(self, style='compact', decimals=2, fill='-'):
         '''Print the results of the costing calculation.
