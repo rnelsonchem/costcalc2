@@ -322,7 +322,8 @@ class ExcelCost(object):
         if not step:
             cells = (slice(None), cpd)
         else: 
-            cells = (step, cpd)
+            # The step needs to be a string, not in int as might be expected
+            cells = (str(step), cpd)
             
         self.fulldata.loc[cells, val_type] = val
         # The "Cost calc" flag must be set to np.nan when setting a cost. 
