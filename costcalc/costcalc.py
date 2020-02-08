@@ -322,6 +322,20 @@ class ExcelCost(object):
         else: 
             # The step needs to be a string, not in int as might be expected
             cells = (str(step), cpd)
+        
+        # Does this position actually exist???
+        try:
+            self.fulldata.loc[cells, val_type]
+        except KeyError:
+            # If not, remove the values from the list and throw an error
+            self._mod_vals.pop()
+            if not step:
+                err = '"' + cpd + '"'
+            else:
+                err = 'Step "' + str(step) + '", "' + cpd + '"'
+            print('Oops! ' + err + " doesn't exist. Check") 
+            print("your reactions to find the correct Step/Compound.")
+            raise 
             
         self.fulldata.loc[cells, val_type] = val
         # The "Cost calc" flag must be set to np.nan when setting a cost. 
