@@ -749,21 +749,24 @@ class ExcelCost(object):
             self.rxn_data_setup()
             self.value_mod(cpd, vals['Val low'], val_type=col, step=step)
             self.calc_cost()
-            cost_high = self.cost
-            cost_high_per = 100 - (self.cost*100./cost_save)
+            cost_low = self.cost
+            cost_low_per = (cost_low*100./cost_save) - 100
+            # Just to be safe - Drop the modified value
+            self._mod_vals.pop()
 
             # High values
             self.rxn_data_setup()
             self.value_mod(cpd, vals['Val high'], val_type=col, step=step)
             self.calc_cost()
-            cost_low = self.cost
-            cost_low_per = 100 - (self.cost*100./cost_save)
+            cost_high = self.cost
+            cost_high_per = (cost_high*100./cost_save) - 100
+            self._mod_vals.pop()
 
             # Set the values in the sensitivity DataFrame
-            sens.loc[(step, cpd), 'Cost low'] = cost_high
-            sens.loc[(step, cpd), 'Cost high'] = cost_low
-            sens.loc[(step, cpd), '% low'] = cost_high_per
-            sens.loc[(step, cpd), '% high'] = cost_low_per
+            sens.loc[(step, cpd), 'Cost low'] = cost_low
+            sens.loc[(step, cpd), 'Cost high'] = cost_high
+            sens.loc[(step, cpd), '% low'] = cost_low_per
+            sens.loc[(step, cpd), '% high'] = cost_high_per
 
         # Reset the original values
         self.cost = cost_save
