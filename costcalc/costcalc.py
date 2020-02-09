@@ -128,9 +128,15 @@ class ExcelCost(object):
         '''Read an Excel sheet that defines the reactions.
         '''
         # Read the file, drop NaN-only rows.
-        rxns = pd.read_excel(self._rxn_file, self._rxn_sheet,
-                            dtype={'Step':str, 'Cost calc':str})\
-                        .dropna(how='all')
+        if self._rxn_file[-4:].lower() == 'xlsx':
+            rxns = pd.read_excel(self._rxn_file, self._rxn_sheet,
+                                dtype={'Step':str, 'Cost calc':str})\
+                            .dropna(how='all')
+        elif self._rxn_file[-3:].lower() == 'csv':
+            rxns = pd.read_csv(self._rxn_file, 
+                               dtype={'Step':str, 'Cost calc':str})\
+                            .dropna(how='all')
+        
         self.rxns = rxns
 
     def _materials_build(self, ):
