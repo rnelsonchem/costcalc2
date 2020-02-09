@@ -26,28 +26,26 @@ plt.rc('figure', dpi=150)
 #pd.set_option('precision', 2)
 
 class ExcelCost(object):
-    '''Costing class designed for local Excel spreadsheets.
+    '''Costing class designed for local Excel/csv spreadsheets.
 
     This can also act as the base class for other subclasses.
 
     Parameters
     ----------
     materials_file : str
-        A string defining where to find the materials list. This value can be
-        found in the URL of the sheet.
+        The name/path of the materials list file. Can be xlsx or csv.
 
     rxn_file : str
-        A string defining where to find the reaction list. This value can be found
-        in the URL of the sheet.
+        The name/path of the file defining the reactions. can be xlsx or csv.
 
     alt_mat_file : str, optional (default = None)
-        A string defining where to find for an optional, secondary materials
-        sheet.  This is useful if you have separate master and user materials
-        sheets, for example.
+        The name/path of an optional, secondary materials sheet.  sheet. This
+        is useful if you have separate master and user materials sheets, for
+        example. Can be an xlsx or csv.
 
     final_prod : str
         Defines the final product name for costing calculations. This should
-        be the same name as the material/reaction sheet.
+        be the same name as in the material/reaction sheet.
 
     materials_sheet : int, str, optional (default = 0)
         The sheet to pull out of the materials spreadsheet. The default
