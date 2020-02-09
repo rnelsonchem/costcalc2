@@ -5,7 +5,7 @@ with open('README.md') as file:
 
 setup(
     name = "costcalc2",
-    version = "0.2",
+    version = "0.3",
 
     description = "Cost calculations for synthetic chemical preparation routes",
     url = "https://github.com/rnelsonchem/costcalc2",
@@ -28,8 +28,6 @@ setup(
     install_requires = [
         'numpy>=1.17',
         'pandas>=0.25',
-        'matplotlib>=3.0',
-        'gspread>=3.0',
         ]
 
 )
