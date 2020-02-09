@@ -694,9 +694,13 @@ class ExcelCost(object):
         print(cost_str.format(self.final_prod, self.cost))
             
         # For compact display, these are the most important columns
-        comp_col = ['Cost', 'Equiv', 'Volumes', 'Sol Recyc', 'OPEX', 
-                    'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod']
+        comp_col = ['Cost', 'Equiv',] 
+        if self.fulldata.Volumes.any():
+            comp_col.extend(['Volumes', 'Sol Recyc',])
+        if self.fulldata.OPEX.any():
+            comp_col.append('OPEX') 
+        comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
+                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
         
         # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
