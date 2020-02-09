@@ -164,8 +164,12 @@ class ExcelCost(object):
         costing.
         '''
         # Read the file, drop NaN-only rows.
-        mats = pd.read_excel(mat_file, sheet_name=wsheet)\
-                        .dropna(how='all')
+        if mat_file[-4:].lower() == 'xlsx':
+            mats = pd.read_excel(mat_file, sheet_name=wsheet)\
+                            .dropna(how='all')
+        elif mat_file[-3:].lower() == 'csv':
+            mats = pd.read_csv(mat_file).dropna(how='all')
+
         return mats
 
     def rxn_data_setup(self, ):
