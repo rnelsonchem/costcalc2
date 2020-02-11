@@ -125,20 +125,22 @@ class ExcelCost(object):
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.
         '''
-        # Read the file, drop NaN-only rows.
-        if self._rxn_file[-4:].lower() == 'xlsx':
-            rxns = pd.read_excel(self._rxn_file, self._rxn_sheet,
-                                dtype={'Step':str, 'Cost calc':str},
-                                comment='#')\
-                            .dropna(how='all')
-        elif self._rxn_file[-3:].lower() == 'csv':
-            rxns = pd.read_csv(self._rxn_file, 
-                               dtype={'Step':str, 'Cost calc':str},
-                               comment='#')\
-                            .dropna(how='all')
-        
-        self.rxns = rxns
+        self.rxns = self._excel_csv_reader(self._rxn_file, self._rxn_sheet,
+                            dtypes={'Step':str, 'Cost calc':str})
 
+    def _excel_csv_reader(self, fname, fsheet, dtypes=None):
+        '''A simple Excel/CSV reader function for both reaction and materials
+        files.
+        '''
+        # Read the file, drop NaN-only and commented rows.
+        if fname[-4:].lower() == 'xlsx':
+            df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
+                            .dropna(how='all')
+        elif fname[-3:].lower() == 'csv':
+            df = pd.read_csv(fname, dtype=dtypes, comment='#')\
+                            .dropna(how='all')
+        return df
+        
     def _materials_build(self, ):
         '''Read and combine the main and an optional alternate materials
         sheets.
@@ -163,14 +165,7 @@ class ExcelCost(object):
         '''Read an Excel file sheet that defines the materials used in
         costing.
         '''
-        # Read the file, drop NaN-only rows.
-        if mat_file[-4:].lower() == 'xlsx':
-            mats = pd.read_excel(mat_file, sheet_name=wsheet,
-                                comment='#')\
-                            .dropna(how='all')
-        elif mat_file[-3:].lower() == 'csv':
-            mats = pd.read_csv(mat_file, comment='#').dropna(how='all')
-
+        mats = self._excel_csv_reader(mat_file, wsheet,)
         return mats
 
     def rxn_data_setup(self, ):
