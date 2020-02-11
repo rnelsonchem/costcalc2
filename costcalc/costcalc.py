@@ -933,6 +933,10 @@ class ColabCost(ExcelCost):
         val_df[mask] = np.nan
         # Drop empty rows
         val_df.dropna(how='all', inplace=True)
+
+        # Drop lines with comment markers
+        mask = ~val_df.iloc[:, 0].str.startswith('#')
+        val_df = val_df[mask]
         
         return val_df
 
