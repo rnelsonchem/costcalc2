@@ -128,11 +128,13 @@ class ExcelCost(object):
         # Read the file, drop NaN-only rows.
         if self._rxn_file[-4:].lower() == 'xlsx':
             rxns = pd.read_excel(self._rxn_file, self._rxn_sheet,
-                                dtype={'Step':str, 'Cost calc':str})\
+                                dtype={'Step':str, 'Cost calc':str},
+                                comment='#')\
                             .dropna(how='all')
         elif self._rxn_file[-3:].lower() == 'csv':
             rxns = pd.read_csv(self._rxn_file, 
-                               dtype={'Step':str, 'Cost calc':str})\
+                               dtype={'Step':str, 'Cost calc':str},
+                               comment='#')\
                             .dropna(how='all')
         
         self.rxns = rxns
@@ -163,10 +165,11 @@ class ExcelCost(object):
         '''
         # Read the file, drop NaN-only rows.
         if mat_file[-4:].lower() == 'xlsx':
-            mats = pd.read_excel(mat_file, sheet_name=wsheet)\
+            mats = pd.read_excel(mat_file, sheet_name=wsheet,
+                                comment='#')\
                             .dropna(how='all')
         elif mat_file[-3:].lower() == 'csv':
-            mats = pd.read_csv(mat_file).dropna(how='all')
+            mats = pd.read_csv(mat_file, comment='#').dropna(how='all')
 
         return mats
 
