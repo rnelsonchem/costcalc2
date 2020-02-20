@@ -13,6 +13,7 @@ import pandas as pd
 # This gets changed for Jupyter Notebook/IPython sessions
 try:
     from IPython.display import display as disp
+    from IPython.display import Javascript
 except:
     disp = print
 
@@ -941,6 +942,39 @@ class ColabCost(ExcelCost):
         val_df = val_df[mask]
         
         return val_df
+
+    def results(self, style='compact', decimals=2, fill='-'):
+        '''Print the results of the costing calculation.
+
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional ('-')
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
+        '''
+        # This makes the max Colab output window very large, so that
+        # DataFrames are not put into separate scroll windows, which is very
+        # annoying for users. Unfortunately, I need to copy/paste the doc
+        # string for results method, though...
+        # See: https://github.com/googlecolab/colabtools/issues/541
+        iframe_h = 'google.colab.output.setIframeHeight(0, true, {\n'\
+                   '  maxHeight: 5000,\n'\
+                   '})'
+        disp(Javascript(iframe_h)) 
+        # Call results method from ExcelCost
+        super(ColabCost, self).results(style=style, decimals=decimals,
+                                       fill=fill)
+
 
     def excel_save(self, fname, decimals=2):
         '''Download the costing DataFrame as an Excel file.
