@@ -25,6 +25,10 @@ plt.rc('figure', dpi=150)
 # Set Pandas precision
 #pd.set_option('precision', 2)
 
+# Set pandas to display lots of DataFrame rows so things don't get cut out
+pd.options.display.max_rows = 1000
+
+
 class ExcelCost(object):
     '''Costing class designed for local Excel/csv spreadsheets.
 
