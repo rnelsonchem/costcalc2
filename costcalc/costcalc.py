@@ -408,6 +408,23 @@ class ExcelCost(object):
         
         return all_costs
 
+    def plot_scan(self, cpd, start, stop, npts, val_type='Cost', step=None, 
+                legend=None):
+        '''Plot a range of values.
+        '''
+        vals = np.linspace(start, stop, npts)
+        costs = self.value_scan(cpd, vals, val_type=val_type, step=step)
+
+        if legend == True:
+            label = cpd
+        else:
+            label = legend
+
+        plt.plot(vals, costs, 'o', label=label)
+        if legend:
+            plt.legend()
+
+
     def swap(self, cpd_old, cpd_new, step=None):
         '''Swap one compound for another in the route.
 
