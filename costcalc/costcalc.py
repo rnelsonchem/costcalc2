@@ -418,15 +418,19 @@ class ExcelCost(object):
             pass a custom string if you want that to be in the legend instead.
 
         '''
+        # Calculate all the costs for the given values
         costs = self.value_scan(cpd, start, stop, npts, val_type=val_type,
                             step=step)
-
+        
+        # If legend is selected, make sure the label is set properly
         if legend == True:
             label = cpd
         else:
             label = legend
 
+        # Plot the values
         plt.plot(costs['Values'], costs['Costs'], 'o', label=label)
+        # Generate the legend, if requested
         if legend:
             plt.legend()
 
