@@ -354,35 +354,36 @@ class ExcelCost(object):
         if val_type == 'Cost':
             self.fulldata.loc[cells, 'Cost calc'] = np.nan
 
-    def value_scan(self, cpd, vals, val_type='Cost', step=None):
+    def value_scan(self, cpd, start, stop, npts, val_type='Cost', step=None):
         '''Scan a range of values for a given material.
         
         Parameters
         ----------
         See `value_mod` method description, except for the following.
 
-        vals : container of int/float values, int, float
-            This is the container of values for which to scan through. If you
-            want, this can be a single value, although the `value_mod` method
-            may be more appropriate for that. 
+        start : int, float
+            The starting value for the scan.
+
+        stop : int, float
+            The ending value for the scan.
+
+        npts : int
+            The numbers of points to calculate the costs between `start` and
+            `stop`
 
         Returns
         -------
-        list of floats
-            This is the costs associate with each value in the input
-            container. 
+        Pandas DataFrame
+            This DataFrame has 'Values' and 'Costs' columns for the input
+            values and output costs, repectively. 
 
         Notes
         -----
         Although this method recalculates the cost for every value, it does
         not modify the original `fulldata` or `cost` attributes. 
         '''
-        # If a single value was given, convert to a list
-        # Set this flag to undo the list at the end of the function
-        val_list = True
-        if isinstance(vals, (float, int)):
-            vals = [vals,]
-            val_list = False
+        # Create the values array
+        vals = np.linspace(start, stop, npts)
        
         # I need a copy of the full data set in order to reset for each
         # iteration. Otherwise, I was noticing some issues.
@@ -401,26 +402,31 @@ class ExcelCost(object):
         self.cost = self.fulldata.loc[(self._fp_idx, self.final_prod), 
                                   'RM cost/kg rxn']
         
-        # When a single value was used, return just that one value. Otherwise,
-        # a list will be returned
-        if val_list == False:
-            all_costs = all_costs[0]
-        
-        return all_costs
+        return pd.DataFrame({'Values':vals, 'Costs':all_costs})
 
     def plot_scan(self, cpd, start, stop, npts, val_type='Cost', step=None, 
                 legend=None):
         '''Plot a range of values.
+
+        Parameters
+        ----------
+        See `value_scan` method description, except for the following.
+
+        legend : bool, str
+            This will add a legend to the plot. If you use the value `True`,
+            the compound name will be added to the legend. Otherwise, you can
+            pass a custom string if you want that to be in the legend instead.
+
         '''
-        vals = np.linspace(start, stop, npts)
-        costs = self.value_scan(cpd, vals, val_type=val_type, step=step)
+        costs = self.value_scan(cpd, start, stop, npts, val_type=val_type,
+                            step=step)
 
         if legend == True:
             label = cpd
         else:
             label = legend
 
-        plt.plot(vals, costs, 'o', label=label)
+        plt.plot(costs['Values'], costs['Costs'], 'o', label=label)
         if legend:
             plt.legend()
 
