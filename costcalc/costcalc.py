@@ -260,7 +260,21 @@ class ExcelCost(object):
                 if group.shape[0] > 1:
                     disp(prod)
             raise ValueError('Yikes! Read the note above.')
-
+            
+        # Check that all the solvent information is given
+        sol_mask = ~self.fulldata['Volumes'].isna() 
+        sol_chk = self.fulldata.loc[sol_mask, 'Relative'].isna() | \
+                self.fulldata.loc[sol_mask, 'Density'].isna() | \
+                self.fulldata.loc[sol_mask, 'Sol Recyc'].isna()
+        # If anything is missing, print a note
+        if sol_chk.any():
+            sol_cols = ['Density', 'Volumes', 'Relative', 'Sol Recyc']
+            print('You are missing some solvent information.')
+            print('Check the following lines.')
+            sol_mask2 = sol_mask & sol_chk
+            disp(self.fulldata.loc[sol_mask2, sol_cols])
+            raise ValueError('Yikes! Read the note above.')
+        
     def _column_clear(self, ):
         '''Clear out calculated values.
 
