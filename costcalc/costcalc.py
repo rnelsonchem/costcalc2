@@ -275,6 +275,16 @@ class ExcelCost(object):
             disp(self.fulldata.loc[sol_mask2, sol_cols])
             raise ValueError('Yikes! Read the note above.')
         
+        # Check to make sure that the "Relative" compound for a solvent
+        # is acutally contained in the step
+        sol_mask = ~self.fulldata['Relative'].isna()
+        for cpd in self.fulldata[sol_mask].itertuples():
+            new_idx = (cpd.Index[0], cpd.Relative)
+            if new_idx not in self.fulldata.index:
+                print('One of your "Relative" compounds is not correct.')
+                print(f'"{cpd.Relative}" is not in Step {cpd.Index[0]}.')
+                raise ValueError('Yikes! Read the note above.')
+        
     def _column_clear(self, ):
         '''Clear out calculated values.
 
