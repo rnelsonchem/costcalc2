@@ -229,7 +229,7 @@ class ExcelCost(object):
                     self.fulldata['Cost'].isna())
         if cost_mask.any():
             print('You are missing a necessary material cost!!')
-            print('You may need a "y" in the "Cost calc" column?')
+            print('You may need to indicate a Step in the "Cost calc" column.')
             print('Check these columns.')
             disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
             raise ValueError('Yikes! Read the note above.')
