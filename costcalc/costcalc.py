@@ -13,6 +13,7 @@ import pandas as pd
 # This gets changed for Jupyter Notebook/IPython sessions
 try:
     from IPython.display import display as disp
+    from IPython.display import Javascript
 except:
     disp = print
 
@@ -24,6 +25,10 @@ plt.rc('figure', dpi=150)
 # the DF doesn't display correctly 
 # Set Pandas precision
 #pd.set_option('precision', 2)
+
+# Set pandas to display lots of DataFrame rows so things don't get cut out
+pd.options.display.max_rows = 1000
+
 
 class ExcelCost(object):
     '''Costing class designed for local Excel/csv spreadsheets.
@@ -349,35 +354,36 @@ class ExcelCost(object):
         if val_type == 'Cost':
             self.fulldata.loc[cells, 'Cost calc'] = np.nan
 
-    def value_scan(self, cpd, vals, val_type='Cost', step=None):
+    def value_scan(self, cpd, start, stop, npts, val_type='Cost', step=None):
         '''Scan a range of values for a given material.
         
         Parameters
         ----------
         See `value_mod` method description, except for the following.
 
-        vals : container of int/float values, int, float
-            This is the container of values for which to scan through. If you
-            want, this can be a single value, although the `value_mod` method
-            may be more appropriate for that. 
+        start : int, float
+            The starting value for the scan.
+
+        stop : int, float
+            The ending value for the scan.
+
+        npts : int
+            The numbers of points to calculate the costs between `start` and
+            `stop`
 
         Returns
         -------
-        list of floats
-            This is the costs associate with each value in the input
-            container. 
+        Pandas DataFrame
+            This DataFrame has 'Values' and 'Costs' columns for the input
+            values and output costs, repectively. 
 
         Notes
         -----
         Although this method recalculates the cost for every value, it does
         not modify the original `fulldata` or `cost` attributes. 
         '''
-        # If a single value was given, convert to a list
-        # Set this flag to undo the list at the end of the function
-        val_list = True
-        if isinstance(vals, (float, int)):
-            vals = [vals,]
-            val_list = False
+        # Create the values array
+        vals = np.linspace(start, stop, npts)
        
         # I need a copy of the full data set in order to reset for each
         # iteration. Otherwise, I was noticing some issues.
@@ -396,12 +402,38 @@ class ExcelCost(object):
         self.cost = self.fulldata.loc[(self._fp_idx, self.final_prod), 
                                   'RM cost/kg rxn']
         
-        # When a single value was used, return just that one value. Otherwise,
-        # a list will be returned
-        if val_list == False:
-            all_costs = all_costs[0]
+        return pd.DataFrame({'Values':vals, 'Costs':all_costs})
+
+    def plot_scan(self, cpd, start, stop, npts, val_type='Cost', step=None, 
+                legend=None):
+        '''Plot a range of values.
+
+        Parameters
+        ----------
+        See `value_scan` method description, except for the following.
+
+        legend : bool, str
+            This will add a legend to the plot. If you use the value `True`,
+            the compound name will be added to the legend. Otherwise, you can
+            pass a custom string if you want that to be in the legend instead.
+
+        '''
+        # Calculate all the costs for the given values
+        costs = self.value_scan(cpd, start, stop, npts, val_type=val_type,
+                            step=step)
         
-        return all_costs
+        # If legend is selected, make sure the label is set properly
+        if legend == True:
+            label = cpd
+        else:
+            label = legend
+
+        # Plot the values
+        plt.plot(costs['Values'], costs['Costs'], 'o', label=label)
+        # Generate the legend, if requested
+        if legend:
+            plt.legend()
+
 
     def swap(self, cpd_old, cpd_new, step=None):
         '''Swap one compound for another in the route.
@@ -937,6 +969,39 @@ class ColabCost(ExcelCost):
         val_df = val_df[mask]
         
         return val_df
+
+    def results(self, style='compact', decimals=2, fill='-'):
+        '''Print the results of the costing calculation.
+
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional ('-')
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
+        '''
+        # This makes the max Colab output window very large, so that
+        # DataFrames are not put into separate scroll windows, which is very
+        # annoying for users. Unfortunately, I need to copy/paste the doc
+        # string for results method, though...
+        # See: https://github.com/googlecolab/colabtools/issues/541
+        iframe_h = 'google.colab.output.setIframeHeight(0, true, {\n'\
+                   '  maxHeight: 5000,\n'\
+                   '})'
+        disp(Javascript(iframe_h)) 
+        # Call results method from ExcelCost
+        super(ColabCost, self).results(style=style, decimals=decimals,
+                                       fill=fill)
+
 
     def excel_save(self, fname, decimals=2):
         '''Download the costing DataFrame as an Excel file.
