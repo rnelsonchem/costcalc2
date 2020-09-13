@@ -569,7 +569,7 @@ class ExcelCost(object):
         # Post process the DataFrame
         self._rxn_data_post()
         
-    def _rxn_cost(self, prod, step, amp=1.0):
+    def _rxn_cost(self, prod, step, amp=1.0, eamp=''):
         '''The recursive cost calculating function. 
         
         This is the workhorse function of the whole process, but is not meant
@@ -642,10 +642,18 @@ class ExcelCost(object):
             # The amounts needed will be amplified by the appropriate kg ratio.
             # Set that ratio
             new_amp = data.loc[cpd, 'kg/kg rxn']
+            # And for dynamic excel output
+            new_amp_enum = data.loc[cpd, 'rnum']
+            new_amp_eden = data.loc[prod, 'rnum']
+            kg_col = ecols['kg/kg rxn']
+            # This will be '*(C#/D#)'. This is different for Excel because we
+            # can't normalize the kg/kg rxn column
+            new_eamp = f'*({kg_col}{new_amp_enum}/{kg_col}{new_amp_eden})'
             # The new step is needed as well
             new_stp = data.loc[cpd, 'Cost calc']
             # Run the cost calculation for the unknown compound
-            cst = self._rxn_cost(cpd, new_stp, amp*new_amp)
+            cst = self._rxn_cost(cpd, new_stp, amp*new_amp, 
+                                eamp + new_eamp)
             # Set the calculated cost
             data.loc[cpd, 'Cost'] = cst
 
