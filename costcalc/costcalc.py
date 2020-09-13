@@ -318,6 +318,12 @@ class ExcelCost(object):
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
+        excel_cols = ['kg/kg rxn dyn', 'RM cost/kg rxn dyn', 
+                    '% RM cost/kg rxn dyn', 'kg/kg prod dyn', 
+                    'RM cost/kg prod dyn', '% RM cost/kg prod dyn',
+                    ]
+        for col in excel_cols:
+            self.fulldata[col] = ''
 
     def value_mod(self, cpd, val, val_type='Cost', step=None):
         '''Manually set a value for a given material.
