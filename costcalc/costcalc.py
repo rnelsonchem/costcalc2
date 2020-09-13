@@ -29,6 +29,15 @@ plt.rc('figure', dpi=150)
 # Set pandas to display lots of DataFrame rows so things don't get cut out
 pd.options.display.max_rows = 1000
 
+# Column dictionary
+# This dictionary will be used for creating dynamic excel sheets, for which
+# I'll need to know the correct column labels
+ecols = {'Step':'A', 'Compound':'B', 'MW':'C', 'Density':'D', 'Cost':'E',
+        'Equiv':'F', 'Volumes':'G', 'Relative':'H', 'Sol Recyc':'I',
+        'Cost Calc':'J', 'OPEX':'K', 'kg/kg rxn':'L', 'RM cost/kg rxn':'M',
+        '% RM cost/kg rxn':'N', 'kg/kg prod':'O', 'RM cost/kg prod':'P',
+        '% RM cost/kg prod':'Q',
+        }
 
 class ExcelCost(object):
     '''Costing class designed for local Excel/csv spreadsheets.
