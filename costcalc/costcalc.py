@@ -545,6 +545,10 @@ class ExcelCost(object):
         self._now = pd.Timestamp.now('US/Eastern').strftime('%Y-%m-%d %H:%M')
         # Prep the DataFrame
         self._column_clear()
+        # Set a column of unique row labels
+        nrows = self.fulldata.shape[0]
+        nrowdig = len(str(nrows))
+        self.fulldata['rnum'] = [f'r{i:0{nrowdig:d}d}' for i in range(nrows)]
         # Run the costing and set the cost attribute
         self.cost = self._rxn_cost(self.final_prod, self._fp_idx)
         # Post process the DataFrame
