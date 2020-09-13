@@ -573,27 +573,31 @@ class ExcelCost(object):
             for the overall final product.   
         '''
         # Select out the reaction of interest from the full data set. Saves
-        # some typing.
-        data = self.fulldata.loc[step]
+        # some typing. (Make this a copy to enusre it isn't given as a view.)
+        data = self.fulldata.loc[step].copy()
 
         # Kg of nonsolvent materials used per equivalent
-        amount_kg = data['Equiv']*data['MW']#/(data['Density'])
+        data['kg/kg rxn'] = data['Equiv']*data['MW']
 
         # Amount of solvent
         # First figure out which materials are solvents 
         mask = ~data['Volumes'].isna()
-        # Which material are the volumes relative to? What is the kg?
-        amt_rel = amount_kg[data.loc[mask, 'Relative']].values
-        # Calculate the mass of solvent. Take into account the solvent 
-        # recycyling 
-        # kg sol = Volume*Density*(1-Recycle)*(kg SM)
-        amount_kg[mask] = data.loc[mask, 'Volumes']*data.loc[mask, 'Density']\
-            *(1 - data.loc[mask, 'Sol Recyc'])*amt_rel
-        
-        # Set the kg/rxn amounts in the large data table. This is normalized
-        # to make the product kg = 1
-        self.fulldata.loc[step, 'kg/kg rxn'] = \
-                (amount_kg/amount_kg[prod]).values
+        sols = data[mask].copy()
+        if sols.size != 0:
+            # Find the material that the volumes are relative to (taking only
+            # the first one... This might not be great.
+            cpd_rel = sols['Relative'][0]
+            # What is the kg of relative cpd?
+            amt_rel = data.loc[cpd_rel, 'kg/kg rxn']
+            # Calculate the mass of solvent. Take into account the solvent
+            # recycyling 
+            # kg sol = Volume*Density*(1-Recycle)*(kg SM)
+            sols['kg/kg rxn'] = sols['Volumes']*sols['Density']*\
+                    (1 - sols['Sol Recyc'])*amt_rel
+            data[mask] = sols
+
+        # Normalize the kg of reaction
+        data['kg/kg rxn'] /= data.loc[prod, 'kg/kg rxn']
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
         # column. Don't use the 'Cost calc' column directly, because some of
@@ -614,42 +618,41 @@ class ExcelCost(object):
             new_stp = data.loc[cpd, 'Cost calc']
             # Run the cost calculation for the unknown compound
             cst = self._rxn_cost(cpd, new_stp, amp*new_amp)
-            # Set the calculated cost in the larger data table
-            self.fulldata.loc[(step, cpd), 'Cost'] = cst
+            # Set the calculated cost
+            data.loc[cpd, 'Cost'] = cst
 
         # Calculate the cost for each material in the reaction
-        self.fulldata.loc[step, 'RM cost/kg rxn'] = \
-                (data['kg/kg rxn']*data['Cost']).values
+        data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
         # The product cost will be the sum of all the reactant/solvent costs
-        self.fulldata.loc[(step, prod), 'RM cost/kg rxn'] = \
-                data['RM cost/kg rxn'].sum()
-        
-        # Calculate % costs for individual rxn
-        # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
-        p_rm_cost = data['RM cost/kg rxn']*100/data.loc[prod, 'RM cost/kg rxn']
-        self.fulldata.loc[step, '% RM cost/kg rxn'] = p_rm_cost.values
-        # Remove the % cost for the rxn product
-        self.fulldata.loc[(step, prod), '% RM cost/kg rxn'] = np.nan
-        
-        # These are the costs for ultimate product
-        # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
-        # cost. However, for feeder reactions this will get amplified by 
-        # each step   
-        self.fulldata.loc[step, 'RM cost/kg prod'] = \
-                self.fulldata.loc[step, 'RM cost/kg rxn'].values*amp
-        
+        data.loc[prod, 'RM cost/kg rxn'] = data['RM cost/kg rxn'].sum()
         # Set the "Cost" to the calculated value
         self.fulldata.loc[(step, prod), 'Cost'] = \
                 data.loc[prod, 'RM cost/kg rxn']
 
+        # Calculate % costs for individual rxn
+        # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
+        p_rm_cost = data['RM cost/kg rxn']*100/data.loc[prod, 'RM cost/kg rxn']
+        data['% RM cost/kg rxn'] = p_rm_cost.values
+        # Remove the % cost for the rxn product
+        data.loc[prod, '% RM cost/kg rxn'] = np.nan
+
+        # These are the costs for ultimate product
+        # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
+        # cost. However, for feeder reactions this will get amplified by 
+        # each step   
+        data['RM cost/kg prod'] = data['RM cost/kg rxn']*amp
+        
         # This sets the number of kg of each material per kilogram of product
         # This is done by multiplying the per reaction value by the amplifier
         # This isn't necessary for costing, but we can use it for PMI
-        self.fulldata.loc[step, 'kg/kg prod'] = \
-                self.fulldata.loc[step, 'kg/kg rxn'].values*amp
+        data['kg/kg prod'] = data['kg/kg rxn']*amp
+        
+        # Set the values in the big DataFrame with this slice. This goofy call
+        # is necessary to make sure the data are set correctly. 
+        self.fulldata.loc[(step, data.index), data.columns] = data.values
         
         # Return the calculated product cost, which is required for the 
-        # recurisive nature of the algorithm. In addition, an optional OPEX
+        # recursive nature of the algorithm. In addition, an optional OPEX
         # may be added to take into acount production costs of the cpd
         if np.isnan(data.loc[prod, 'OPEX']):
             return data.loc[prod, 'RM cost/kg rxn']
