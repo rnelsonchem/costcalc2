@@ -597,6 +597,9 @@ class ExcelCost(object):
 
         # Kg of nonsolvent materials used per equivalent
         data['kg/kg rxn'] = data['Equiv']*data['MW']
+        # And for Excel
+        data['kg/kg rxn dyn'] = '=' + ecols['Equiv'] + data['rnum'] + '*'\
+                + ecols['MW'] + data['rnum']
 
         # Amount of solvent
         # First figure out which materials are solvents 
@@ -608,11 +611,17 @@ class ExcelCost(object):
             cpd_rel = sols['Relative'][0]
             # What is the kg of relative cpd?
             amt_rel = data.loc[cpd_rel, 'kg/kg rxn']
+            amt_rel_e = data.loc[cpd_rel, 'rnum']
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)
             sols['kg/kg rxn'] = sols['Volumes']*sols['Density']*\
                     (1 - sols['Sol Recyc'])*amt_rel
+            # And for Excel
+            sols['kg/kg rxn dyn'] = '=' + ecols['Volumes'] + sols['rnum'] +\
+                    '*' + ecols['Density'] + sols['rnum'] + '*' +\
+                    '(1 - ' + ecols['Sol Recyc'] + sols['rnum'] +\
+                    ')*' + ecols['kg/kg rxn'] + amt_rel_e
             data[mask] = sols
 
         # Normalize the kg of reaction
