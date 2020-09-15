@@ -701,6 +701,9 @@ class ExcelCost(object):
         # cost. However, for feeder reactions this will get amplified by 
         # each step   
         data['RM cost/kg prod'] = data['RM cost/kg rxn']*amp
+        # And for Excel
+        data['RM cost/kg prod dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+                data['rnum'] + eamp
         
         # This sets the number of kg of each material per kilogram of product
         # This is done by multiplying the per reaction value by the amplifier
