@@ -601,6 +601,12 @@ class ExcelCost(object):
         # And for Excel
         data['kg/kg rxn dyn'] = '=' + ecols['Equiv'] + data['rnum'] + '*'\
                 + ecols['MW'] + data['rnum']
+        # For Excel, normalize the data here. This will get overwritten for
+        # solvents. This is a little weird for the product because it will be
+        # the same in numerator and denominator, but that will keep things
+        # fully interactive.
+        data['kg/kg rxn dyn'] += '/(' + ecols['Equiv'] + data.loc[prod,'rnum']\
+                    + '*' + ecols['MW'] + data.loc[prod, 'rnum'] + ')'
 
         # Amount of solvent
         # First figure out which materials are solvents 
