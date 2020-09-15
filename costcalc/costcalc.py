@@ -755,6 +755,11 @@ class ExcelCost(object):
         # Calculate % overall costs relative to the prod
         self.fulldata['% RM cost/kg prod'] = \
                 self.fulldata['RM cost/kg prod']*100/self.cost
+        # And for Excel
+        self.fulldata['% RM cost/kg prod dyn'] = '=' +\
+                ecols['RM cost/kg prod'] + self.fulldata['rnum'] + '*100/'\
+                + ecols['RM cost/kg prod'] + self.fulldata.loc[(step, prod),\
+                'rnum']
         
         # Filter out certain values to simplify full data set
         # Remove the cost and %s for cost-calculated materials
