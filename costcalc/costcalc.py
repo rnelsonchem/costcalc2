@@ -318,7 +318,8 @@ class ExcelCost(object):
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
-        excel_cols = ['kg/kg rxn dyn', 'RM cost/kg rxn dyn', 
+        # For dynamic Excel
+        excel_cols = ['Cost dyn', 'kg/kg rxn dyn', 'RM cost/kg rxn dyn', 
                     '% RM cost/kg rxn dyn', 'kg/kg prod dyn', 
                     'RM cost/kg prod dyn', '% RM cost/kg prod dyn',
                     ]
@@ -656,6 +657,9 @@ class ExcelCost(object):
                                 eamp + new_eamp)
             # Set the calculated cost
             data.loc[cpd, 'Cost'] = cst
+            # And for Excel -- This cost will need to get swapped out later.
+            data.loc[cpd, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+                    self.fulldata.loc[(new_stp, cpd), 'rnum']
 
         # Calculate the cost for each material in the reaction
         data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
