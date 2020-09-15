@@ -658,8 +658,15 @@ class ExcelCost(object):
             # Set the calculated cost
             data.loc[cpd, 'Cost'] = cst
             # And for Excel -- This cost will need to get swapped out later.
-            data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
-                    self.fulldata.loc[(new_stp, cpd), 'rnum']
+            # Also need to check if an OPEX is necessary
+            if np.isnan(self.fulldata.loc[(new_stp, cpd), 'OPEX']):
+                data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
+                        self.fulldata.loc[(new_stp, cpd), 'rnum']
+            else:
+                data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
+                        self.fulldata.loc[(new_stp, cpd), 'rnum'] + '+'\
+                        + ecols['OPEX'] +\
+                        self.fulldata.loc[(new_stp, cpd), 'rnum']
 
         # Calculate the cost for each material in the reaction
         data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
