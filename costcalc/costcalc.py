@@ -748,6 +748,9 @@ class ExcelCost(object):
         opex = self.fulldata.loc[(step, prod), 'OPEX']
         if not np.isnan(opex):
             self.fulldata.loc[(step, prod), 'Cost'] = self.cost
+            # And for Excel
+            self.fulldata.loc[(step, prod), 'Cost dyn'] += '+' +\
+                    ecols['OPEX'] + self.fulldata.loc[(step, prod), 'rnum']
                 
         # Calculate % overall costs relative to the prod
         self.fulldata['% RM cost/kg prod'] = \
