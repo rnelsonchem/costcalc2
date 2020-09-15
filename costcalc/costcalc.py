@@ -677,10 +677,8 @@ class ExcelCost(object):
         # Combine them together into a sum
         data.loc[prod, 'RM cost/kg rxn dyn'] = '=SUM(' + rs + ')'
         # Set the "Cost" to the calculated value
-#        self.fulldata.loc[(step, prod), 'Cost'] = \
-#                data.loc[prod, 'RM cost/kg rxn']
         data.loc[prod, 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
-        # And for Excel
+        # And for Excel, need to divide by the total number of kgs
         data.loc[prod, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
                 data.loc[prod, 'rnum'] + '/' + ecols['kg/kg rxn'] +\
                 data.loc[prod, 'rnum']
