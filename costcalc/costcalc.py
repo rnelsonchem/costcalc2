@@ -658,16 +658,32 @@ class ExcelCost(object):
             # Set the calculated cost
             data.loc[cpd, 'Cost'] = cst
             # And for Excel -- This cost will need to get swapped out later.
-            data.loc[cpd, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+            data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
                     self.fulldata.loc[(new_stp, cpd), 'rnum']
 
         # Calculate the cost for each material in the reaction
         data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
+        # And for Excel
+        data['RM cost/kg rxn dyn'] = '=' + ecols['kg/kg rxn'] + data['rnum']\
+                + '*' + ecols['Cost'] + data['rnum']
         # The product cost will be the sum of all the reactant/solvent costs
         data.loc[prod, 'RM cost/kg rxn'] = data['RM cost/kg rxn'].sum()
+        # And for Excel, first we need the rows that are not the product
+        mask = data.index != prod
+        # Then we need to make a comma-separated list of these rows
+        cells = [f'{ecols["RM cost/kg rxn"]}{r}' for r in\
+                data.loc[mask, 'rnum']]
+        rs = ','.join(cells)
+        # Combine them together into a sum
+        data.loc[prod, 'RM cost/kg rxn dyn'] = '=SUM(' + rs + ')'
         # Set the "Cost" to the calculated value
-        self.fulldata.loc[(step, prod), 'Cost'] = \
-                data.loc[prod, 'RM cost/kg rxn']
+#        self.fulldata.loc[(step, prod), 'Cost'] = \
+#                data.loc[prod, 'RM cost/kg rxn']
+        data.loc[prod, 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
+        # And for Excel
+        data.loc[prod, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+                data.loc[prod, 'rnum'] + '/' + ecols['kg/kg rxn'] +\
+                data.loc[prod, 'rnum']
 
         # Calculate % costs for individual rxn
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
