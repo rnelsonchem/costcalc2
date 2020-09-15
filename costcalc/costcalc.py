@@ -687,8 +687,14 @@ class ExcelCost(object):
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
         p_rm_cost = data['RM cost/kg rxn']*100/data.loc[prod, 'RM cost/kg rxn']
         data['% RM cost/kg rxn'] = p_rm_cost.values
+        # And for Excel
+        data['% RM cost/kg rxn dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+                data['rnum'] + '*100/' + ecols['RM cost/kg rxn'] +\
+                data.loc[prod, 'rnum']
         # Remove the % cost for the rxn product
         data.loc[prod, '% RM cost/kg rxn'] = np.nan
+        # And for Excel
+        data.loc[prod, '% RM cost/kg rxn dyn'] = ''
 
         # These are the costs for ultimate product
         # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
