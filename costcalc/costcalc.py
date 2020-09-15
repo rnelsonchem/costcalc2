@@ -709,6 +709,9 @@ class ExcelCost(object):
         # This is done by multiplying the per reaction value by the amplifier
         # This isn't necessary for costing, but we can use it for PMI
         data['kg/kg prod'] = data['kg/kg rxn']*amp
+        # And for Excel
+        data['kg/kg prod dyn'] = '=' + ecols['kg/kg rxn'] + data['rnum']\
+                + eamp
         
         # Set the values in the big DataFrame with this slice. This goofy call
         # is necessary to make sure the data are set correctly. 
