@@ -764,7 +764,7 @@ class ExcelCost(object):
         # And for Excel
         self.fulldata['% RM cost/kg prod dyn'] = '=' +\
                 ecols['RM cost/kg prod'] + self.fulldata['rnum'] + '*100/'\
-                + ecols['RM cost/kg prod'] + self.fulldata.loc[(step, prod),\
+                + ecols['RM cost/kg rxn'] + self.fulldata.loc[(step, prod),\
                 'rnum']
         
         # Filter out certain values to simplify full data set
@@ -772,15 +772,19 @@ class ExcelCost(object):
         # This is necessary so that this column adds up to 100% (w/o OPEX)
         mask = ~self.fulldata['Cost calc'].isna()
         self.fulldata.loc[mask, '% RM cost/kg prod'] = np.nan
+        self.fulldata.loc[mask, '% RM cost/kg prod dyn'] = ''
         # This filters some of the costs which are simply the sum of raw materials
         # from eariler rxns. The sum of this column will now be equal to the cost
         # of the final product.
         self.fulldata.loc[mask, 'RM cost/kg prod'] = np.nan
+        self.fulldata.loc[mask, 'RM cost/kg prod dyn'] = ''
         # This filters out the kg/kg prod values that were calculated, so that
         # the sum of this column is the PMI
         self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
+        self.fulldata.loc[mask, 'kg/kg prod dyn'] = ''
         # But we are making 1 kg of final product so that needs to be reset
         self.fulldata.loc[(step, prod), 'kg/kg prod'] = 1.
+        self.fulldata.loc[(step, prod), 'kg/kg prod dyn'] = 1.
 
         # PMI Calculations
         # Need to append this prefix for sorting purposes
