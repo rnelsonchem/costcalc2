@@ -784,7 +784,7 @@ class ExcelCost(object):
         self.fulldata.loc[mask, 'kg/kg prod dyn'] = ''
         # But we are making 1 kg of final product so that needs to be reset
         self.fulldata.loc[(step, prod), 'kg/kg prod'] = 1.
-        self.fulldata.loc[(step, prod), 'kg/kg prod dyn'] = 1.
+        self.fulldata.loc[(step, prod), 'kg/kg prod dyn'] = '=1.'
 
         # PMI Calculations
         # Need to append this prefix for sorting purposes
@@ -792,16 +792,27 @@ class ExcelCost(object):
         self._pre = 'zzzz'
         
         # First of all, calculate the PMI for each reaction individually
-        gb = self.fulldata[['kg/kg rxn']].groupby('Step')
-        rxn_pmi = gb.sum().reset_index()
+        # A function for creating the dynamic Excel cells is needed too
+        def excel_pmi(col):
+            cells = [f'{ecols["kg/kg rxn"]}{i}' for i in col]
+            return "=SUM(" + ','.join(cells) + ")"
+        gb = self.fulldata.groupby('Step')
+        rxn_pmi = gb.agg({'kg/kg rxn':'sum', 'rnum':excel_pmi})\
+                        .rename({'rnum': 'kg/kg rxn dyn'}, axis=1)\
+                        .reset_index()
         rxn_pmi['Compound'] = self._pre + 'Step ' + rxn_pmi['Step'] + ' PMI'
         
         # The full route PMI is not the sum of the above, but is the sum of
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
-        # merge with the per reaction values above
+        # merge with the per reaction values above.
+        mask = ~self.fulldata['kg/kg prod'].isna()
+        all_cells = [f'{ecols["kg/kg prod"]}{i}' for i in\
+                     self.fulldata.loc[mask, 'rnum']]
+        cell_sum = '=SUM(' + ','.join(all_cells) + ')'
         df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
                    'Step': [self._fp_idx],
-                   'Compound': [self._pre*2 + 'Full Route PMI']
+                   'Compound': [self._pre*2 + 'Full Route PMI'],
+                   'kg/kg prod dyn': [cell_sum],
                    }
         full_pmi = pd.DataFrame(df_vals)
 
