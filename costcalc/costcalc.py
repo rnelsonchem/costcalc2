@@ -792,12 +792,8 @@ class ExcelCost(object):
         self._pre = 'zzzz'
         
         # First of all, calculate the PMI for each reaction individually
-        # A function for creating the dynamic Excel cells is needed too
-        def excel_pmi(col):
-            cells = [f'{ecols["kg/kg rxn"]}{i}' for i in col]
-            return "=SUM(" + ','.join(cells) + ")"
         gb = self.fulldata.groupby('Step')
-        rxn_pmi = gb.agg({'kg/kg rxn':'sum', 'rnum':excel_pmi})\
+        rxn_pmi = gb.agg({'kg/kg rxn':'sum', 'rnum':self._excel_pmi})\
                         .rename({'rnum': 'kg/kg rxn dyn'}, axis=1)\
                         .reset_index()
         rxn_pmi['Compound'] = self._pre + 'Step ' + rxn_pmi['Step'] + ' PMI'
@@ -819,6 +815,11 @@ class ExcelCost(object):
         # Merge the per-reaction and full PMI
         self.pmi = pd.concat([rxn_pmi, full_pmi], 
                              sort=False).set_index('Step')
+
+    def _excel_pmi(self, col):
+        # A function for creating the dynamic Excel cells for PMI
+        cells = [f'{ecols["kg/kg rxn"]}{i}' for i in col]
+        return "=SUM(" + ','.join(cells) + ")"
 
     def results(self, style='compact', decimals=2, fill='-'):
         '''Print the results of the costing calculation.
