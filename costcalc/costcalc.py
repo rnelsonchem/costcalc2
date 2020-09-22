@@ -859,6 +859,10 @@ class ExcelCost(object):
             comp_col.append('OPEX') 
         comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
                     'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
+
+        # For full display, don't show the Excel columns
+        ecol_mask = ~self.fulldata.columns.str.contains('dyn|rnum')
+        no_ecol = self.fulldata.columns[ecol_mask]
         
         # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
@@ -868,12 +872,12 @@ class ExcelCost(object):
         # may goof up printing
         if decimals:
             if style == 'full':
-                disp(fd.round(decimals).fillna(fill))
+                disp(fd[no_ecol].round(decimals).fillna(fill))
             elif style == 'compact':
                 disp(fd[comp_col].round(decimals).fillna(fill))
         else:
             if style == 'full':
-                disp(fd.fillna(fill))
+                disp(fd[no_ecol].fillna(fill))
             elif style == 'compact':
                 disp(fd[comp_col].fillna(fill))
 
