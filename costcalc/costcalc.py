@@ -1000,7 +1000,22 @@ class ExcelCost(object):
             for col in fd:
                 if 'dyn' in col:
                     fd[col] = fd[col].str.replace(r, str(n))
-            
+                    
+        # Set dynamic cost for the "Cost" of calculated products
+        mask = fd['Cost dyn'] != ''
+        fd.loc[mask, 'Cost'] = fd.loc[mask, 'Cost dyn']
+        
+        # Drop the non-dynamic columns
+        d_cols = ['Cost dyn', 'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn', 
+                  'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
+                  'rnum']
+        fd = fd.drop(d_cols, axis=1)
+        
+        # Rename columns to remove "dyn" suffix
+        col_str = fd.columns.str.replace(' dyn', '')
+        new_cols = {c:cn for (c, cn) in zip(fd.columns, col_str)}
+        fd = fd.rename(new_cols, axis=1)
+        
         # Create the excel file. Can only save with the date and not the time
         with pd.ExcelWriter(fname) as writer:
             fd.to_excel(writer, 
