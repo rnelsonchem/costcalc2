@@ -992,6 +992,15 @@ class ExcelCost(object):
             
         fd = self._df_combine()
         
+        # Convert the unique row ID with an Excel sheet row number
+        nrows = fd.shape[0]
+        for r, n in zip(fd['rnum'], np.arange(2, nrows+2)):
+            if isinstance(r, float):
+                continue
+            for col in fd:
+                if 'dyn' in col:
+                    fd[col] = fd[col].str.replace(r, str(n))
+            
         # Create the excel file. Can only save with the date and not the time
         with pd.ExcelWriter(fname) as writer:
             fd.to_excel(writer, 
