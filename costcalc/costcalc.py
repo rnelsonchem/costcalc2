@@ -1014,6 +1014,9 @@ class ExcelCost(object):
         In some cases, this function will throw an error. In that case, try
         running this again in order to get it to work. 
         '''
+        # Run the cost calculation again, but using the excel keyword
+        self.calc_cost(excel=True)
+
         # Can set some keyword arguments here
         kwargs = {}
         # If decimals is given, set that value to the rounding for float
@@ -1052,6 +1055,10 @@ class ExcelCost(object):
             fd.to_excel(writer, 
                         sheet_name='As of ' + self._now.split()[0], 
                         **kwargs)
+
+        # Rerun the cost calculation without the excel stuff to get rid of all
+        # the other columns
+        self.calc_cost(excel=False)
             
 
 class ColabCost(ExcelCost):
