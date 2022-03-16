@@ -1168,6 +1168,9 @@ class ColabCost(ExcelCost):
         # Set some rxns columns to numeric values. Everything is read from a
         # Google sheet as strings
         num_cols = ['Equiv', 'Volumes', 'Sol Recyc', 'OPEX']
+        # Check if "Amount" column is present, and add it if so
+        if "Amount" in rxns.columns:
+            num_cols.append("Amount")
         for nc in num_cols:
             rxns[nc] = pd.to_numeric(rxns[nc])
         
