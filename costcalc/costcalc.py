@@ -1236,7 +1236,7 @@ class ColabCost(ExcelCost):
                                        fill=fill)
 
 
-    def excel_save(self, fname, decimals=2):
+    def excel_save(self, fname, decimals=None):
         '''Download the costing DataFrame as an Excel file.
 
         Parameters
@@ -1244,7 +1244,7 @@ class ColabCost(ExcelCost):
         fname : str
             The name you want to give to the Excel file.
 
-        decimals : str or None, optional (default = 2)
+        decimals : str or None, optional (default = None)
             The number of decimal places to display in the Excel sheet. If
             `None`, then the full precision will be saved. 
 
