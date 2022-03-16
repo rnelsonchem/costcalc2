@@ -195,14 +195,48 @@ class ExcelCost(object):
         # on the rxns DataFrame ('right'), which means that missing materials
         # will be fairly obvious (no MW, e.g.).
         mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
-        rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative', 
-                     'Sol Recyc', 'Cost calc', 'OPEX',]
+
+        rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative',
+                    'Sol Recyc', 'Cost calc', 'OPEX',]
+        # Check if an "Amount" column is present. This is used to calculate
+        # equivalents. If this is present, add this column to our "keep" list
+        amt = False
+        if 'Amount' in self.rxns.columns:
+            amt = True 
+            rxn_keeps = rxn_keeps[:2] + ['Amount'] + rxn_keeps[2:]
+
         fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
                             on='Compound', how='right')
 
         # Find the step number for the final product. 
         fp_mask = fulldata.Compound == self.final_prod
         self._fp_idx = fulldata.loc[fp_mask, 'Cost calc'].iloc[0]
+
+        # If the "Amount" column is present, then you will need calculate the
+        # "Equiv" based on the Amount given
+        if amt:
+            # Group everything by "Step" column
+            grp = fulldata.groupby('Step')
+            for idx, sb_grp in grp:
+                # If there are no amounts for a given Step, then skip
+                if ~sb_grp['Amount'].any():
+                    continue
+                # Mask out only the values that have amounts. This is
+                # important in case a mixture of mass and equiv is used.
+                # Also check to make sure this isn't a solvent
+                mask = ~sb_grp['Amount'].isna() & sb_grp['Volumes'].isna()
+                # Calculate the Equivalents
+                sb_grp.loc[mask, 'Equiv'] = sb_grp.loc[mask, 'MW']*\
+                                        sb_grp.loc[mask, 'Amount']
+                # Assume the first entry is the limiting reagent. Normalize
+                # the rest of the equivalents to that value
+                sb_grp.loc[mask, 'Equiv'] = sb_grp.loc[mask, 'Equiv']/\
+                                       (sb_grp.iloc[0]['Equiv'])
+                # Set the values in the full DataFrame
+                mask = fulldata['Step'] == idx
+                fulldata.loc[mask, 'Equiv'] = sb_grp['Equiv']
+                # Remove the Amount column
+                fulldata.drop('Amount', axis=1)
 
         # Set MultiIndex
         fulldata.set_index(['Step', 'Compound'], inplace=True)
@@ -235,7 +269,7 @@ class ExcelCost(object):
             print('Check these materials.')
             disp(self.fulldata.loc[mw_mask, 'MW'])
             raise ValueError('Yikes! Read the note above.')
-            
+
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
         # NaNs. Check for this by looking for NaN in both Cost and Calc columns
