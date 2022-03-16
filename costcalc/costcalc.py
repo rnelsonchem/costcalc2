@@ -692,6 +692,8 @@ class ExcelCost(object):
         data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
         # The product cost will be the sum of all the reactant/solvent costs
         data.loc[prod, 'RM cost/kg rxn'] = data['RM cost/kg rxn'].sum()
+        # Set the "Cost" to the calculated value
+        data.loc[prod, 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
         # And for Excel
         if excel:
             data['RM cost/kg rxn dyn'] = '=' + ecols['kg/kg rxn'] +\
@@ -704,8 +706,6 @@ class ExcelCost(object):
             rs = ','.join(cells)
             # Combine them together into a sum
             data.loc[prod, 'RM cost/kg rxn dyn'] = '=SUM(' + rs + ')'
-            # Set the "Cost" to the calculated value
-            data.loc[prod, 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
             # Need to divide by the total number of kgs
             data.loc[prod, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
                     data.loc[prod, 'rnum'] + '/' + ecols['kg/kg rxn'] +\
