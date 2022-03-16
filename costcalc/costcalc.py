@@ -1031,7 +1031,7 @@ class ExcelCost(object):
         else:
             return sens
 
-    def excel_save(self, fname, decimals=2):
+    def excel_save(self, fname, decimals=None):
         '''Save the costing DataFrame as an Excel file.
 
         Parameters
@@ -1039,7 +1039,7 @@ class ExcelCost(object):
         fname : str
             The name you want to give to the Excel file.
 
-        decimals : str or None, optional (default = 2)
+        decimals : str or None, optional (default = None)
             The number of decimal places to display in the Excel sheet. If
             `None`, then the full precision will be saved. 
 
