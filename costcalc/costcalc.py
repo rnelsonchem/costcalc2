@@ -235,8 +235,8 @@ class ExcelCost(object):
                 # Set the values in the full DataFrame
                 mask = fulldata['Step'] == idx
                 fulldata.loc[mask, 'Equiv'] = sb_grp['Equiv']
-                # Remove the Amount column
-                fulldata.drop('Amount', axis=1, inplace=True)
+            # Remove the Amount column
+            fulldata.drop('Amount', axis=1, inplace=True)
 
         # Set MultiIndex
         fulldata.set_index(['Step', 'Compound'], inplace=True)
