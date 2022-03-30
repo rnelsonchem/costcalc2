@@ -1118,19 +1118,23 @@ class ColabCost(ExcelCost):
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
         # Do some imports that are only possible in the Colab environment
         # This should prevent these from running in a non-Colab environment
-        from oauth2client.client import GoogleCredentials
+#        from oauth2client.client import GoogleCredentials
+        from google.auth import default
         from google.colab import auth
         from google.colab import files
         import gspread
         # These will have to be made global
-        global GoogleCredentials
+#        global GoogleCredentials
+        global default
         global auth
         global files
         global gspread
 
         # Authenticate the Colab environment 
         auth.authenticate_user()
-        self._gc = gspread.authorize(GoogleCredentials.get_application_default())
+        creds, _ = default()
+#        self._gc = gspread.authorize(GoogleCredentials.get_application_default())
+        self._gc = gspread.authorize(creds)
         
         # Fix the final product and setup a mod variable
         super(ColabCost, self).__init__(materials_key, rxn_key, final_prod,
