@@ -238,11 +238,15 @@ class ExcelCost(object):
             # Remove the Amount column
             fulldata.drop('Amount', axis=1, inplace=True)
 
+        # Add an indexing column, which will be used for sorting purposes
+        fulldata['idx_col'] = np.arange(fulldata.shape[0])
         # Set MultiIndex
-        fulldata.set_index(['Step', 'Compound'], inplace=True)
+        fulldata.set_index(['idx_col', 'Step', 'Compound'], inplace=True)
         # This is necessary so that slices of the DataFrame are views and not
         # copies
         fulldata = fulldata.sort_index()
+        # Remove sorting index, drop column
+        fulldata = fulldata.reset_index('idx_col').drop('idx_col', axis=1)
         
         # Save the full data set
         self.fulldata = fulldata
