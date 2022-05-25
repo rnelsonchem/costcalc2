@@ -957,17 +957,35 @@ class ExcelCost(object):
         fd = self.fulldata.reset_index()
         pmi = self.pmi.reset_index()
         
-        # Combine the DFs. Set the index and then sort. Undo the multiindex
-        # So compound names can be fixed
-        concated = pd.concat([fd, pmi], sort=False)\
-                    .set_index(['Step', 'Compound']).sort_index()\
-                    .reset_index()
+        # Concats the fulldata and pmi based on step. The groupby function
+        # will sort by "Step" as it processes things. This will need to be
+        # modified if this behavior is undesired, but as is, it is not trivial
+        # to make this fix. The apply function doubles up the "Step" column.
+        # So one needs to be removed.
+        gb = fd.groupby('Step')
+        concated = gb.apply(self.__fd_pmi_concat, pmi)
+        concated = concated.drop('Step', axis=1)\
+                            .reset_index().drop('level_1', axis=1)
         
         # Fix the compound names
         concated['Compound'] = concated['Compound'].str.replace(self._pre, '*')
-        
-        # Reset the index and return the DF
+
+        # Reset the index and return the DF. No sorting is necessary here.
         return concated.set_index(['Step', 'Compound'])                
+
+    def __fd_pmi_concat(self, df, pmi):
+        '''Concats the fulldata and pmi DataFrames.
+
+        This is only used in a DataFrame.apply call in the _df_combine
+        method.'''
+        # The step number
+        step = df['Step'].iloc[0]
+        # Mask out the correct PMI values
+        pmi_mask = pmi['Step'] == step
+        pmi_small = pmi[pmi_mask]
+        # Combine the route step info with the PMI. In this way, the pmi will
+        # be at the end.
+        return pd.concat([df, pmi_small], ignore_index=True)
 
     def sensitivity(self, col='Equiv', frac=0.1, decimals=2):
         '''Do a sensitivity analysis for the equivalents of reagents.
