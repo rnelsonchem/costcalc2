@@ -1078,9 +1078,15 @@ class ExcelCost(object):
         # formatting in the output
         if decimals:
             kwargs['float_format'] = '%.{:d}f'.format(decimals)
-            
+           
+        # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
-        
+        # Move the Notes columns to the end of the combined DataFrame
+        mat_note = fd.pop('Material Notes')
+        fd.insert(fd.shape[1], 'Material Notes', mat_note)
+        rxn_note = fd.pop('Reaction Notes')
+        fd.insert(fd.shape[1], 'Reaction Notes', rxn_note)
+
         # Convert the unique row ID with an Excel sheet row number
         nrows = fd.shape[0]
         for r, n in zip(fd['rnum'], np.arange(2, nrows+2)):
