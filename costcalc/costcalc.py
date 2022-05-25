@@ -194,10 +194,10 @@ class ExcelCost(object):
         # dropped, which are not necessary for calculations. The merge happens
         # on the rxns DataFrame ('right'), which means that missing materials
         # will be fairly obvious (no MW, e.g.).
-        mat_keeps = ['Compound', 'MW', 'Density', 'Cost']
+        mat_keeps = ['Compound', 'MW', 'Density', 'Cost', 'Notes']
 
         rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative',
-                    'Sol Recyc', 'Cost calc', 'OPEX',]
+                    'Sol Recyc', 'Cost calc', 'OPEX', 'Notes']
         # Check if an "Amount" column is present. This is used to calculate
         # equivalents. If this is present, add this column to our "keep" list
         amt = False
@@ -206,7 +206,9 @@ class ExcelCost(object):
             rxn_keeps = rxn_keeps[:2] + ['Amount'] + rxn_keeps[2:]
 
         fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
-                            on='Compound', how='right')
+                            on='Compound', how='right')\
+                            .rename({'Notes_x': 'Material Notes',
+                                'Notes_y': 'Reaction Notes'}, axis=1)
 
         # Find the step number for the final product. 
         fp_mask = fulldata.Compound == self.final_prod
