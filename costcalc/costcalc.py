@@ -851,9 +851,9 @@ class ExcelCost(object):
             self.fulldata.loc[(step, prod), 'kg/kg prod dyn'] = '=1.'
 
         # PMI Calculations
-        # Need to append this prefix for sorting purposes
+        # Adding a prefix for display purposes
         # There will be a funny column in this DF with these values...
-        self._pre = 'zzzz'
+        self._pre = '*'
         
         # First of all, calculate the PMI for each reaction individually
         gb = self.fulldata.groupby('Step')
@@ -967,9 +967,6 @@ class ExcelCost(object):
         concated = concated.drop('Step', axis=1)\
                             .reset_index().drop('level_1', axis=1)
         
-        # Fix the compound names
-        concated['Compound'] = concated['Compound'].str.replace(self._pre, '*')
-
         # Reset the index and return the DF. No sorting is necessary here.
         return concated.set_index(['Step', 'Compound'])                
 
