@@ -4,6 +4,7 @@ Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
 import time
+import urllib.parse as parse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1208,7 +1209,13 @@ class ColabCost(ExcelCost):
         '''General code for getting Google Sheet values and returning a 
         DataFrame.
         '''
-        # Grab the Google sheet handle, pull down all values and make a 
+        # Check if the `key` is a URL. If so, pull apart the url and grab the
+        # part of the path that is the key to the spreadsheet.
+        if key.startswith('http'):
+            url_frag = parse.urlparse(key)
+            key = url_frag.path.split('/')[3]
+
+        # Using the Google sheet handle, pull down all values and make a 
         # DataFrame
         gsh = self._gc.open_by_key(key)
         # Differentiate between string and integer worksheets 
