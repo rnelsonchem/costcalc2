@@ -266,28 +266,6 @@ class ExcelCost(object):
         These are some checks that will throw some "sane" errors if things are
         not correct.
         ''' 
-        # Check for a missing material -- Everything should have a MW
-        mw_mask = self.fulldata['MW'].isna()
-        if mw_mask.any():
-            print('You are missing a MW!!!')
-            print('May be a mismatch between the reaction and materials file.')
-            print('Material might be missing from materials sheet.')
-            print('Check these materials.')
-            disp(self.fulldata.loc[mw_mask, 'MW'])
-            raise ValueError('Yikes! Read the note above.')
-
-        # Check for a missing cost, which is not being calculated
-        # This is a tricky error because the costing will run just fine with 
-        # NaNs. Check for this by looking for NaN in both Cost and Calc columns
-        cost_mask = (self.fulldata['Cost calc'].isna() & \
-                    self.fulldata['Cost'].isna())
-        if cost_mask.any():
-            print('You are missing a necessary material cost!!')
-            print('You may need to indicate a Step in the "Cost calc" column.')
-            print('Check these columns.')
-            disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
-            raise ValueError('Yikes! Read the note above.')
-        
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
         dup_cpds = self.materials['Compound'].duplicated()
@@ -310,6 +288,28 @@ class ExcelCost(object):
                     disp(prod)
             raise ValueError('Yikes! Read the note above.')
             
+        # Check for a missing material -- Everything should have a MW
+        mw_mask = self.fulldata['MW'].isna()
+        if mw_mask.any():
+            print('You are missing a MW!!!')
+            print('May be a mismatch between the reaction and materials file.')
+            print('Material might be missing from materials sheet.')
+            print('Check these materials.')
+            disp(self.fulldata.loc[mw_mask, 'MW'])
+            raise ValueError('Yikes! Read the note above.')
+
+        # Check for a missing cost, which is not being calculated
+        # This is a tricky error because the costing will run just fine with 
+        # NaNs. Check for this by looking for NaN in both Cost and Calc columns
+        cost_mask = (self.fulldata['Cost calc'].isna() & \
+                    self.fulldata['Cost'].isna())
+        if cost_mask.any():
+            print('You are missing a necessary material cost!!')
+            print('You may need to indicate a Step in the "Cost calc" column.')
+            print('Check these columns.')
+            disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
+            raise ValueError('Yikes! Read the note above.')
+        
         # Check that all the solvent information is given
         sol_mask = ~self.fulldata['Volumes'].isna() 
         sol_chk = self.fulldata.loc[sol_mask, 'Relative'].isna() | \
