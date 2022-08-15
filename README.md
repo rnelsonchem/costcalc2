@@ -8,3 +8,4 @@ synthetic route. This package is intended for Python versions >= 3.
 * Python >= 3
 * Numpy >= 1.17
 * Pandas >= 0.25
+* Matplotlib >= 2.0
