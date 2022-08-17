@@ -5,6 +5,7 @@ Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 '''
 import time
 import urllib.parse as parse
+from io import BytesIO
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1295,4 +1296,120 @@ class ColabCost(ExcelCost):
         time.sleep(2)
         files.download(fname)
         
+class WebAppCost(ExcelCost):
+    def _excel_csv_reader(self, fname, fsheet, dtypes=None):
+        '''A simple Excel/CSV reader function for both reaction and materials
+        files.
 
+        In this case, it will be assumed that Excel files, and not CSV files,
+        are being passed into this function. 
+        '''
+        # Read the file, drop NaN-only and commented rows.
+        df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
+                        .dropna(how='all')
+
+        return df
+        
+    def results(self, style='compact', decimals=2, fill=np.nan):
+        # For compact display, these are the most important columns
+        comp_col = ['Cost', 'Equiv',] 
+        if self.fulldata.Volumes.any():
+            comp_col.extend(['Volumes', 'Sol Recyc',])
+        if self.fulldata.OPEX.any():
+            comp_col.append('OPEX') 
+        comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
+                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
+
+        # For full display, don't show the Excel columns
+        ecol_mask = ~self.fulldata.columns.str.contains('dyn|rnum')
+        no_ecol = self.fulldata.columns[ecol_mask]
+        
+        # Combine the fulldata and pmi DataFrames
+        fd = self._df_combine()
+        
+        # Display the DataFrames for different permutations of kwargs
+        # The fillna removes NaN from the displayed tables in Notebook, but
+        # may goof up printing
+        if style == 'full':
+            fd = fd[no_ecol].round(decimals).fillna(fill)
+        elif style == 'compact':
+            fd = fd[comp_col].round(decimals).fillna(fill)
+
+        return fd
+
+    def excel_save(self, fname, decimals=None):
+        '''Save the costing DataFrame as an Excel file.
+
+        Parameters
+        ----------
+        fname : str
+            The name you want to give to the Excel file.
+
+        decimals : str or None, optional (default = None)
+            The number of decimal places to display in the Excel sheet. If
+            `None`, then the full precision will be saved. 
+
+        Note
+        ----
+        In some cases, this function will throw an error. In that case, try
+        running this again in order to get it to work. 
+        '''
+        # Run the cost calculation again, but using the excel keyword
+        self.calc_cost(excel=True)
+
+        # Can set some keyword arguments here
+        kwargs = {}
+        # If decimals is given, set that value to the rounding for float
+        # formatting in the output
+        if decimals:
+            kwargs['float_format'] = '%.{:d}f'.format(decimals)
+           
+        # Combine the fulldata and pmi DataFrames
+        fd = self._df_combine()
+        # Move the Notes columns to the end of the combined DataFrame
+        mat_note = fd.pop('Material Notes')
+        fd.insert(fd.shape[1], 'Material Notes', mat_note)
+        rxn_note = fd.pop('Reaction Notes')
+        fd.insert(fd.shape[1], 'Reaction Notes', rxn_note)
+
+        # Convert the unique row ID with an Excel sheet row number
+        nrows = fd.shape[0]
+        for r, n in zip(fd['rnum'], np.arange(2, nrows+2)):
+            if isinstance(r, float):
+                continue
+            for col in fd:
+                if 'dyn' in col:
+                    fd[col] = fd[col].str.replace(r, str(n))
+                    
+        # Set dynamic cost for the "Cost" of calculated products
+        mask = fd['Cost dyn'] != ''
+        fd.loc[mask, 'Cost'] = fd.loc[mask, 'Cost dyn']
+        
+        # Drop the non-dynamic columns
+        d_cols = ['Cost dyn', 'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn', 
+                  'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
+                  'rnum']
+        fd = fd.drop(d_cols, axis=1)
+        
+        # Rename columns to remove "dyn" suffix
+        col_str = fd.columns.str.replace(' dyn', '')
+        new_cols = {c:cn for (c, cn) in zip(fd.columns, col_str)}
+        fd = fd.rename(new_cols, axis=1)
+
+        # Rerun the cost calculation without the excel stuff to get rid of all
+        # the other columns
+        self.calc_cost(excel=False)
+        
+        # Create the excel file. Can only save with the date and not the time
+        # This must be done as a Bytes object, as described in the refs
+        output = BytesIO()
+        writer = pd.ExcelWriter(output)
+        fd.to_excel(writer, 
+                    sheet_name='As of ' + self._now.split()[0], 
+                    **kwargs)
+        writer.save()
+        proc_excel = output.getvalue()
+        return proc_excel
+
+### References:
+# https://discuss.streamlit.io/t/download-button-for-csv-or-xlsx-file/17385/2
