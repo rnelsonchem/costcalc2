@@ -1062,33 +1062,14 @@ class ExcelCost(object):
         else:
             return sens
 
-    def excel_save(self, fname, decimals=None):
-        '''Save the costing DataFrame as an Excel file.
+    def _prep_excel(self, decimals):
+        '''Prepare a DataFrame for Excel export.
 
-        Parameters
-        ----------
-        fname : str
-            The name you want to give to the Excel file.
-
-        decimals : str or None, optional (default = None)
-            The number of decimal places to display in the Excel sheet. If
-            `None`, then the full precision will be saved. 
-
-        Note
-        ----
-        In some cases, this function will throw an error. In that case, try
-        running this again in order to get it to work. 
+        See `excel_save` method for the docstring info.
         '''
         # Run the cost calculation again, but using the excel keyword
         self.calc_cost(excel=True)
 
-        # Can set some keyword arguments here
-        kwargs = {}
-        # If decimals is given, set that value to the rounding for float
-        # formatting in the output
-        if decimals:
-            kwargs['float_format'] = '%.{:d}f'.format(decimals)
-           
         # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
         # Move the Notes columns to the end of the combined DataFrame
@@ -1121,15 +1102,45 @@ class ExcelCost(object):
         new_cols = {c:cn for (c, cn) in zip(fd.columns, col_str)}
         fd = fd.rename(new_cols, axis=1)
         
+        # Rerun the cost calculation without the excel stuff to get rid of all
+        # the other columns
+        self.calc_cost(excel=False)
+
+        return fd
+
+
+    def excel_save(self, fname, decimals=None):
+        '''Save the costing DataFrame as an Excel file.
+
+        Parameters
+        ----------
+        fname : str
+            The name you want to give to the Excel file.
+
+        decimals : str or None, optional (default = None)
+            The number of decimal places to display in the Excel sheet. If
+            `None`, then the full precision will be saved. 
+
+        Note
+        ----
+        In some cases, this function will throw an error. In that case, try
+        running this again in order to get it to work. 
+        '''
+        # Get the process DataFrame
+        fd = self._prep_excel(decimals)
+
+        # Can set some keyword arguments here
+        kwargs = {}
+        # If decimals is given, set that value to the rounding for float
+        # formatting in the output
+        if decimals:
+            kwargs['float_format'] = '%.{:d}f'.format(decimals)
+           
         # Create the excel file. Can only save with the date and not the time
         with pd.ExcelWriter(fname) as writer:
             fd.to_excel(writer, 
                         sheet_name='As of ' + self._now.split()[0], 
                         **kwargs)
-
-        # Rerun the cost calculation without the excel stuff to get rid of all
-        # the other columns
-        self.calc_cost(excel=False)
             
 
 class ColabCost(ExcelCost):
@@ -1367,8 +1378,8 @@ class WebAppCost(ExcelCost):
         In some cases, this function will throw an error. In that case, try
         running this again in order to get it to work. 
         '''
-        # Run the cost calculation again, but using the excel keyword
-        self.calc_cost(excel=True)
+        # Get the process DataFrame
+        fd = self._prep_excel(decimals)
 
         # Can set some keyword arguments here
         kwargs = {}
@@ -1377,51 +1388,20 @@ class WebAppCost(ExcelCost):
         if decimals:
             kwargs['float_format'] = '%.{:d}f'.format(decimals)
            
-        # Combine the fulldata and pmi DataFrames
-        fd = self._df_combine()
-        # Move the Notes columns to the end of the combined DataFrame
-        mat_note = fd.pop('Material Notes')
-        fd.insert(fd.shape[1], 'Material Notes', mat_note)
-        rxn_note = fd.pop('Reaction Notes')
-        fd.insert(fd.shape[1], 'Reaction Notes', rxn_note)
-
-        # Convert the unique row ID with an Excel sheet row number
-        nrows = fd.shape[0]
-        for r, n in zip(fd['rnum'], np.arange(2, nrows+2)):
-            if isinstance(r, float):
-                continue
-            for col in fd:
-                if 'dyn' in col:
-                    fd[col] = fd[col].str.replace(r, str(n))
-                    
-        # Set dynamic cost for the "Cost" of calculated products
-        mask = fd['Cost dyn'] != ''
-        fd.loc[mask, 'Cost'] = fd.loc[mask, 'Cost dyn']
-        
-        # Drop the non-dynamic columns
-        d_cols = ['Cost dyn', 'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn', 
-                  'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
-                  'rnum']
-        fd = fd.drop(d_cols, axis=1)
-        
-        # Rename columns to remove "dyn" suffix
-        col_str = fd.columns.str.replace(' dyn', '')
-        new_cols = {c:cn for (c, cn) in zip(fd.columns, col_str)}
-        fd = fd.rename(new_cols, axis=1)
-
-        # Rerun the cost calculation without the excel stuff to get rid of all
-        # the other columns
-        self.calc_cost(excel=False)
-        
         # Create the excel file. Can only save with the date and not the time
         # This must be done as a Bytes object, as described in the refs
         output = BytesIO()
         writer = pd.ExcelWriter(output)
+        # Dump the data to the ExcelWriter, which in turn sends it to a
+        # bytestream object
         fd.to_excel(writer, 
                     sheet_name='As of ' + self._now.split()[0], 
                     **kwargs)
         writer.save()
+        
+        # Get the byte string for output and return this for saving
         proc_excel = output.getvalue()
+
         return proc_excel
 
 ### References:
