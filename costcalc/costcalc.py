@@ -1306,11 +1306,14 @@ class ColabCost(ExcelCost):
         
 class WebAppCost(ExcelCost):
     def _excel_csv_reader(self, fname, fsheet, dtypes=None):
-        '''A simple Excel/CSV reader function for both reaction and materials
+        '''A simple Excel reader function for both reaction and materials
         files.
 
-        In this case, it will be assumed that Excel files, and not CSV files,
-        are being passed into this function. 
+        For the WebApp, it is assumed that only Excel files will be passed
+        into the app. In the app, the Excel file is converted into a binary
+        stream, so you can not easily tell the difference between Excel/CSV
+        files. The read_excel pandas method can still read the bytestream just
+        fine.
         '''
         # Read the file, drop NaN-only and commented rows.
         df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
