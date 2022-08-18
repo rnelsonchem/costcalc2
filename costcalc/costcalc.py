@@ -894,36 +894,9 @@ class ExcelCost(object):
         cells = [f'{ecols["kg/kg rxn"]}{i}' for i in col]
         return "=SUM(" + ','.join(cells) + ")"
 
-    def results(self, style='compact', decimals=2, fill='-'):
-        '''Print the results of the costing calculation.
-
-        Parameters
-        ----------
-        style : str, optional (Default = 'compact')
-            This sets the style of the displayed costing DataFrame.
-            `'compact'` prints a DataFrame that has been truncated slightly.
-            `'full'` prints the entire DataFrame.
-
-        decimals : int or None, optional (Default = 2)
-            How many decimal places to show in the table. Set this to `None`
-            if you want full precision.
-
-        fill : str or None, optional ('-')
-            Fill NaN values with this string. This makes the table a little
-            easier to read. Set this to `None` if you want to see the table
-            with the typical NaN labels.
+    def _prep_results(self, style='compact'):
+        '''Preps an output DataFrame for the results method.
         '''
-        # Print the time the calculation was run
-        print('As of', self._now, '--')
-        
-        # Print a string about the final cost of the product
-        if decimals:
-            dec_str = ':.{:d}f'.format(decimals)
-        else:
-            dec_str = ':f'
-        cost_str = 'The final cost of {} is ${' + dec_str + '}/kg.'
-        print(cost_str.format(self.final_prod, self.cost))
-            
         # For compact display, these are the most important columns
         comp_col = ['Cost', 'Equiv',] 
         if self.fulldata.Volumes.any():
@@ -939,20 +912,55 @@ class ExcelCost(object):
         
         # Combine the fulldata and pmi DataFrames
         fd = self._df_combine()
-        
+
         # Display the DataFrames for different permutations of kwargs
         # The fillna removes NaN from the displayed tables in Notebook, but
         # may goof up printing
+        if style == 'full':
+            fd = fd[no_ecol]
+        elif style == 'compact':
+            fd = fd[comp_col]
+
+        return fd
+
+    def results(self, style='compact', decimals=2, fill='-'):
+        '''Print the results of the costing calculation.
+
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional (Default = '-')
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
+        '''
+        # Get the prepared DataFrame for printing 
+        fd = self._prep_results(style)
+
+        # Print the time the calculation was run
+        print('As of', self._now, '--')
+        
+        # Print a string about the final cost of the product
         if decimals:
-            if style == 'full':
-                disp(fd[no_ecol].round(decimals).fillna(fill))
-            elif style == 'compact':
-                disp(fd[comp_col].round(decimals).fillna(fill))
+            dec_str = ':.{:d}f'.format(decimals)
         else:
-            if style == 'full':
-                disp(fd[no_ecol].fillna(fill))
-            elif style == 'compact':
-                disp(fd[comp_col].fillna(fill))
+            dec_str = ':f'
+        cost_str = 'The final cost of {} is ${' + dec_str + '}/kg.'
+        print(cost_str.format(self.final_prod, self.cost))
+            
+        # Display the correct format of data based on the kwargs
+        if decimals:
+            disp(fd.round(decimals).fillna(fill))
+        else:
+            disp(fd.fillna(fill))
 
     def _df_combine(self, ):
         '''Combine the fulldata and pmi DataFrames for saving/exporting.
@@ -1253,7 +1261,7 @@ class ColabCost(ExcelCost):
             How many decimal places to show in the table. Set this to `None`
             if you want full precision.
 
-        fill : str or None, optional ('-')
+        fill : str or None, optional (Default = '-')
             Fill NaN values with this string. This makes the table a little
             easier to read. Set this to `None` if you want to see the table
             with the typical NaN labels.
@@ -1311,29 +1319,31 @@ class WebAppCost(ExcelCost):
         return df
         
     def results(self, style='compact', decimals=2, fill=np.nan):
-        # For compact display, these are the most important columns
-        comp_col = ['Cost', 'Equiv',] 
-        if self.fulldata.Volumes.any():
-            comp_col.extend(['Volumes', 'Sol Recyc',])
-        if self.fulldata.OPEX.any():
-            comp_col.append('OPEX') 
-        comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
+        '''Print the results of the costing calculation.
 
-        # For full display, don't show the Excel columns
-        ecol_mask = ~self.fulldata.columns.str.contains('dyn|rnum')
-        no_ecol = self.fulldata.columns[ecol_mask]
-        
-        # Combine the fulldata and pmi DataFrames
-        fd = self._df_combine()
-        
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional (Default = np.nan)
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
+        '''
+        fd = self._prep_results(style)
+
         # Display the DataFrames for different permutations of kwargs
-        # The fillna removes NaN from the displayed tables in Notebook, but
-        # may goof up printing
-        if style == 'full':
-            fd = fd[no_ecol].round(decimals).fillna(fill)
-        elif style == 'compact':
-            fd = fd[comp_col].round(decimals).fillna(fill)
+        if decimals:
+            fd = fd.round(decimals).fillna(fill)
+        else:
+            fd = fd.fillna(fill)
 
         return fd
 
