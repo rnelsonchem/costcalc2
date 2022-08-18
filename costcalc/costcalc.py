@@ -1316,6 +1316,11 @@ class ColabCost(ExcelCost):
         files.download(fname)
         
 class WebAppCost(ExcelCost):
+    '''Costing class designed for the Streamlit Web App environment.
+
+    This is largely the same as the `ExcelCost` class, so see that method for
+    a more complete docstring. 
+    '''
     def _excel_csv_reader(self, fname, fsheet, dtypes=None):
         '''A simple Excel reader function for both reaction and materials
         files.
