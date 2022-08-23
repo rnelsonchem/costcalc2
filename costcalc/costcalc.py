@@ -1347,6 +1347,11 @@ class WebAppCost(ExcelCost):
         df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
                         .dropna(how='all')
 
+        # Drop lines that are still empty, these cause all sorts of problems
+        # Assume rxn/materials sheets should have Cpd names for valid entries
+        cpd_mask = df['Compound'].isna()
+        df = df[~cpd_mask]
+        
         return df
         
     def results(self, style='compact', decimals=2, fill=np.nan):
