@@ -155,6 +155,11 @@ class ExcelCost(object):
         elif fname[-3:].lower() == 'csv':
             df = pd.read_csv(fname, dtype=dtypes, comment='#')\
                             .dropna(how='all')
+        # Drop lines that are still empty, these cause all sorts of problems
+        # Assume rxn/materials sheets should have Cpd names for valid entries
+        cpd_mask = df['Compound'].isna()
+        df = df[~cpd_mask]
+        
         return df
         
     def _materials_build(self, ):
@@ -1253,8 +1258,11 @@ class ColabCost(ExcelCost):
         # Convert empty cells to NaN
         mask = (val_df == '')
         val_df[mask] = np.nan
-        # Drop empty rows
-        val_df.dropna(how='all', inplace=True)
+        # Drop empty rows, these are particularly difficult to error check
+        # sometimes. Assuming that both materials/rxns sheets should have
+        # compound names for valid lines.
+        cpd_mask = val_df['Compound'].isna()
+        val_df = val_df[~cpd_mask]
 
         # Drop lines with comment markers
         mask = ~val_df.iloc[:, 0].str.startswith('#')
