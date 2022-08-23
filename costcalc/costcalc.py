@@ -268,6 +268,20 @@ class ExcelCost(object):
         These are some checks that will throw some "sane" errors if things are
         not correct.
         ''' 
+        # Check for a missing material -- Everything should have a MW
+        # If not, this may suggest that there is a line that should not be
+        # empty
+        mw_mask = self.fulldata['MW'].isna()
+        if mw_mask.any():
+            err_line = 'Missing MW or bad line in input file! \n'\
+                'You are missing one or more MW values or else there is \n'\
+                'a cell entry in a "blank" line. Make sure that all empty\n'\
+                'reaction/materials lines are completely blank, i.e. \n'\
+                'entry free (even spaces!).'
+            print(err_line)
+            disp(self.fulldata[mw_mask])
+            raise ValueError(err_line)
+
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
         dup_cpds = self.materials['Compound'].duplicated()
@@ -290,16 +304,6 @@ class ExcelCost(object):
                     disp(prod)
             raise ValueError('Yikes! Read the note above.')
             
-        # Check for a missing material -- Everything should have a MW
-        mw_mask = self.fulldata['MW'].isna()
-        if mw_mask.any():
-            print('You are missing a MW!!!')
-            print('May be a mismatch between the reaction and materials file.')
-            print('Material might be missing from materials sheet.')
-            print('Check these materials.')
-            disp(self.fulldata.loc[mw_mask, 'MW'])
-            raise ValueError('Yikes! Read the note above.')
-
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
         # NaNs. Check for this by looking for NaN in both Cost and Calc columns
