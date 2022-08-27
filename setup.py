@@ -29,6 +29,7 @@ setup(
         'numpy>=1.17',
         'pandas>=0.25',
         'matplotlib>=2.0',
+        'openpyxl>=3.0',
         ]
 
 )
