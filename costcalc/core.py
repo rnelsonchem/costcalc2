@@ -1,5 +1,5 @@
 '''
-Chemical Reaction Cost Cacluation Routines.
+Chemical Reaction Cost Calculation Routines.
 Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
@@ -603,7 +603,7 @@ class CoreCost(object):
         # be at the end.
         return pd.concat([df, pmi_small], ignore_index=True)
 
-    def excel(self, decimals):
+    def excel(self, ):
         '''Prepare a DataFrame for Excel export.
 
         See `excel_save` method for the docstring info.
