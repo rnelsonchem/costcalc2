@@ -2,6 +2,7 @@ import urllib.parse as parse
 from io import BytesIO
 
 from .core import CoreCost
+from .helper import HelperFuncs
 
 import numpy as np
 import pandas as pd
@@ -226,6 +227,10 @@ class ExcelCost(CoreCost):
         fd.to_excel(fname, 
                     sheet_name='As of ' + self._now.split()[0], )
             
+
+class ExcelCostAdv(ExcelCost, HelperFuncs):
+    pass
+
 
 class ColabCost(ExcelCost):
     '''Costing class designed for the Colab Python environment.
@@ -500,6 +505,11 @@ class WebAppCost(ExcelCost):
         proc_excel = output.getvalue()
 
         return proc_excel
+
+
+class ColabCostAdv(ColabCost, HelperFuncs):
+    pass
+
 
 ### References:
 # https://discuss.streamlit.io/t/download-button-for-csv-or-xlsx-file/17385/2
