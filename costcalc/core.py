@@ -650,7 +650,122 @@ class CoreCost(object):
         return fd
 
 
-class ExcelCost(object):
+class ExcelCost(CoreCost):
+    def __init__(self, materials_file, rxn_file, final_prod,
+            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
+            alt_mat_sheet=0):
+        # Set up the reaction DataFrame
+        self._rxn_file = rxn_file
+        self._rxn_sheet = rxn_sheet
+        rxns = self._rxn_read()
+
+        # Create the Materials DataFrame from a main sheet and an optional
+        # alternate sheet.
+        self._materials_file = materials_file
+        self._materials_sheet = materials_sheet
+        self._alt_mat_file = alt_mat_file
+        self._alt_mat_sheet = alt_mat_sheet
+        materials = self._materials_build()                
+
+        # Run the __init__ method from the CoreCost class
+        super(ExcelCost, self).__init__(rxns, materials, final_prod)
+
+    def _rxn_read(self, ):
+        '''Read an Excel sheet that defines the reactions.
+        '''
+        rxns = self._excel_csv_reader(self._rxn_file, self._rxn_sheet,
+                            dtypes={'Step':str, 'Cost calc':str})
+        return rxns
+
+    def _excel_csv_reader(self, fname, fsheet, dtypes=None):
+        '''A simple Excel/CSV reader function for both reaction and materials
+        files.
+        '''
+        # Read the file, drop NaN-only and commented rows.
+        if fname[-4:].lower() == 'xlsx':
+            df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
+                            .dropna(how='all')
+        elif fname[-3:].lower() == 'csv':
+            df = pd.read_csv(fname, dtype=dtypes, comment='#')\
+                            .dropna(how='all')
+        # Drop lines that are still empty, these cause all sorts of problems
+        # Assume rxn/materials sheets should have Cpd names for valid entries
+        cpd_mask = df['Compound'].isna()
+        df = df[~cpd_mask]
+        
+        return df
+        
+    def _materials_build(self, ):
+        '''Read and combine the main and an optional alternate materials
+        sheets.
+        '''
+        materials = self._materials_read(self._materials_file,
+                self._materials_sheet)
+
+        # If an alternative materials key is given, combine that materials
+        # sheet with the main one
+        if self._alt_mat_file:
+            alt_mats = self._materials_read(self._alt_mat_file,
+                    self._alt_mat_sheet)
+            # Concatenate the sheets. Reset the index so that it is
+            # consecutively numbered
+            materials = pd.concat([materials, alt_mats], sort=False)\
+                    .reset_index(drop=True)
+
+        # Set the final materials sheet
+        return materials
+
+    def _materials_read(self, mat_file, wsheet):
+        '''Read an Excel file sheet that defines the materials used in
+        costing.
+
+        This is a separate method so it can be overwritten in other classes.
+        '''
+        mats = self._excel_csv_reader(mat_file, wsheet,)
+        return mats
+
+    def results(self, style='compact', decimals=2, fill='-'):
+        '''Print the results of the costing calculation.
+
+        Parameters
+        ----------
+        style : str, optional (Default = 'compact')
+            This sets the style of the displayed costing DataFrame.
+            `'compact'` prints a DataFrame that has been truncated slightly.
+            `'full'` prints the entire DataFrame.
+
+        decimals : int or None, optional (Default = 2)
+            How many decimal places to show in the table. Set this to `None`
+            if you want full precision.
+
+        fill : str or None, optional (Default = '-')
+            Fill NaN values with this string. This makes the table a little
+            easier to read. Set this to `None` if you want to see the table
+            with the typical NaN labels.
+        '''
+        # Get the prepared DataFrame for printing 
+        fd = super(ExcelCost, self).results(style)
+
+        # Print the time the calculation was run
+        print('As of', self._now, '--')
+        
+        # Print a string about the final cost of the product
+        if decimals:
+            dec_str = ':.{:d}f'.format(decimals)
+        else:
+            dec_str = ':f'
+        cost_str = f'The final cost of {self.final_prod} is '\
+                f'${self.cost:.2f}/kg.'
+        print(cost_str)
+            
+        # Display the correct format of data based on the kwargs
+        if decimals:
+            print(fd.round(decimals).fillna(fill))
+        else:
+            print(fd.fillna(fill))
+
+
+class ExcelCost_old(object):
     '''Costing class designed for local Excel/csv spreadsheets.
 
     This can also act as the base class for other subclasses.
