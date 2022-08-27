@@ -1,5 +1,5 @@
 '''
-Chemical Reaction Cost Calculation Routine.
+Chemical Reaction Cost Calculation and Excel Export Algorithms.
 Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
 (C) Ryan Nelson
 '''
@@ -7,6 +7,15 @@ import time
 
 import numpy as np
 import pandas as pd
+
+# Setting the display to print function
+# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
+# are displayed in a fancier format
+try:
+    from IPython.display import display as disp
+    from IPython.display import Javascript
+except:
+    disp = print
 
 # Column dictionary
 # This dictionary will be used for creating dynamic excel sheets, for which

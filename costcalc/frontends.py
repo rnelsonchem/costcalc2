@@ -13,6 +13,15 @@ pd.options.display.max_rows = 1000
 # Set Pandas precision
 #pd.set_option('precision', 2)
 
+# Setting the display to print function
+# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
+# are displayed in a fancier format
+try:
+    from IPython.display import display as disp
+    from IPython.display import Javascript
+except:
+    disp = print
+
 
 class ExcelCost(CoreCost):
     '''Costing class designed for local Excel/csv spreadsheets.
@@ -195,9 +204,9 @@ class ExcelCost(CoreCost):
             
         # Display the correct format of data based on the kwargs
         if decimals:
-            print(fd.round(decimals).fillna(fill))
+            disp(fd.round(decimals).fillna(fill))
         else:
-            print(fd.fillna(fill))
+            disp(fd.fillna(fill))
 
     def excel(self, fname, ):
         '''Save the costing DataFrame as an Excel file.
@@ -241,15 +250,11 @@ class ColabCost(ExcelCost):
             rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
         # Do some imports that are only possible in the Colab environment
         # This should prevent these from running in a non-Colab environment
-        from IPython.display import display as disp
-        from IPython.display import Javascript
         from google.auth import default
         from google.colab import auth
         from google.colab import files
         import gspread
         # These will have to be made global
-        global disp
-        global Javascript
         global default
         global auth
         global files
