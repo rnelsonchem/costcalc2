@@ -764,6 +764,24 @@ class ExcelCost(CoreCost):
         else:
             print(fd.fillna(fill))
 
+    def excel(self, fname, ):
+        '''Save the costing DataFrame as an Excel file.
+
+        Parameters
+        ----------
+        fname : str, ExcelWriter
+            The name you want to give to the Excel file, or an ExcelWriter
+            object to send multiple to the same file. See
+            `pandas.DataFrame.to_excel` documentation for details.
+
+        '''
+        # Get the process DataFrame
+        fd = super(ExcelCost, self).excel()
+
+        # Create the excel file. Can only save with the date and not the time
+        fd.to_excel(fname, 
+                    sheet_name='As of ' + self._now.split()[0], )
+            
 
 class ExcelCost_old(object):
     '''Costing class designed for local Excel/csv spreadsheets.
