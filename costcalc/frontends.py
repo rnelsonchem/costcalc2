@@ -118,11 +118,11 @@ class ExcelCost(CoreCost):
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.
         '''
-        rxns = self._excel_csv_reader(self._rxn_file, self._rxn_sheet,
+        rxns = self._get_sheet_vals(self._rxn_file, self._rxn_sheet,
                             dtypes={'Step':str, 'Cost calc':str})
         return rxns
 
-    def _excel_csv_reader(self, fname, fsheet, dtypes=None):
+    def _get_sheet_vals(self, fname, fsheet, dtypes=None):
         '''A simple Excel/CSV reader function for both reaction and materials
         files.
         '''
@@ -166,7 +166,7 @@ class ExcelCost(CoreCost):
 
         This is a separate method so it can be overwritten in other classes.
         '''
-        mats = self._excel_csv_reader(mat_file, wsheet,)
+        mats = self._get_sheet_vals(mat_file, wsheet,)
         return mats
 
     def results(self, style='compact', decimals=2, fill='-'):
