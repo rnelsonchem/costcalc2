@@ -382,7 +382,7 @@ class ColabCost(ExcelCost):
                                        fill=fill)
 
 
-    def excel_save(self, fname, decimals=None):
+    def excel(self, fname):
         '''Download the costing DataFrame as an Excel file.
 
         Parameters
@@ -390,20 +390,10 @@ class ColabCost(ExcelCost):
         fname : str
             The name you want to give to the Excel file.
 
-        decimals : str or None, optional (default = None)
-            The number of decimal places to display in the Excel sheet. If
-            `None`, then the full precision will be saved. 
-
-        Note
-        ----
-        In some cases, this function will throw an error. In that case, try
-        running this again in order to get it to work. 
         '''
-        super(ColabCost, self).excel_save(fname, decimals)
+        super(ColabCost, self).excel(fname, )
 
-        # There seems to be a bit of a lag before you can download
-        # the file, this delay might fix some of the errors this causes
-        time.sleep(2)
+        # Use the Colab function for downloading the file from the server
         files.download(fname)
         
 
