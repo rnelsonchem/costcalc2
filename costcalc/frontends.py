@@ -237,22 +237,22 @@ class ColabCost(ExcelCost):
 
     Parameters
     ----------
-    materials_key : str
+    materials_url : str
         The Google Sheet key to a materials list. This value can be found
         in the URL of the sheet.
 
-    rxn_key : str
+    rxn_url : str
         The Google Sheet key to the reaction list. This value can be found
         in the URL of the sheet.
 
-    alt_mat_key : str, optional (default = None)
+    alt_mat_url : str, optional (default = None)
         A Google Sheet key for an optional, secondary materials sheet.
         This is useful if you have separate master and user materials
         sheets, for example.
 
     '''
-    def __init__(self, materials_key, rxn_key, final_prod, materials_sheet=0,
-            rxn_sheet=0, alt_mat_key=None, alt_mat_sheet=0):
+    def __init__(self, materials_url, rxn_url, final_prod, materials_sheet=0,
+            rxn_sheet=0, alt_mat_url=None, alt_mat_sheet=0):
         # Do some imports that are only possible in the Colab environment
         # This should prevent these from running in a non-Colab environment
         from google.auth import default
@@ -271,10 +271,10 @@ class ColabCost(ExcelCost):
         self._gc = gspread.authorize(creds)
         
         # Fix the final product and setup a mod variable
-        super(ColabCost, self).__init__(materials_key, rxn_key, final_prod,
-                materials_sheet, rxn_sheet, alt_mat_key, alt_mat_sheet)
+        super(ColabCost, self).__init__(materials_url, rxn_url, final_prod,
+                materials_sheet, rxn_sheet, alt_mat_url, alt_mat_sheet)
         
-    def _materials_read(self, mat_key, wsheet):
+    def _materials_read(self, mat_url, wsheet):
         '''Read a Google sheet that defines the materials used in costing.
 
         Parameters
@@ -286,21 +286,20 @@ class ColabCost(ExcelCost):
         wsheet : str or int
             The specific sheet to extract from the Google spreadsheet. 
         '''
-        mats = self._get_gsheet_vals(mat_key, wsheet)
+        mats = self._get_sheet_vals(mat_url, wsheet)
 
         # Convert numeric/date columns. Everything is read from a Google sheet
         # as strings
         num_cols = ['MW', 'Density', 'Cost'] 
         for nc in num_cols:
             mats[nc] = pd.to_numeric(mats[nc])
-        #mats['Date'] = pd.to_datetime(mats['Date'])
 
         return mats
         
     def _rxn_read(self, ):
         '''Read a Google Sheet of reaction info.
         '''
-        rxns = self._get_gsheet_vals(self._rxn_file,
+        rxns = self._get_sheet_vals(self._rxn_file,
                                      self._rxn_sheet)
 
         # Set some rxns columns to numeric values. Everything is read from a
@@ -312,9 +311,9 @@ class ColabCost(ExcelCost):
         for nc in num_cols:
             rxns[nc] = pd.to_numeric(rxns[nc])
         
-        self.rxns = rxns
+        return rxns
         
-    def _get_gsheet_vals(self, key, sheet):
+    def _get_sheet_vals(self, key, sheet):
         '''General code for getting Google Sheet values and returning a 
         DataFrame.
         '''
