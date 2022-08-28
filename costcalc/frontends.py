@@ -1,5 +1,4 @@
 import urllib.parse as parse
-from io import BytesIO
 
 from .core import CoreCost
 from .helper import HelperFuncs
@@ -127,12 +126,13 @@ class ExcelCost(CoreCost):
         files.
         '''
         # Read the file, drop NaN-only and commented rows.
-        if fname[-4:].lower() == 'xlsx':
-            df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
-                            .dropna(how='all')
-        elif fname[-3:].lower() == 'csv':
+        if isinstance(fname, str) and fname[-3:].lower() == 'csv':
             df = pd.read_csv(fname, dtype=dtypes, comment='#')\
                             .dropna(how='all')
+        else:
+            df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
+                            .dropna(how='all')
+
         # Drop lines that are still empty, these cause all sorts of problems
         # Assume rxn/materials sheets should have Cpd names for valid entries
         cpd_mask = df['Compound'].isna()
@@ -418,27 +418,6 @@ class WebAppCost(ExcelCost):
     This is largely the same as the `ExcelCost` class, so see that method for
     a more complete docstring. 
     '''
-    def _excel_csv_reader(self, fname, fsheet, dtypes=None):
-        '''A simple Excel reader function for both reaction and materials
-        files.
-
-        For the WebApp, it is assumed that only Excel files will be passed
-        into the app. In the app, the Excel file is converted into a binary
-        stream, so you can not easily tell the difference between Excel/CSV
-        files. The read_excel pandas method can still read the bytestream just
-        fine.
-        '''
-        # Read the file, drop NaN-only and commented rows.
-        df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
-                        .dropna(how='all')
-
-        # Drop lines that are still empty, these cause all sorts of problems
-        # Assume rxn/materials sheets should have Cpd names for valid entries
-        cpd_mask = df['Compound'].isna()
-        df = df[~cpd_mask]
-        
-        return df
-        
     def results(self, style='compact', decimals=2, fill=np.nan):
         '''Print the results of the costing calculation.
 
@@ -458,7 +437,8 @@ class WebAppCost(ExcelCost):
             easier to read. Set this to `None` if you want to see the table
             with the typical NaN labels.
         '''
-        fd = self._prep_results(style)
+        # Use the CoreCost.results method to get the initial results DataFrame
+        fd = super(ExcelCost, self).results(style)
 
         # Display the DataFrames for different permutations of kwargs
         if decimals:
@@ -468,49 +448,4 @@ class WebAppCost(ExcelCost):
 
         return fd
 
-    def excel_save(self, fname, decimals=None):
-        '''Save the costing DataFrame as an Excel file.
 
-        Parameters
-        ----------
-        fname : str
-            The name you want to give to the Excel file.
-
-        decimals : str or None, optional (default = None)
-            The number of decimal places to display in the Excel sheet. If
-            `None`, then the full precision will be saved. 
-
-        Note
-        ----
-        In some cases, this function will throw an error. In that case, try
-        running this again in order to get it to work. 
-        '''
-        # Get the process DataFrame
-        fd = self._prep_excel(decimals)
-
-        # Can set some keyword arguments here
-        kwargs = {}
-        # If decimals is given, set that value to the rounding for float
-        # formatting in the output
-        if decimals:
-            kwargs['float_format'] = '%.{:d}f'.format(decimals)
-           
-        # Create the excel file. Can only save with the date and not the time
-        # This must be done as a Bytes object, as described in the refs
-        output = BytesIO()
-        writer = pd.ExcelWriter(output)
-        # Dump the data to the ExcelWriter, which in turn sends it to a
-        # bytestream object
-        fd.to_excel(writer, 
-                    sheet_name='As of ' + self._now.split()[0], 
-                    **kwargs)
-        writer.save()
-        
-        # Get the byte string for output and return this for saving
-        proc_excel = output.getvalue()
-
-        return proc_excel
-
-
-### References:
-# https://discuss.streamlit.io/t/download-button-for-csv-or-xlsx-file/17385/2
