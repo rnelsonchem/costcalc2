@@ -5,9 +5,9 @@ with open('README.md') as file:
 
 setup(
     name = "costcalc2",
-    version = "0.3",
+    version = "0.7",
 
-    description = "Cost calculations for synthetic chemical preparation routes",
+    description = "Calculate raw material costs for chemical synthetic route",
     url = "https://github.com/rnelsonchem/costcalc2",
     long_description = long_description,
 
@@ -22,13 +22,13 @@ setup(
         'Programming Language :: Python :: 3',
     ],
 
-    keywords = "Chemical Synthesis Cost Pricing",
+    keywords = "Chemical Synthesis Route Cost Pricing",
 
     packages = find_packages(),
     install_requires = [
-        'numpy>=1.17',
-        'pandas>=0.25',
-        'matplotlib>=2.0',
+        'numpy>=1.2',
+        'pandas>=1.4',
+        'matplotlib>=3.5',
         'openpyxl>=3.0',
         ]
 
