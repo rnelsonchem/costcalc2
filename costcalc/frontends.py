@@ -407,6 +407,11 @@ class ColabCost(ExcelCost):
         time.sleep(2)
         files.download(fname)
         
+
+class ColabCostAdv(ColabCost, HelperFuncs):
+    pass
+
+
 class WebAppCost(ExcelCost):
     '''Costing class designed for the Streamlit Web App environment.
 
@@ -505,10 +510,6 @@ class WebAppCost(ExcelCost):
         proc_excel = output.getvalue()
 
         return proc_excel
-
-
-class ColabCostAdv(ColabCost, HelperFuncs):
-    pass
 
 
 ### References:
