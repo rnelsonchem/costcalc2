@@ -113,7 +113,7 @@ class ExcelCost(CoreCost):
         materials = self._materials_build()                
 
         # Run the __init__ method from the CoreCost class
-        super(ExcelCost, self).__init__(rxns, materials, final_prod)
+        super(ExcelCost, self).__init__(materials, rxns, final_prod)
 
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.

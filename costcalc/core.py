@@ -28,7 +28,7 @@ ecols = {'Step':'A', 'Compound':'B', 'MW':'C', 'Density':'D', 'Cost':'E',
         }
 
 class CoreCost(object):
-    def __init__(self, rxns, materials, final_prod):
+    def __init__(self, materials, rxns, final_prod):
         # We need to store the input values/DataFrames
         self.rxns = rxns
         self.materials = materials
