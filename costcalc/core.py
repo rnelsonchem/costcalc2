@@ -17,12 +17,28 @@ try:
 except:
     disp = print
 
+# Reactions Table Columns
+rxn_stp = 'Step' # The step labels
+rxn_cpd = 'Compound' # The compound names column, same for materials table
+rxn_eq = 'Equiv' # Molar equivalents of reagent
+rxn_ms = 'Mass' # Mass of material used, typically kg, just be consistent
+rxn_vol = 'Volumes' # Volumes of solvent L/kg of limiting reagent (usually)
+rxn_rel = 'Relative' # Limiting reagent name for volumes->mass calculation
+rxn_rcy = 'Sol Recyc' # Fractional amount of solvent that is recycled
+rxn_cst = 'Cost calc' # Step where cost is calculated
+rxn_opx = 'OPEX' # Operational expenditures in $/kg, only for rxn product
+notes = 'Notes' # The notes column name, same for materials table
+# Materials Table Columns
+mat_mw = 'MW' # Molecular weight
+mat_den = 'Density' # Density, only used for solvents
+mat_cst = 'Cost' # The estimated material price/cost ($/kg)
+
 # Column dictionary
 # This dictionary will be used for creating dynamic excel sheets, for which
 # I'll need to know the correct column labels
-ecols = {'Step':'A', 'Compound':'B', 'MW':'C', 'Density':'D', 'Cost':'E',
-        'Equiv':'F', 'Volumes':'G', 'Relative':'H', 'Sol Recyc':'I',
-        'Cost Calc':'J', 'OPEX':'K', 'kg/kg rxn':'L', 'RM cost/kg rxn':'M',
+ecols = {rxn_stp:'A', rxn_cpd:'B', mat_mw:'C', mat_den:'D', mat_cst:'E',
+        rxn_eq:'F', rxn_vol:'G', rxn_rel:'H', rxn_rcy:'I',
+        rxn_cst:'J', rxn_opx:'K', 'kg/kg rxn':'L', 'RM cost/kg rxn':'M',
         '% RM cost/kg rxn':'N', 'kg/kg prod':'O', 'RM cost/kg prod':'P',
         '% RM cost/kg prod':'Q',
         }
@@ -52,56 +68,56 @@ class CoreCost(object):
         # dropped, which are not necessary for calculations. The merge happens
         # on the rxns DataFrame ('right'), which means that missing materials
         # will be fairly obvious (no MW, e.g.).
-        mat_keeps = ['Compound', 'MW', 'Density', 'Cost', 'Notes']
+        mat_keeps = [rxn_cpd, mat_mw, mat_den, mat_cst, notes]
 
-        rxn_keeps = ['Step', 'Compound', 'Equiv', 'Volumes', 'Relative',
-                    'Sol Recyc', 'Cost calc', 'OPEX', 'Notes']
+        rxn_keeps = [rxn_stp, rxn_cpd, rxn_eq, rxn_vol, rxn_rel,
+                    rxn_rcy, rxn_cst, rxn_opx, notes]
         # Check if an "Amount" column is present. This is used to calculate
         # equivalents. If this is present, add this column to our "keep" list
         amt = False
-        if 'Amount' in self.rxns.columns:
+        if rxn_ms in self.rxns.columns:
             amt = True 
-            rxn_keeps = rxn_keeps[:2] + ['Amount'] + rxn_keeps[2:]
+            rxn_keeps = rxn_keeps[:2] + [rxn_ms] + rxn_keeps[2:]
 
         fulldata = pd.merge(self.materials[mat_keeps], self.rxns[rxn_keeps],
-                            on='Compound', how='right')\
+                            on=rxn_cpd, how='right')\
                             .rename({'Notes_x': 'Material Notes',
                                 'Notes_y': 'Reaction Notes'}, axis=1)
 
         # Find the step number for the final product. 
         fp_mask = fulldata.Compound == self.final_prod
-        self._fp_idx = fulldata.loc[fp_mask, 'Cost calc'].iloc[0]
+        self._fp_idx = fulldata.loc[fp_mask, rxn_cst].iloc[0]
 
         # If the "Amount" column is present, then you will need calculate the
         # "Equiv" based on the Amount given
         if amt:
             # Group everything by "Step" column
-            grp = fulldata.groupby('Step')
+            grp = fulldata.groupby(rxn_stp)
             for idx, sb_grp in grp:
                 # If there are no amounts for a given Step, then skip
-                if ~sb_grp['Amount'].any():
+                if ~sb_grp[rxn_ms].any():
                     continue
                 # Mask out only the values that have amounts. This is
                 # important in case a mixture of mass and equiv is used.
                 # Also check to make sure this isn't a solvent
-                mask = ~sb_grp['Amount'].isna() & sb_grp['Volumes'].isna()
+                mask = ~sb_grp[rxn_ms].isna() & sb_grp[rxn_vol].isna()
                 # Calculate the Equivalents
-                sb_grp.loc[mask, 'Equiv'] = sb_grp.loc[mask, 'MW']*\
-                                        sb_grp.loc[mask, 'Amount']
+                sb_grp.loc[mask, rxn_eq] = sb_grp.loc[mask, mat_mw]*\
+                                        sb_grp.loc[mask, rxn_ms]
                 # Assume the first entry is the limiting reagent. Normalize
                 # the rest of the equivalents to that value
-                sb_grp.loc[mask, 'Equiv'] = sb_grp.loc[mask, 'Equiv']/\
-                                       (sb_grp.iloc[0]['Equiv'])
+                sb_grp.loc[mask, rxn_eq] = sb_grp.loc[mask, rxn_eq]/\
+                                       (sb_grp.iloc[0][rxn_eq])
                 # Set the values in the full DataFrame
-                mask = fulldata['Step'] == idx
-                fulldata.loc[mask, 'Equiv'] = sb_grp['Equiv']
+                mask = fulldata[rxn_stp] == idx
+                fulldata.loc[mask, rxn_eq] = sb_grp[rxn_eq]
             # Remove the Amount column
-            fulldata.drop('Amount', axis=1, inplace=True)
+            fulldata.drop(rxn_ms, axis=1, inplace=True)
 
         # Add an indexing column, which will be used for sorting purposes
         fulldata['idx_col'] = np.arange(fulldata.shape[0])
         # Set MultiIndex
-        fulldata.set_index(['idx_col', 'Step', 'Compound'], inplace=True)
+        fulldata.set_index(['idx_col', rxn_stp, rxn_cpd], inplace=True)
         # This is necessary so that slices of the DataFrame are views and not
         # copies
         fulldata = fulldata.sort_index()
@@ -127,8 +143,8 @@ class CoreCost(object):
         modified values with `value_mod` method will be re-modified. 
         '''
         # Set the costs to NaN for materials that will have costs calculated 
-        cost_recalc_mask = ~self.fulldata['Cost calc'].isna()
-        self.fulldata.loc[cost_recalc_mask, 'Cost'] = np.nan
+        cost_recalc_mask = ~self.fulldata[rxn_cst].isna()
+        self.fulldata.loc[cost_recalc_mask, mat_cst] = np.nan
 
         # Modify stored mod variables
         for mod in self._mod_vals:
@@ -160,7 +176,7 @@ class CoreCost(object):
         # Check for a missing material -- Everything should have a MW
         # If not, this may suggest that there is a line that should not be
         # empty
-        mw_mask = self.fulldata['MW'].isna()
+        mw_mask = self.fulldata[mat_mw].isna()
         if mw_mask.any():
             err_line = 'Missing MW or bad line in input file! \n'\
                 'You are missing one or more MW values or else there is \n'\
@@ -173,21 +189,21 @@ class CoreCost(object):
 
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
-        dup_cpds = self.materials['Compound'].duplicated()
+        dup_cpds = self.materials[rxn_cpd].duplicated()
         if dup_cpds.any():
             print('You have a duplicate material!!!')
             print("These compounds are duplicated in your materials sheet.")
-            disp(self.materials.loc[dup_cpds, 'Compound'])
+            disp(self.materials.loc[dup_cpds, rxn_cpd])
             raise ValueError('Yikes! Read the note above.')
 
         # Check for duplicated materials in a single reaction.
         # When you select a single value from a reaction, you'll get a series
         # and not a float, e.g.
-        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), 'MW']
+        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), mat_mw]
         if isinstance(dup_rxn, pd.Series):
             print('You have a duplicated material in a single reaction.')
             print('Check these lines:')
-            gb = self.fulldata.groupby(['Prod', 'Compound'])
+            gb = self.fulldata.groupby(['Prod', rxn_cpd])
             for prod, group in gb:
                 if group.shape[0] > 1:
                     disp(prod)
@@ -196,23 +212,23 @@ class CoreCost(object):
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
         # NaNs. Check for this by looking for NaN in both Cost and Calc columns
-        cost_mask = (self.fulldata['Cost calc'].isna() & \
-                    self.fulldata['Cost'].isna())
+        cost_mask = (self.fulldata[rxn_cst].isna() & \
+                    self.fulldata[mat_cst].isna())
         if cost_mask.any():
             print('You are missing a necessary material cost!!')
             print('You may need to indicate a Step in the "Cost calc" column.')
             print('Check these columns.')
-            disp(self.fulldata.loc[cost_mask, ['Cost', 'Cost calc']])
+            disp(self.fulldata.loc[cost_mask, [mat_cst, rxn_cst]])
             raise ValueError('Yikes! Read the note above.')
         
         # Check that all the solvent information is given
-        sol_mask = ~self.fulldata['Volumes'].isna() 
-        sol_chk = self.fulldata.loc[sol_mask, 'Relative'].isna() | \
-                self.fulldata.loc[sol_mask, 'Density'].isna() | \
-                self.fulldata.loc[sol_mask, 'Sol Recyc'].isna()
+        sol_mask = ~self.fulldata[rxn_vol].isna() 
+        sol_chk = self.fulldata.loc[sol_mask, rxn_rel].isna() | \
+                self.fulldata.loc[sol_mask, mat_den].isna() | \
+                self.fulldata.loc[sol_mask, rxn_rcy].isna()
         # If anything is missing, print a note
         if sol_chk.any():
-            sol_cols = ['Density', 'Volumes', 'Relative', 'Sol Recyc']
+            sol_cols = [mat_den, rxn_vol, rxn_rel, rxn_rcy]
             print('You are missing some solvent information.')
             print('Check the following lines.')
             sol_mask2 = sol_mask & sol_chk
@@ -221,7 +237,7 @@ class CoreCost(object):
         
         # Check to make sure that the "Relative" compound for a solvent
         # is acutally contained in the step
-        sol_mask = ~self.fulldata['Relative'].isna()
+        sol_mask = ~self.fulldata[rxn_rel].isna()
         for cpd in self.fulldata[sol_mask].itertuples():
             new_idx = (cpd.Index[0], cpd.Relative)
             if new_idx not in self.fulldata.index:
@@ -273,28 +289,28 @@ class CoreCost(object):
         data = self.fulldata.loc[step].copy()
 
         # Kg of nonsolvent materials used per equivalent
-        data['kg/kg rxn'] = data['Equiv']*data['MW']
+        data['kg/kg rxn'] = data[rxn_eq]*data[mat_mw]
         # And for Excel
         if excel:
-            data['kg/kg rxn dyn'] = '=' + ecols['Equiv'] + data['rnum'] + '*'\
-                    + ecols['MW'] + data['rnum']
+            data['kg/kg rxn dyn'] = '=' + ecols[rxn_eq] + data['rnum'] + '*'\
+                    + ecols[mat_mw] + data['rnum']
         # For Excel, normalize the data here. This will get overwritten for
         # solvents. This is a little weird for the product because it will be
         # the same in numerator and denominator, but that will keep things
         # fully interactive.
         if excel:
-            data['kg/kg rxn dyn'] += '/(' + ecols['Equiv'] +\
-                    data.loc[prod,'rnum'] + '*' + ecols['MW'] +\
+            data['kg/kg rxn dyn'] += '/(' + ecols[rxn_eq] +\
+                    data.loc[prod,'rnum'] + '*' + ecols[mat_mw] +\
                     data.loc[prod, 'rnum'] + ')'
 
         # Amount of solvent
         # First figure out which materials are solvents 
-        mask = ~data['Volumes'].isna()
+        mask = ~data[rxn_vol].isna()
         sols = data[mask].copy()
         if sols.size != 0:
             # Find the material that the volumes are relative to (taking only
             # the first one... This might not be great.
-            cpd_rel = sols['Relative'][0]
+            cpd_rel = sols[rxn_rel][0]
             # What is the kg of relative cpd?
             amt_rel = data.loc[cpd_rel, 'kg/kg rxn']
             if excel:
@@ -302,13 +318,13 @@ class CoreCost(object):
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)
-            sols['kg/kg rxn'] = sols['Volumes']*sols['Density']*\
-                    (1 - sols['Sol Recyc'])*amt_rel
+            sols['kg/kg rxn'] = sols[rxn_vol]*sols[mat_den]*\
+                    (1 - sols[rxn_rcy])*amt_rel
             # And for Excel
             if excel:
-                sols['kg/kg rxn dyn'] = '=' + ecols['Volumes'] +\
-                        sols['rnum'] + '*' + ecols['Density'] +\
-                        sols['rnum'] + '*' + '(1 - ' + ecols['Sol Recyc']\
+                sols['kg/kg rxn dyn'] = '=' + ecols[rxn_vol] +\
+                        sols['rnum'] + '*' + ecols[mat_den] +\
+                        sols['rnum'] + '*' + '(1 - ' + ecols[rxn_rcy]\
                         + sols['rnum'] + ')*' + ecols['kg/kg rxn'] +\
                         amt_rel_e
             data[mask] = sols
@@ -317,10 +333,10 @@ class CoreCost(object):
         data['kg/kg rxn'] /= data.loc[prod, 'kg/kg rxn']
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
-        # column. Don't use the 'Cost calc' column directly, because some of
+        # column. Don't use the rxn_cst column directly, because some of
         # the costs may have been manually set using the `value_mod` method
-        # unknown_cost = ~data['Cost calc'].isna()
-        unknown_cost = data['Cost'].isna()
+        # unknown_cost = ~data[rxn_cst].isna()
+        unknown_cost = data[mat_cst].isna()
         # This is recursive. The final cost per kg of product will be
         # amplified by each subsequent step, which is where the new_amp
         # calculation comes into play
@@ -341,7 +357,7 @@ class CoreCost(object):
                 new_eamp = f'*({kg_col}{new_amp_enum}/{kg_col}{new_amp_eden})'
 
             # The new step is needed as well
-            new_stp = data.loc[cpd, 'Cost calc']
+            new_stp = data.loc[cpd, rxn_cst]
             # Run the cost calculation for the unknown compound
             if excel:
                 cst = self._rxn_cost(cpd, new_stp, amp*new_amp, 
@@ -349,29 +365,29 @@ class CoreCost(object):
             else:
                 cst = self._rxn_cost(cpd, new_stp, amp*new_amp)
             # Set the calculated cost
-            data.loc[cpd, 'Cost'] = cst
+            data.loc[cpd, mat_cst] = cst
             # And for Excel -- This cost will need to get swapped out later.
             # Also need to check if an OPEX is necessary
             if excel:
-                if np.isnan(self.fulldata.loc[(new_stp, cpd), 'OPEX']):
-                    data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
+                if np.isnan(self.fulldata.loc[(new_stp, cpd), rxn_opx]):
+                    data.loc[cpd, 'Cost dyn'] = '=' + ecols[mat_cst] +\
                             self.fulldata.loc[(new_stp, cpd), 'rnum']
                 else:
-                    data.loc[cpd, 'Cost dyn'] = '=' + ecols['Cost'] +\
+                    data.loc[cpd, 'Cost dyn'] = '=' + ecols[mat_cst] +\
                             self.fulldata.loc[(new_stp, cpd), 'rnum'] + '+'\
-                            + ecols['OPEX'] +\
+                            + ecols[rxn_opx] +\
                             self.fulldata.loc[(new_stp, cpd), 'rnum']
 
         # Calculate the cost for each material in the reaction
-        data['RM cost/kg rxn'] = data['kg/kg rxn']*data['Cost']
+        data['RM cost/kg rxn'] = data['kg/kg rxn']*data[mat_cst]
         # The product cost will be the sum of all the reactant/solvent costs
         data.loc[prod, 'RM cost/kg rxn'] = data['RM cost/kg rxn'].sum()
         # Set the "Cost" to the calculated value
-        data.loc[prod, 'Cost'] = data.loc[prod, 'RM cost/kg rxn']
+        data.loc[prod, mat_cst] = data.loc[prod, 'RM cost/kg rxn']
         # And for Excel
         if excel:
             data['RM cost/kg rxn dyn'] = '=' + ecols['kg/kg rxn'] +\
-                    data['rnum'] + '*' + ecols['Cost'] + data['rnum']
+                    data['rnum'] + '*' + ecols[mat_cst] + data['rnum']
             # And for Excel, first we need the rows that are not the product
             mask = data.index != prod
             # Then we need to make a comma-separated list of these rows
@@ -426,10 +442,10 @@ class CoreCost(object):
         # Return the calculated product cost, which is required for the 
         # recursive nature of the algorithm. In addition, an optional OPEX
         # may be added to take into acount production costs of the cpd
-        if np.isnan(data.loc[prod, 'OPEX']):
+        if np.isnan(data.loc[prod, rxn_opx]):
             return data.loc[prod, 'RM cost/kg rxn']
         else:
-            return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, 'OPEX']
+            return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, rxn_opx]
     
     def _rxn_data_post(self, excel=False):
         '''Calculate some values after the final cost of the reaction is
@@ -444,13 +460,13 @@ class CoreCost(object):
         
         # If an OPEX for the final reaction is given, add that to the cost
         # of the final product
-        opex = self.fulldata.loc[(step, prod), 'OPEX']
+        opex = self.fulldata.loc[(step, prod), rxn_opx]
         if not np.isnan(opex):
-            self.fulldata.loc[(step, prod), 'Cost'] = self.cost
+            self.fulldata.loc[(step, prod), mat_cst] = self.cost
             # And for Excel
             if excel:
                 self.fulldata.loc[(step, prod), 'Cost dyn'] += '+' +\
-                        ecols['OPEX'] +\
+                        ecols[rxn_opx] +\
                         self.fulldata.loc[(step, prod), 'rnum']
                 
         # Calculate % overall costs relative to the prod
@@ -466,7 +482,7 @@ class CoreCost(object):
         # Filter out certain values to simplify full data set
         # Remove the cost and %s for cost-calculated materials
         # This is necessary so that this column adds up to 100% (w/o OPEX)
-        mask = ~self.fulldata['Cost calc'].isna()
+        mask = ~self.fulldata[rxn_cst].isna()
         self.fulldata.loc[mask, '% RM cost/kg prod'] = np.nan
         if excel:
             self.fulldata.loc[mask, '% RM cost/kg prod dyn'] = ''
@@ -492,7 +508,7 @@ class CoreCost(object):
         self._pre = '*'
         
         # First of all, calculate the PMI for each reaction individually
-        gb = self.fulldata.groupby('Step')
+        gb = self.fulldata.groupby(rxn_stp)
         if excel:
             rxn_pmi = gb.agg({'kg/kg rxn':'sum', 'rnum':self._excel_pmi})\
                             .rename({'rnum': 'kg/kg rxn dyn'}, axis=1)\
@@ -500,14 +516,14 @@ class CoreCost(object):
         else:
             rxn_pmi = gb.agg({'kg/kg rxn':'sum'})\
                             .reset_index()
-        rxn_pmi['Compound'] = self._pre + 'Step ' + rxn_pmi['Step'] + ' PMI'
+        rxn_pmi[rxn_cpd] = self._pre + 'Step ' + rxn_pmi[rxn_stp] + ' PMI'
         
         # The full route PMI is not the sum of the above, but is the sum of
         # the 'kg/kg prod' column. We need to make this into a DataFrame to
         # merge with the per reaction values above.
         df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
-                   'Step': [self._fp_idx],
-                   'Compound': [self._pre*2 + 'Full Route PMI'],
+                   rxn_stp: [self._fp_idx],
+                   rxn_cpd: [self._pre*2 + 'Full Route PMI'],
                    }
         if excel:
             mask = ~self.fulldata['kg/kg prod'].isna()
@@ -519,7 +535,7 @@ class CoreCost(object):
 
         # Merge the per-reaction and full PMI
         self.pmi = pd.concat([rxn_pmi, full_pmi], 
-                             sort=False).set_index('Step')
+                             sort=False).set_index(rxn_stp)
 
     def _excel_pmi(self, col):
         # A function for creating the dynamic Excel cells for PMI
@@ -530,11 +546,11 @@ class CoreCost(object):
         '''Preps an output DataFrame for the results method.
         '''
         # For compact display, these are the most important columns
-        comp_col = ['Cost', 'Equiv',] 
+        comp_col = [mat_cst, rxn_eq,] 
         if self.fulldata.Volumes.any():
-            comp_col.extend(['Volumes', 'Sol Recyc',])
+            comp_col.extend([rxn_vol, rxn_rcy,])
         if self.fulldata.OPEX.any():
-            comp_col.append('OPEX') 
+            comp_col.append(rxn_opx) 
         comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
                     'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
 
@@ -567,13 +583,13 @@ class CoreCost(object):
         # modified if this behavior is undesired, but as is, it is not trivial
         # to make this fix. The apply function doubles up the "Step" column.
         # So one needs to be removed.
-        gb = fd.groupby('Step')
+        gb = fd.groupby(rxn_stp)
         concated = gb.apply(self.__fd_pmi_concat, pmi)
-        concated = concated.drop('Step', axis=1)\
+        concated = concated.drop(rxn_stp, axis=1)\
                             .reset_index().drop('level_1', axis=1)
         
         # Reset the index and return the DF. No sorting is necessary here.
-        return concated.set_index(['Step', 'Compound'])                
+        return concated.set_index([rxn_stp, rxn_cpd])                
 
     def __fd_pmi_concat(self, df, pmi):
         '''Concats the fulldata and pmi DataFrames.
@@ -581,9 +597,9 @@ class CoreCost(object):
         This is only used in a DataFrame.apply call in the _df_combine
         method.'''
         # The step number
-        step = df['Step'].iloc[0]
+        step = df[rxn_stp].iloc[0]
         # Mask out the correct PMI values
-        pmi_mask = pmi['Step'] == step
+        pmi_mask = pmi[rxn_stp] == step
         pmi_small = pmi[pmi_mask]
         # Combine the route step info with the PMI. In this way, the pmi will
         # be at the end.
@@ -616,7 +632,7 @@ class CoreCost(object):
                     
         # Set dynamic cost for the "Cost" of calculated products
         mask = fd['Cost dyn'] != ''
-        fd.loc[mask, 'Cost'] = fd.loc[mask, 'Cost dyn']
+        fd.loc[mask, mat_cst] = fd.loc[mask, 'Cost dyn']
         
         # Drop the non-dynamic columns
         d_cols = ['Cost dyn', 'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn', 
