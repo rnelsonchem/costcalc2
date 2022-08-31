@@ -147,9 +147,6 @@ class CoreCost(object):
         # Save the full data set
         self.fulldata = fulldata
 
-        # Add a modified variable placeholder. This will store modified
-        # values for later processing
-        self._mod_vals = []
         # Add the empty columns
         self._column_clear()
 
