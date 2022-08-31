@@ -17,6 +17,8 @@ try:
 except:
     disp = print
 
+# Column name mapper: This is setting variable names for many of the important
+# DataFrame columns. 
 # Reactions Table Columns
 rxn_stp = 'Step' # The step labels
 rxn_cpd = 'Compound' # The compound names column, same for materials table
@@ -32,16 +34,22 @@ notes = 'Notes' # The notes column name, same for materials table
 mat_mw = 'MW' # Molecular weight
 mat_den = 'Density' # Density, only used for solvents
 mat_cst = 'Cost' # The estimated material price/cost ($/kg)
+# Calculated columns
+rxn_kg = 'kg/kg rxn' # kg of materials used per kg reaction/step product
+rxn_rmc = 'RM cost/kg rxn' # Cost of a material to make 1 kg rxn product
+rxn_rmp = '% RM cost/kg rxn' # % material cost per 1 kg rxn product
+prd_kg = 'kg/kg prod' # kg of material used per kg of route product
+prd_rmc = 'RM cost/kg prod' # Cost of a material to make 1 kg route prod
+prd_rmp = '% RM cost/kg prod' # % material cost per 1 kg route product
 
-# Column dictionary
+
+# Excel Column dictionary
 # This dictionary will be used for creating dynamic excel sheets, for which
-# I'll need to know the correct column labels
+# I'll need to know the DataFrame<->Excel column name mapping
 ecols = {rxn_stp:'A', rxn_cpd:'B', mat_mw:'C', mat_den:'D', mat_cst:'E',
-        rxn_eq:'F', rxn_vol:'G', rxn_rel:'H', rxn_rcy:'I',
-        rxn_cst:'J', rxn_opx:'K', 'kg/kg rxn':'L', 'RM cost/kg rxn':'M',
-        '% RM cost/kg rxn':'N', 'kg/kg prod':'O', 'RM cost/kg prod':'P',
-        '% RM cost/kg prod':'Q',
-        }
+        rxn_eq:'F', rxn_vol:'G', rxn_rel:'H', rxn_rcy:'I', rxn_cst:'J',
+        rxn_opx:'K', rxn_kg:'L', rxn_rmc:'M', rxn_rmp:'N', prd_kg:'O',
+        prd_rmc:'P', prd_rmp:'Q', }
 
 class CoreCost(object):
     def __init__(self, materials, rxns, final_prod):
@@ -152,8 +160,8 @@ class CoreCost(object):
 
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
-        empty_cols = ['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
+        empty_cols = [rxn_kg, rxn_rmc, rxn_rmp,
+                prd_kg, prd_rmc, prd_rmp,
                 ]
         for col in empty_cols:
             self.fulldata[col] = np.nan
@@ -289,7 +297,7 @@ class CoreCost(object):
         data = self.fulldata.loc[step].copy()
 
         # Kg of nonsolvent materials used per equivalent
-        data['kg/kg rxn'] = data[rxn_eq]*data[mat_mw]
+        data[rxn_kg] = data[rxn_eq]*data[mat_mw]
         # And for Excel
         if excel:
             data['kg/kg rxn dyn'] = '=' + ecols[rxn_eq] + data['rnum'] + '*'\
@@ -312,25 +320,25 @@ class CoreCost(object):
             # the first one... This might not be great.
             cpd_rel = sols[rxn_rel][0]
             # What is the kg of relative cpd?
-            amt_rel = data.loc[cpd_rel, 'kg/kg rxn']
+            amt_rel = data.loc[cpd_rel, rxn_kg]
             if excel:
                 amt_rel_e = data.loc[cpd_rel, 'rnum']
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)
-            sols['kg/kg rxn'] = sols[rxn_vol]*sols[mat_den]*\
+            sols[rxn_kg] = sols[rxn_vol]*sols[mat_den]*\
                     (1 - sols[rxn_rcy])*amt_rel
             # And for Excel
             if excel:
                 sols['kg/kg rxn dyn'] = '=' + ecols[rxn_vol] +\
                         sols['rnum'] + '*' + ecols[mat_den] +\
                         sols['rnum'] + '*' + '(1 - ' + ecols[rxn_rcy]\
-                        + sols['rnum'] + ')*' + ecols['kg/kg rxn'] +\
+                        + sols['rnum'] + ')*' + ecols[rxn_kg] +\
                         amt_rel_e
             data[mask] = sols
 
         # Normalize the kg of reaction
-        data['kg/kg rxn'] /= data.loc[prod, 'kg/kg rxn']
+        data[rxn_kg] /= data.loc[prod, rxn_kg]
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
         # column. Don't use the rxn_cst column directly, because some of
@@ -346,12 +354,12 @@ class CoreCost(object):
                 continue
             # The amounts needed will be amplified by the appropriate kg ratio.
             # Set that ratio
-            new_amp = data.loc[cpd, 'kg/kg rxn']
+            new_amp = data.loc[cpd, rxn_kg]
             # And for dynamic excel output
             if excel:
                 new_amp_enum = data.loc[cpd, 'rnum']
                 new_amp_eden = data.loc[prod, 'rnum']
-                kg_col = ecols['kg/kg rxn']
+                kg_col = ecols[rxn_kg]
             # This will be '*(C#/D#)'. This is different for Excel because we
             # can't normalize the kg/kg rxn column
                 new_eamp = f'*({kg_col}{new_amp_enum}/{kg_col}{new_amp_eden})'
@@ -379,14 +387,14 @@ class CoreCost(object):
                             self.fulldata.loc[(new_stp, cpd), 'rnum']
 
         # Calculate the cost for each material in the reaction
-        data['RM cost/kg rxn'] = data['kg/kg rxn']*data[mat_cst]
+        data[rxn_rmc] = data[rxn_kg]*data[mat_cst]
         # The product cost will be the sum of all the reactant/solvent costs
-        data.loc[prod, 'RM cost/kg rxn'] = data['RM cost/kg rxn'].sum()
+        data.loc[prod, rxn_rmc] = data[rxn_rmc].sum()
         # Set the "Cost" to the calculated value
-        data.loc[prod, mat_cst] = data.loc[prod, 'RM cost/kg rxn']
+        data.loc[prod, mat_cst] = data.loc[prod, rxn_rmc]
         # And for Excel
         if excel:
-            data['RM cost/kg rxn dyn'] = '=' + ecols['kg/kg rxn'] +\
+            data['RM cost/kg rxn dyn'] = '=' + ecols[rxn_kg] +\
                     data['rnum'] + '*' + ecols[mat_cst] + data['rnum']
             # And for Excel, first we need the rows that are not the product
             mask = data.index != prod
@@ -397,21 +405,21 @@ class CoreCost(object):
             # Combine them together into a sum
             data.loc[prod, 'RM cost/kg rxn dyn'] = '=SUM(' + rs + ')'
             # Need to divide by the total number of kgs
-            data.loc[prod, 'Cost dyn'] = '=' + ecols['RM cost/kg rxn'] +\
-                    data.loc[prod, 'rnum'] + '/' + ecols['kg/kg rxn'] +\
+            data.loc[prod, 'Cost dyn'] = '=' + ecols[rxn_rmc] +\
+                    data.loc[prod, 'rnum'] + '/' + ecols[rxn_kg] +\
                     data.loc[prod, 'rnum']
 
         # Calculate % costs for individual rxn
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
-        p_rm_cost = data['RM cost/kg rxn']*100/data.loc[prod, 'RM cost/kg rxn']
-        data['% RM cost/kg rxn'] = p_rm_cost.values
+        p_rm_cost = data[rxn_rmc]*100/data.loc[prod, rxn_rmc]
+        data[rxn_rmp] = p_rm_cost.values
         # And for Excel
         if excel:
-            data['% RM cost/kg rxn dyn'] = '=' + ecols['RM cost/kg rxn'] +\
-                    data['rnum'] + '*100/' + ecols['RM cost/kg rxn'] +\
+            data['% RM cost/kg rxn dyn'] = '=' + ecols[rxn_rmc] +\
+                    data['rnum'] + '*100/' + ecols[rxn_rmc] +\
                     data.loc[prod, 'rnum']
         # Remove the % cost for the rxn product
-        data.loc[prod, '% RM cost/kg rxn'] = np.nan
+        data.loc[prod, rxn_rmp] = np.nan
         # And for Excel
         if excel:
             data.loc[prod, '% RM cost/kg rxn dyn'] = ''
@@ -420,19 +428,19 @@ class CoreCost(object):
         # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
         # cost. However, for feeder reactions this will get amplified by 
         # each step   
-        data['RM cost/kg prod'] = data['RM cost/kg rxn']*amp
+        data[prd_rmc] = data[rxn_rmc]*amp
         # And for Excel
         if excel:
-            data['RM cost/kg prod dyn'] = '=' + ecols['RM cost/kg rxn'] +\
+            data['RM cost/kg prod dyn'] = '=' + ecols[rxn_rmc] +\
                     data['rnum'] + eamp
         
         # This sets the number of kg of each material per kilogram of product
         # This is done by multiplying the per reaction value by the amplifier
         # This isn't necessary for costing, but we can use it for PMI
-        data['kg/kg prod'] = data['kg/kg rxn']*amp
+        data[prd_kg] = data[rxn_kg]*amp
         # And for Excel
         if excel:
-            data['kg/kg prod dyn'] = '=' + ecols['kg/kg rxn'] + data['rnum']\
+            data['kg/kg prod dyn'] = '=' + ecols[rxn_kg] + data['rnum']\
                     + eamp
         
         # Set the values in the big DataFrame with this slice. This goofy call
@@ -443,9 +451,9 @@ class CoreCost(object):
         # recursive nature of the algorithm. In addition, an optional OPEX
         # may be added to take into acount production costs of the cpd
         if np.isnan(data.loc[prod, rxn_opx]):
-            return data.loc[prod, 'RM cost/kg rxn']
+            return data.loc[prod, rxn_rmc]
         else:
-            return data.loc[prod, 'RM cost/kg rxn'] + data.loc[prod, rxn_opx]
+            return data.loc[prod, rxn_rmc] + data.loc[prod, rxn_opx]
     
     def _rxn_data_post(self, excel=False):
         '''Calculate some values after the final cost of the reaction is
@@ -470,35 +478,35 @@ class CoreCost(object):
                         self.fulldata.loc[(step, prod), 'rnum']
                 
         # Calculate % overall costs relative to the prod
-        self.fulldata['% RM cost/kg prod'] = \
-                self.fulldata['RM cost/kg prod']*100/self.cost
+        self.fulldata[prd_rmp] = \
+                self.fulldata[prd_rmc]*100/self.cost
         # And for Excel
         if excel:
             self.fulldata['% RM cost/kg prod dyn'] = '=' +\
-                    ecols['RM cost/kg prod'] + self.fulldata['rnum'] +\
-                    '*100/' + ecols['RM cost/kg rxn'] +\
+                    ecols[prd_rmc] + self.fulldata['rnum'] +\
+                    '*100/' + ecols[rxn_rmc] +\
                     self.fulldata.loc[(step, prod), 'rnum']
         
         # Filter out certain values to simplify full data set
         # Remove the cost and %s for cost-calculated materials
         # This is necessary so that this column adds up to 100% (w/o OPEX)
         mask = ~self.fulldata[rxn_cst].isna()
-        self.fulldata.loc[mask, '% RM cost/kg prod'] = np.nan
+        self.fulldata.loc[mask, prd_rmp] = np.nan
         if excel:
             self.fulldata.loc[mask, '% RM cost/kg prod dyn'] = ''
         # This filters some of the costs which are simply the sum of raw
         # materials from eariler rxns. The sum of this column will now be
         # equal to the cost of the final product.
-        self.fulldata.loc[mask, 'RM cost/kg prod'] = np.nan
+        self.fulldata.loc[mask, prd_rmc] = np.nan
         if excel:
             self.fulldata.loc[mask, 'RM cost/kg prod dyn'] = ''
         # This filters out the kg/kg prod values that were calculated, so that
         # the sum of this column is the PMI
-        self.fulldata.loc[mask, 'kg/kg prod'] = np.nan
+        self.fulldata.loc[mask, prd_kg] = np.nan
         if excel:
             self.fulldata.loc[mask, 'kg/kg prod dyn'] = ''
         # But we are making 1 kg of final product so that needs to be reset
-        self.fulldata.loc[(step, prod), 'kg/kg prod'] = 1.
+        self.fulldata.loc[(step, prod), prd_kg] = 1.
         if excel:
             self.fulldata.loc[(step, prod), 'kg/kg prod dyn'] = '=1.'
 
@@ -510,23 +518,23 @@ class CoreCost(object):
         # First of all, calculate the PMI for each reaction individually
         gb = self.fulldata.groupby(rxn_stp)
         if excel:
-            rxn_pmi = gb.agg({'kg/kg rxn':'sum', 'rnum':self._excel_pmi})\
+            rxn_pmi = gb.agg({rxn_kg:'sum', 'rnum':self._excel_pmi})\
                             .rename({'rnum': 'kg/kg rxn dyn'}, axis=1)\
                             .reset_index()
         else:
-            rxn_pmi = gb.agg({'kg/kg rxn':'sum'})\
+            rxn_pmi = gb.agg({rxn_kg:'sum'})\
                             .reset_index()
         rxn_pmi[rxn_cpd] = self._pre + 'Step ' + rxn_pmi[rxn_stp] + ' PMI'
         
         # The full route PMI is not the sum of the above, but is the sum of
-        # the 'kg/kg prod' column. We need to make this into a DataFrame to
+        # the prd_kg column. We need to make this into a DataFrame to
         # merge with the per reaction values above.
-        df_vals = {'kg/kg prod': [self.fulldata['kg/kg prod'].sum()], 
+        df_vals = {prd_kg: [self.fulldata[prd_kg].sum()], 
                    rxn_stp: [self._fp_idx],
                    rxn_cpd: [self._pre*2 + 'Full Route PMI'],
                    }
         if excel:
-            mask = ~self.fulldata['kg/kg prod'].isna()
+            mask = ~self.fulldata[prd_kg].isna()
             all_cells = [f'{ecols["kg/kg prod"]}{i}' for i in\
                          self.fulldata.loc[mask, 'rnum']]
             cell_sum = '=SUM(' + ','.join(all_cells) + ')'
@@ -551,8 +559,8 @@ class CoreCost(object):
             comp_col.extend([rxn_vol, rxn_rcy,])
         if self.fulldata.OPEX.any():
             comp_col.append(rxn_opx) 
-        comp_col.extend(['kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn',
-                    'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod'])
+        comp_col.extend([rxn_kg, rxn_rmc, rxn_rmp,
+                    prd_kg, prd_rmc, prd_rmp])
 
         # For full display, don't show the Excel columns
         ecol_mask = ~self.fulldata.columns.str.contains('dyn|rnum')
@@ -635,8 +643,8 @@ class CoreCost(object):
         fd.loc[mask, mat_cst] = fd.loc[mask, 'Cost dyn']
         
         # Drop the non-dynamic columns
-        d_cols = ['Cost dyn', 'kg/kg rxn', 'RM cost/kg rxn', '% RM cost/kg rxn', 
-                  'kg/kg prod', 'RM cost/kg prod', '% RM cost/kg prod',
+        d_cols = ['Cost dyn', rxn_kg, rxn_rmc, rxn_rmp, 
+                  prd_kg, prd_rmc, prd_rmp,
                   'rnum']
         fd = fd.drop(d_cols, axis=1)
         
