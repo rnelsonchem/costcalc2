@@ -1,3 +1,7 @@
+# Import everything from the core file to get all of the column variable
+# definitions
+from .core import *
+
 import matplotlib.pyplot as plt
 
 # Set up some plotting stuff for the notebooks
@@ -72,7 +76,7 @@ class HelperFuncs(object):
         # The "Cost calc" flag must be set to np.nan when setting a cost. 
         # This is necessary for % RM cost calcs, e.g.
         if val_type == 'Cost':
-            self.fulldata.loc[cells, 'Cost calc'] = np.nan
+            self.fulldata.loc[cells, rxn_cst] = np.nan
 
     def value_scan(self, cpd, start, stop, npts, val_type='Cost', step=None):
         '''Scan a range of values for a given material.
@@ -194,18 +198,18 @@ class HelperFuncs(object):
             mat_vals = self.materials[mat_mask].iloc[0]
             # Set some values that will be used for updating
             cpd_name = cpd_new
-            mw = mat_vals['MW']
-            density = mat_vals['Density']
-            cost = mat_vals['Cost']
+            mw = mat_vals[mat_mw]
+            density = mat_vals[mat_den]
+            cost = mat_vals[mat_cst]
         
         # If the new compound is a costing instance...
         elif isinstance(cpd_new, (ExcelCost, ColabCost)):
             # The value selection is a little different
             cpd_name = cpd_new.final_prod
             cpd_loc = (cpd_new._fp_idx, cpd_new.final_prod)
-            mw = cpd_new.fulldata.loc[cpd_loc, 'MW']
-            density = cpd_new.fulldata.loc[cpd_loc, 'Density']
-            cost = cpd_new.fulldata.loc[cpd_loc, 'Cost']
+            mw = cpd_new.fulldata.loc[cpd_loc, mat_mw]
+            density = cpd_new.fulldata.loc[cpd_loc, mat_den]
+            cost = cpd_new.fulldata.loc[cpd_loc, mat_cst]
         
         # Else you've added the wrong kind of new compound
         else:
@@ -216,18 +220,18 @@ class HelperFuncs(object):
         # First, remove the MultiIndex
         fd_rst = self.fulldata.reset_index()
         # Check for the requested compound
-        cpd_mask = fd_rst['Compound'] == cpd_old
+        cpd_mask = fd_rst[rxn_cpd] == cpd_old
         # If a particular step is chosen, select only that step
         if step:
-            cpd_mask = cpd_mask & (fd_rst['Step'] == str(step))
+            cpd_mask = cpd_mask & (fd_rst[rxn_stp] == str(step))
 
         if not cpd_mask.any():
             raise ValueError("Oops! '" + cpd_old + "' isn't in your "
                             "current route.")
         # Swap out the compound names
-        fd_rst.loc[cpd_mask, 'Compound'] = cpd_name
+        fd_rst.loc[cpd_mask, rxn_cpd] = cpd_name
         # Reset index and fulldata attribute
-        self.fulldata = fd_rst.set_index(['Step', 'Compound'])
+        self.fulldata = fd_rst.set_index([rxn_stp, rxn_cpd])
 
         # Set the values using `value_mod`
         self.value_mod(cpd_name, mw, val_type='MW', step=step)
