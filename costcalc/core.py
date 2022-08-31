@@ -27,7 +27,7 @@ rxn_ms = 'Mass' # Mass of material used, typically kg, just be consistent
 rxn_vol = 'Volumes' # Volumes of solvent L/kg of limiting reagent (usually)
 rxn_rel = 'Relative' # Limiting reagent name for volumes->mass calculation
 rxn_rcy = 'Sol Recyc' # Fractional amount of solvent that is recycled
-rxn_cst = 'Cost calc' # Step where cost is calculated
+rxn_cst = 'Cost step' # Step where cost is calculated
 rxn_opx = 'OPEX' # Operational expenditures in $/kg, only for rxn product
 notes = 'Notes' # The notes column name, same for materials table
 # Materials Table Columns
