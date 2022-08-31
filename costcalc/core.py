@@ -166,10 +166,6 @@ class CoreCost(object):
         cost_recalc_mask = ~self.fulldata[rxn_cst].isna()
         self.fulldata.loc[cost_recalc_mask, mat_cst] = np.nan
 
-        # Modify stored mod variables
-        for mod in self._mod_vals:
-            self._set_val(*mod)
-
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
         empty_cols = [rxn_kg, rxn_rmc, rxn_rmp, prd_kg, prd_rmc, prd_rmp,]
