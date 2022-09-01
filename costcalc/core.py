@@ -64,11 +64,12 @@ ecols = {rxn_stp:'A', rxn_cpd:'B', mat_mw:'C', mat_den:'D', mat_cst:'E',
 
 
 class CoreCost(object):
-    def __init__(self, materials, rxns, final_prod):
+    def __init__(self, materials, rxns, final_prod, disp_err_df=False):
         # We need to store the input values/DataFrames
         self.rxns = rxns
         self.materials = materials
         self.final_prod = final_prod        
+        self._disp_err_df = disp_err_df
 
         # Combine the reaction/materials sheets, add the new columns
         self.rxn_data_setup()
@@ -189,36 +190,44 @@ class CoreCost(object):
         # empty
         mw_mask = self.fulldata[mat_mw].isna()
         if mw_mask.any():
-            err_line = 'Missing MW or bad line in input file! \n'\
-                'You are missing one or more MW values or else there is \n'\
-                'a cell entry in a "blank" line. Make sure that all empty\n'\
-                'reaction/materials lines are completely blank, i.e. \n'\
-                'entry free (even spaces!).'
+            err_line = 'Missing MW in input file! \n'\
+                'You are missing one or more MW values.\n'\
+                'Make sure all reaction compounds are defined in the'\
+                ' materials table.'
             print(err_line)
-            disp(self.fulldata[mw_mask])
+            if self._disp_err_df:
+                disp(self.fulldata[mw_mask])
             raise ValueError(err_line)
 
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
         dup_cpds = self.materials[rxn_cpd].duplicated()
         if dup_cpds.any():
-            print('You have a duplicate material!!!')
-            print("These compounds are duplicated in your materials sheet.")
-            disp(self.materials.loc[dup_cpds, rxn_cpd])
-            raise ValueError('Yikes! Read the note above.')
+            err_line = 'You have a duplicate material!!!\n'\
+                    'Check that you do not have two or more of the same\n'\
+                    'compound name in your material sheet(s).'
+            print(err_line)
+            if self._disp_err_df:
+                print("These compounds are the duplicated compounds.")
+                disp(self.materials.loc[dup_cpds, rxn_cpd])
+            raise ValueError(err_line)
 
         # Check for duplicated materials in a single reaction.
         # When you select a single value from a reaction, you'll get a series
         # and not a float, e.g.
         dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), mat_mw]
         if isinstance(dup_rxn, pd.Series):
-            print('You have a duplicated material in a single reaction.')
-            print('Check these lines:')
-            gb = self.fulldata.groupby(['Prod', rxn_cpd])
-            for prod, group in gb:
-                if group.shape[0] > 1:
-                    disp(prod)
-            raise ValueError('Yikes! Read the note above.')
+            err_line = 'You have a duplicated material in a single '\
+                    'reaction step.\nPlease combine multiple uses of'\
+                    ' a material into one entry.'
+            print(err_line)
+            if self._disp_err_df:
+                print('Check these lines:')
+                gb = self.fulldata.groupby([rxn_stp, rxn_cpd])
+                for prod, group in gb:
+                    if group.shape[0] > 1:
+                        print('Step: ' + prod[0] + '; Cpd: ' + prod[1])
+            raise ValueError(err_line)
             
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
@@ -226,11 +235,14 @@ class CoreCost(object):
         cost_mask = (self.fulldata[rxn_cst].isna() & \
                     self.fulldata[mat_cst].isna())
         if cost_mask.any():
-            print('You are missing a necessary material cost!!')
-            print('You may need to indicate a Step in the "Cost calc" column.')
-            print('Check these columns.')
-            disp(self.fulldata.loc[cost_mask, [mat_cst, rxn_cst]])
-            raise ValueError('Yikes! Read the note above.')
+            err_line = 'You are missing a necessary material cost!!\n'\
+                   f'You may need to indicate a Step in the "{rxn_cst}"'\
+                   ' column.' 
+            print(err_line)
+            if self._disp_err_df:
+                print('Check these columns.')
+                disp(self.fulldata.loc[cost_mask, [mat_cst, rxn_cst]])
+            raise ValueError(err_line)
         
         # Check that all the solvent information is given
         sol_mask = ~self.fulldata[rxn_vol].isna() 
@@ -239,22 +251,33 @@ class CoreCost(object):
                 self.fulldata.loc[sol_mask, rxn_rcy].isna()
         # If anything is missing, print a note
         if sol_chk.any():
-            sol_cols = [mat_den, rxn_vol, rxn_rel, rxn_rcy]
-            print('You are missing some solvent information.')
-            print('Check the following lines.')
-            sol_mask2 = sol_mask & sol_chk
-            disp(self.fulldata.loc[sol_mask2, sol_cols])
-            raise ValueError('Yikes! Read the note above.')
+            err_line = 'You are missing some solvent information.'
+            print(err_line)
+            if self._disp_err_df:
+                print('Check the following lines.')
+                sol_cols = [mat_den, rxn_vol, rxn_rel, rxn_rcy]
+                sol_mask2 = sol_mask & sol_chk
+                disp(self.fulldata.loc[sol_mask2, sol_cols])
+            raise ValueError(err_line)
         
         # Check to make sure that the "Relative" compound for a solvent
         # is acutally contained in the step
+        msg = False
         sol_mask = ~self.fulldata[rxn_rel].isna()
+        bad = []
         for cpd in self.fulldata[sol_mask].itertuples():
-            new_idx = (cpd.Index[0], cpd.Relative)
+            new_idx = (cpd.Index[0], getattr(cpd, rxn_rel) )
             if new_idx not in self.fulldata.index:
-                print('One of your "Relative" compounds is not correct.')
-                print(f'"{cpd.Relative}" is not in Step {cpd.Index[0]}.')
-                raise ValueError('Yikes! Read the note above.')
+                msg = True
+                bad.append( cpd.Index )
+        if msg:
+            err_line = 'You have a bad solvent recycle entry.\n'\
+                    f'One of your "{rxn_rel}" compounds is not correct.'
+            print(err_line)
+            if self._disp_err_df:
+                print(f'Check the following Step/Solvents:')
+                [print(f'Step {s}: Solvent {sol}') for s, sol in bad]
+            raise ValueError(err_line)
         
     def calc_cost(self, excel=False):
         '''Calculate the cost of the route. 

@@ -85,8 +85,9 @@ class ExcelCost(CoreCost):
     reset their costs.
     '''
     def __init__(self, materials_file, rxn_file, final_prod,
-            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
-            alt_mat_sheet=0):
+            materials_sheet=0, rxn_sheet=0, 
+            alt_mat_file=None, alt_mat_sheet=0,
+            disp_err_df = True):
         # Set up the reaction DataFrame
         self._rxn_file = rxn_file
         self._rxn_sheet = rxn_sheet
@@ -101,7 +102,8 @@ class ExcelCost(CoreCost):
         materials = self._materials_build()                
 
         # Run the __init__ method from the CoreCost class
-        super(ExcelCost, self).__init__(materials, rxns, final_prod)
+        super(ExcelCost, self).__init__(materials, rxns, final_prod,
+                disp_err_df)
 
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.
