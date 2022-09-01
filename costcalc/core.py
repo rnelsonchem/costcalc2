@@ -171,7 +171,7 @@ class CoreCost(object):
         for col in empty_cols:
             self.fulldata[col] = np.nan
         # For dynamic Excel
-        if excel:
+        if self.fulldata.columns.str.contains(suffix).any():
             excel_cols = [dyn_cst, dyn_rkg, dyn_rrmc, dyn_rrmp, dyn_pkg,
                     dyn_prmc, dyn_prmp,]
 
