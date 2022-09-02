@@ -1,10 +1,9 @@
 import urllib.parse as parse
 
-from .core import CoreCost
+# This first import will import all of the column name variables and
+# third-party imports
+from .core import *
 from .helper import HelperFuncs
-
-import numpy as np
-import pandas as pd
 
 # Set pandas to display lots of DataFrame rows so things don't get cut out
 pd.options.display.max_rows = 1000
@@ -12,16 +11,6 @@ pd.options.display.max_rows = 1000
 # the DF doesn't display correctly 
 # Set Pandas precision
 #pd.set_option('precision', 2)
-
-# Setting the display to print function
-# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
-# are displayed in a fancier format
-try:
-    from IPython.display import display as disp
-    from IPython.display import Javascript
-except:
-    disp = print
-
 
 class ExcelCost(CoreCost):
     '''Costing class designed for local Excel/csv spreadsheets.
@@ -96,8 +85,9 @@ class ExcelCost(CoreCost):
     reset their costs.
     '''
     def __init__(self, materials_file, rxn_file, final_prod,
-            materials_sheet=0, rxn_sheet=0, alt_mat_file=None,
-            alt_mat_sheet=0):
+            materials_sheet=0, rxn_sheet=0, 
+            alt_mat_file=None, alt_mat_sheet=0,
+            disp_err_df = True):
         # Set up the reaction DataFrame
         self._rxn_file = rxn_file
         self._rxn_sheet = rxn_sheet
@@ -112,13 +102,14 @@ class ExcelCost(CoreCost):
         materials = self._materials_build()                
 
         # Run the __init__ method from the CoreCost class
-        super(ExcelCost, self).__init__(materials, rxns, final_prod)
+        super(ExcelCost, self).__init__(materials, rxns, final_prod,
+                disp_err_df)
 
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.
         '''
         rxns = self._get_sheet_vals(self._rxn_file, self._rxn_sheet,
-                            dtypes={'Step':str, 'Cost calc':str})
+                            dtypes={rxn_stp:str, rxn_cst:str})
         return rxns
 
     def _get_sheet_vals(self, fname, fsheet, dtypes=None):
@@ -133,11 +124,6 @@ class ExcelCost(CoreCost):
             df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
                             .dropna(how='all')
 
-        # Drop lines that are still empty, these cause all sorts of problems
-        # Assume rxn/materials sheets should have Cpd names for valid entries
-        cpd_mask = df['Compound'].isna()
-        df = df[~cpd_mask]
-        
         return df
         
     def _materials_build(self, ):
@@ -290,7 +276,7 @@ class ColabCost(ExcelCost):
 
         # Convert numeric/date columns. Everything is read from a Google sheet
         # as strings
-        num_cols = ['MW', 'Density', 'Cost'] 
+        num_cols = [mat_mw, mat_den, mat_cst] 
         for nc in num_cols:
             mats[nc] = pd.to_numeric(mats[nc])
 
@@ -304,10 +290,10 @@ class ColabCost(ExcelCost):
 
         # Set some rxns columns to numeric values. Everything is read from a
         # Google sheet as strings
-        num_cols = ['Equiv', 'Volumes', 'Sol Recyc', 'OPEX']
-        # Check if "Amount" column is present, and add it if so
-        if "Amount" in rxns.columns:
-            num_cols.append("Amount")
+        num_cols = [rxn_eq, rxn_vol, rxn_rcy, rxn_opx]
+        # Check if rxn_ms column is present, and add it if so
+        if rxn_ms in rxns.columns:
+            num_cols.append(rxn_ms)
         for nc in num_cols:
             rxns[nc] = pd.to_numeric(rxns[nc])
         
@@ -340,7 +326,7 @@ class ColabCost(ExcelCost):
         # Drop empty rows, these are particularly difficult to error check
         # sometimes. Assuming that both materials/rxns sheets should have
         # compound names for valid lines.
-        cpd_mask = val_df['Compound'].isna()
+        cpd_mask = val_df[rxn_cpd].isna()
         val_df = val_df[~cpd_mask]
 
         # Drop lines with comment markers
@@ -407,6 +393,15 @@ class WebAppCost(ExcelCost):
     This is largely the same as the `ExcelCost` class, so see that method for
     a more complete docstring. 
     '''
+    def __init__(self, materials_file, rxn_file, final_prod,
+            materials_sheet=0, rxn_sheet=0, 
+            alt_mat_file=None, alt_mat_sheet=0,
+            disp_err_df=False):
+
+        super(WebAppCost, self).__init__(materials_file, rxn_file, final_prod,
+                materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet,
+                disp_err_df)
+
     def results(self, style='compact', decimals=2, fill=np.nan):
         '''Print the results of the costing calculation.
 
