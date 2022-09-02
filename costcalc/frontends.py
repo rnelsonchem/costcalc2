@@ -393,6 +393,15 @@ class WebAppCost(ExcelCost):
     This is largely the same as the `ExcelCost` class, so see that method for
     a more complete docstring. 
     '''
+    def __init__(self, materials_file, rxn_file, final_prod,
+            materials_sheet=0, rxn_sheet=0, 
+            alt_mat_file=None, alt_mat_sheet=0,
+            disp_err_df=False):
+
+        super(WebAppCost, self).__init__(materials_file, rxn_file, final_prod,
+                materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet,
+                disp_err_df)
+
     def results(self, style='compact', decimals=2, fill=np.nan):
         '''Print the results of the costing calculation.
 
