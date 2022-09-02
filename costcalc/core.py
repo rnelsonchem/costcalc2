@@ -190,10 +190,7 @@ class CoreCost(object):
         # empty
         mw_mask = self.fulldata[mat_mw].isna()
         if mw_mask.any():
-            err_line = 'Missing MW in input file! \n'\
-                'You are missing one or more MW values.\n'\
-                'Make sure all reaction compounds are defined in the'\
-                ' materials table.'
+            err_line = err_lines['miss_mw'] 
             print(err_line)
             if self._disp_err_df:
                 disp(self.fulldata[mw_mask])
@@ -203,9 +200,7 @@ class CoreCost(object):
         # with two materials sheets.
         dup_cpds = self.materials[rxn_cpd].duplicated()
         if dup_cpds.any():
-            err_line = 'You have a duplicate material!!!\n'\
-                    'Check that you do not have two or more of the same\n'\
-                    'compound name in your material sheet(s).'
+            err_line = err_lines['dup_cpd'] 
             print(err_line)
             if self._disp_err_df:
                 print("These compounds are the duplicated compounds.")
@@ -217,9 +212,7 @@ class CoreCost(object):
         # and not a float, e.g.
         dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), mat_mw]
         if isinstance(dup_rxn, pd.Series):
-            err_line = 'You have a duplicated material in a single '\
-                    'reaction step.\nPlease combine multiple uses of'\
-                    ' a material into one entry.'
+            err_line = err_lines['dup_rxn'] 
             print(err_line)
             if self._disp_err_df:
                 print('Check these lines:')
@@ -235,9 +228,8 @@ class CoreCost(object):
         cost_mask = (self.fulldata[rxn_cst].isna() & \
                     self.fulldata[mat_cst].isna())
         if cost_mask.any():
-            err_line = 'You are missing a necessary material cost!!\n'\
-                   f'You may need to indicate a Step in the "{rxn_cst}"'\
-                   ' column.' 
+            err_line = err_lines['mis_cst']
+
             print(err_line)
             if self._disp_err_df:
                 print('Check these columns.')
@@ -251,7 +243,7 @@ class CoreCost(object):
                 self.fulldata.loc[sol_mask, rxn_rcy].isna()
         # If anything is missing, print a note
         if sol_chk.any():
-            err_line = 'You are missing some solvent information.'
+            err_line = err_lines['mis_sol']
             print(err_line)
             if self._disp_err_df:
                 print('Check the following lines.')
@@ -271,8 +263,7 @@ class CoreCost(object):
                 msg = True
                 bad.append( cpd.Index )
         if msg:
-            err_line = 'You have a bad solvent recycle entry.\n'\
-                    f'One of your "{rxn_rel}" compounds is not correct.'
+            err_line = err_lines['mis_rel']
             print(err_line)
             if self._disp_err_df:
                 print(f'Check the following Step/Solvents:')
@@ -682,5 +673,35 @@ class CoreCost(object):
         self.calc_cost(excel=False)
 
         return fd
+
+# Moved the error messages here to make it easier to format the lines.
+err_lines = {
+    'miss_mw': 'Missing MW error! \n'\
+            'This most commonly happens for 1 of 2 reasons:\n'\
+            '1. A reaction compound is not defined in the '\
+            ' materials table.\n'\
+            '2. The compound names in reaction/materials '\
+            'tables do not match *exactly* (even white space).',
+
+    'dup_cpd': 'Duplicated material error!\n'\
+            'Check that you do not have two or more compounds of the same\n'\
+            'name in your material sheet(s).',
+
+    'dup_rxn': 'Duplicated material in a reaction step error!\n'\
+            'Please combine multiple uses of a material into one entry.',
+
+    'mis_cst': 'Missing material cost error!\n'\
+           'First check your material table.\n'\
+           f'Otherwise, you may be missing a Step in the "{rxn_cst}" column.',
+
+    'mis_sol': 'Missing solvent info error!\n'\
+           'One of your solvent entries is missing critical info.',
+           
+    'mis_rel': f'"{rxn_rel}" solvent entry error!\n'\
+           f'A "{rxn_rel}" compound for one of your solvents is incorrect.\n'\
+           f'This may be due to a name mismatch with the "{rxn_cpd}" column.',
+           
+    }
+    
 
 
