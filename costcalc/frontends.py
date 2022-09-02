@@ -124,11 +124,6 @@ class ExcelCost(CoreCost):
             df = pd.read_excel(fname, fsheet, dtype=dtypes, comment='#')\
                             .dropna(how='all')
 
-        # Drop lines that are still empty, these cause all sorts of problems
-        # Assume rxn/materials sheets should have Cpd names for valid entries
-        cpd_mask = df[rxn_cpd].isna()
-        df = df[~cpd_mask]
-        
         return df
         
     def _materials_build(self, ):

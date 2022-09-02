@@ -71,11 +71,38 @@ class CoreCost(object):
         self.final_prod = final_prod        
         self._disp_err_df = disp_err_df
 
+        # Correct typical input problems. This needs to be done before the
+        # setup method below, because it can affect the combining of the two
+        # tables
+        self._problem_correct()
+
         # Combine the reaction/materials sheets, add the new columns
         self.rxn_data_setup()
 
-        # Look for common errors in the input.
+        # Look for other common errors in the input. Throw an error if found
+        # These errors must be manually fixed by the user, which is why they
+        # are not covered in problem correction method
         self._sanity_check()
+
+    def _problem_correct(self, ):
+        rxn = self.rxns.copy()
+        mat = self.materials.copy()
+        # Drop lines that are still empty, these cause all sorts of
+        # problems. Assume rxn/materials tables should have compound names
+        # for valid entries
+        rxn = rxn[ ~rxn[rxn_cpd].isna() ]
+        mat = mat[ ~mat[rxn_cpd].isna() ]
+
+        # Remove white space from before/after these columns
+        # This is another tricky problem because trailing white space for
+        # example is very hard to notice
+        rxn_col = [rxn_stp, rxn_cpd, rxn_rel, rxn_cst]
+        rxn[rxn_col] = rxn[rxn_col].apply(lambda x: x.str.strip())
+        mat_col = [rxn_cpd, ]
+        mat[mat_col] = mat[mat_col].apply(lambda x: x.str.strip())
+
+        self.rxns = rxn.copy()
+        self.materials = mat.copy()
 
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
