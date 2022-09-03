@@ -26,7 +26,7 @@ class HelperFuncs(CoreCost):
         present. This is not the same as a reset, though, because manually
         modified values with `value_mod` method will be re-modified. 
         '''
-        super(HelperFuncs, self)._column_clear()
+        super(HelperFuncs, self)._column_clear(excel)
 
         # Modify stored mod variables
         for mod in self._mod_vals:

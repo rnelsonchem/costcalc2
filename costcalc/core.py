@@ -194,16 +194,13 @@ class CoreCost(object):
         # Create or clear a bunch of columns that will be populated during 
         # cost calculation. 
         empty_cols = [rxn_kg, rxn_rmc, rxn_rmp, prd_kg, prd_rmc, prd_rmp,]
-        
-        for col in empty_cols:
-            self.fulldata[col] = np.nan
+        self.fulldata[ empty_cols ] = np.nan
+
         # For dynamic Excel
-        if self.fulldata.columns.str.contains(suffix).any():
+        if excel or self.fulldata.columns.str.contains(suffix).any():
             excel_cols = [dyn_cst, dyn_rkg, dyn_rrmc, dyn_rrmp, dyn_pkg,
                     dyn_prmc, dyn_prmp,]
-
-            for col in excel_cols:
-                self.fulldata[col] = ''
+            self.fulldata[ excel_cols ] = ''
 
     def _sanity_check(self, ):
         '''Run some sanity checks on the DataFrames to catch common errors.
