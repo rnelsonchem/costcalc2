@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "costcalc2"
+version = "0.8.0"
+
+description = "Calculate raw material costs for chemical synthetic route"
+keywords = [ "Chemical", "Synthesis", "Route", "Cost", "Pricing" ]
+readme = "README.md"
+license = {file = "LICENSE"}
+
+authors = [
+  { name="Ryan Nelson", email="rnelsonchem@gmail.com" },
+]
+
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: GNU License',
+    'Programming Language :: Python :: 3',
+]
+
+requires-python = ">=3"
+dependencies = [
+        'numpy>=1.0',
+        'pandas>=1.0',
+        'matplotlib>=3.0',
+        'openpyxl>=3.0',
+        ]
+        
+[project.urls]
+"Homepage" = "https://github.com/rnelsonchem/costcalc2"
+
+[tool.setuptools.packages.find]
+where = ["src"]
