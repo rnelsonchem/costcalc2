@@ -9,7 +9,7 @@ version = "0.8.0"
 description = "Calculate raw material costs for chemical synthetic route"
 keywords = [ "Chemical", "Synthesis", "Route", "Cost", "Pricing" ]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {text = "GPL-3.0-or-later"}
 
 authors = [
   { name="Ryan Nelson", email="rnelsonchem@gmail.com" },
@@ -18,7 +18,7 @@ authors = [
 classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: GNU License',
+    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
     'Programming Language :: Python :: 3',
 ]
 
