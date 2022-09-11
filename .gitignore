@@ -122,6 +122,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# RCN stuff
+### RCN stuff ###
 testing_data/
 *.swp
+# For conda builds
+conda-bld/

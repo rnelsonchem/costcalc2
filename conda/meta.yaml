@@ -1,0 +1,44 @@
+{% set name = "costcalc2" %}
+{% set version = "0.8.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/costcalc2-{{ version }}.tar.gz
+  sha256: cf2cc754902e09e436880f207c7669a8faf01a0224c1a6d24e558599a959b1eb
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.0
+    - pip
+  run:
+    - python >=3.0
+    - numpy >=1.0
+    - pandas >=1.0
+    - matplotlib-base >=3.0
+    - openpyxl >=3.0
+
+test:
+  imports:
+    - costcalc
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://pypi.org/project/costcalc2/
+  summary: Calculate raw material costs for chemical synthetic route
+  license: GPL-3.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - rnelsonchem
