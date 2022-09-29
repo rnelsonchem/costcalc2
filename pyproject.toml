@@ -35,3 +35,20 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+test = [ 
+    "pytest", 
+]
+
+dev = [
+    "pytest", 
+    "build", 
+    "ipython",
+    "twine",
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]

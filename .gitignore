@@ -123,7 +123,6 @@ dmypy.json
 .pyre/
 
 ### RCN stuff ###
-testing_data/
 *.swp
 # For conda builds
 conda-bld/
