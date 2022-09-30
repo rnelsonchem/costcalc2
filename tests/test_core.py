@@ -8,7 +8,7 @@ import pandas as pd
 from numpy.testing import *
 
 from costcalc import CoreCost
-from costcalc.core import rxn_stp, rxn_cst
+from costcalc.constants import *
 
 # The data file directory
 ddir = Path(dirname(__file__), 'data')
@@ -28,7 +28,7 @@ class Test_CoreFunctions(object):
         mats = pd.read_excel(ddir / 'clean_mat.xlsx')
         rxns = pd.read_excel(ddir / 'clean_rxn.xlsx',
                 sheet_name = name,
-                dtype={rxn_stp:str, rxn_cst:str})
+                dtype={RXN_STP:str, RXN_CST:str})
 
         coster = CoreCost(mats, rxns, 'Product')
         coster.calc_cost()
