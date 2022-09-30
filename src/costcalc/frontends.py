@@ -1,9 +1,11 @@
 import urllib.parse as parse
 
-# This first import will import all of the column name variables and
-# third-party imports
-from .core import *
+import numpy as np
+import pandas as pd
+
+from .core import CoreCost
 from .helper import HelperFuncs
+from .constants import *
 
 # Set pandas to display lots of DataFrame rows so things don't get cut out
 pd.options.display.max_rows = 1000
@@ -109,7 +111,7 @@ class ExcelCost(CoreCost):
         '''Read an Excel sheet that defines the reactions.
         '''
         rxns = self._get_sheet_vals(self._rxn_file, self._rxn_sheet,
-                            dtypes={rxn_stp:str, rxn_cst:str})
+                            dtypes={RXN_STP:str, RXN_CST:str})
         return rxns
 
     def _get_sheet_vals(self, fname, fsheet, dtypes=None):
@@ -276,7 +278,7 @@ class ColabCost(ExcelCost):
 
         # Convert numeric/date columns. Everything is read from a Google sheet
         # as strings
-        num_cols = [mat_mw, mat_den, mat_cst] 
+        num_cols = [MAT_MW, MAT_DEN, MAT_CST] 
         for nc in num_cols:
             mats[nc] = pd.to_numeric(mats[nc])
 
@@ -290,10 +292,10 @@ class ColabCost(ExcelCost):
 
         # Set some rxns columns to numeric values. Everything is read from a
         # Google sheet as strings
-        num_cols = [rxn_eq, rxn_vol, rxn_rcy, rxn_opx]
-        # Check if rxn_ms column is present, and add it if so
-        if rxn_ms in rxns.columns:
-            num_cols.append(rxn_ms)
+        num_cols = [RXN_EQ, RXN_VOL, RXN_RCY, RXN_OPX]
+        # Check if RXN_MS column is present, and add it if so
+        if RXN_MS in rxns.columns:
+            num_cols.append(RXN_MS)
         for nc in num_cols:
             rxns[nc] = pd.to_numeric(rxns[nc])
         
@@ -326,7 +328,7 @@ class ColabCost(ExcelCost):
         # Drop empty rows, these are particularly difficult to error check
         # sometimes. Assuming that both materials/rxns sheets should have
         # compound names for valid lines.
-        cpd_mask = val_df[rxn_cpd].isna()
+        cpd_mask = val_df[RXN_CPD].isna()
         val_df = val_df[~cpd_mask]
 
         # Drop lines with comment markers
