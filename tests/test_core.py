@@ -4,8 +4,9 @@ from pathlib import Path
 import pytest
 import pandas as pd
 
-# Using some of the numerical testing routines in Numpy
+# Using some of the testing routines from third-party libraries
 from numpy.testing import *
+from pandas.testing import *
 
 from costcalc import CoreCost
 from costcalc.constants import *
@@ -23,19 +24,31 @@ br_clean = pd.read_excel(ddir / 'clean_rxn.xlsx',
 cl_clean = pd.read_excel(ddir / 'clean_rxn.xlsx', 
         sheet_name='Chlorine Route',
         dtype={RXN_STP:str, RXN_CST:str})
+br_clean_fd = pd.read_pickle(ddir / 'br_clean_fd.pickle')
+cl_clean_fd = pd.read_pickle(ddir / 'cl_clean_fd.pickle')
 
 
 ### Tests ###
 
-@pytest.mark.parametrize(
-        "rxn, mats, cost",
-        [(br_clean, mats, 43.05580071473825),
-        (cl_clean, mats, 61.25477348169882),
-        ]
-)
 class Test_CoreFunctions(object):
+    @pytest.mark.parametrize(
+            "rxn, mats, fd",
+            [(br_clean, mats, br_clean_fd),
+            (cl_clean, mats, cl_clean_fd),
+            ]
+    )
+    def test_rxn_data_setup(self, rxn, mats, fd):
+        coster = CoreCost(mats, rxn, 'Product')
+        assert_frame_equal(coster.fulldata, fd)
+
+    @pytest.mark.parametrize(
+            "rxn, mats, cost",
+            [(br_clean, mats, 43.05580071473825,),
+            (cl_clean, mats, 61.25477348169882,),
+            ]
+    )
     def test_calc_cost_clean(self, rxn, mats, cost):
-        coster = CoreCost(mats, df, 'Product')
+        coster = CoreCost(mats, rxn, 'Product')
         coster.calc_cost()
         assert_allclose(coster.cost, cost)
 
