@@ -1,0 +1,14 @@
+﻿Compound,MW,Density,Cost,CAS Num,Key Material,Notes
+Starting Material,151,,15,,,
+Starting Material 2,182,,8.12,,,
+Intermediate A,230.9,,,,,SM + 1 bromine
+Intermediate B,186.45,,,,,SM + 1 chlorine
+Reagent C,222,,10,,,Same reagent transforms both Cl and Br intermediate
+Product,183,,,,,SM + 2 oxygen
+Bromine,159.8,,2,,,
+Dichloromethane (DCM),84.93,1.33,1,,,
+Tetrahydrofuran (THF),72.11,0.8878,1,,,
+Acetonitrile (MeCN),41.05,0.786,1,,,
+Sulfuryl chloride,134.965,1.67,5,,,
+Sodium hydroxide,40,,0.5,,,
+Water,18.02,1,0.1,,,

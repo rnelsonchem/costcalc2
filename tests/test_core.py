@@ -14,41 +14,47 @@ from costcalc.constants import *
 # The data file directory
 ddir = Path(dirname(__file__), 'data')
 
-# Use Pandas to read in the test Excel files 
-# For the reactions sheets, the dtype must be specified for a couple of
-# columns
-mats = pd.read_excel(ddir / 'clean_mat.xlsx')
-br_clean = pd.read_excel(ddir / 'clean_rxn.xlsx', 
-        sheet_name='Bromine Route',
+# Load the test data for comparisons
+# For some sheets, the dtype must be specified for string columns
+# Materials file
+mat_clean = pd.read_csv(ddir / 'clean_mat.csv')
+
+# Linear and convergent rxn sheets
+lin_clean = pd.read_csv(ddir / 'clean_lin_route.csv', 
         dtype={RXN_STP:str, RXN_CST:str})
-cl_clean = pd.read_excel(ddir / 'clean_rxn.xlsx', 
-        sheet_name='Chlorine Route',
+con_clean = pd.read_csv(ddir / 'clean_conv_route.csv', 
         dtype={RXN_STP:str, RXN_CST:str})
-br_clean_fd = pd.read_pickle(ddir / 'br_clean_fd.pickle')
-cl_clean_fd = pd.read_pickle(ddir / 'cl_clean_fd.pickle')
+
+# Linear and convergent fulldata DataFrames
+lin_clean_fd = pd.read_csv(ddir / 'clean_lin_fd.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+con_clean_fd = pd.read_csv(ddir / 'clean_conv_fd.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
 
 
-### Tests ###
+### Tests - Working reactions ###
 
 class Test_CoreFunctions(object):
     @pytest.mark.parametrize(
-            "rxn, mats, fd",
-            [(br_clean, mats, br_clean_fd),
-            (cl_clean, mats, cl_clean_fd),
+            "rxn, mat, fd",
+            [(lin_clean, mat_clean, lin_clean_fd),
+            (con_clean, mat_clean, con_clean_fd),
             ]
     )
-    def test_rxn_data_setup(self, rxn, mats, fd):
-        coster = CoreCost(mats, rxn, 'Product')
+    def test_rxn_data_setup(self, rxn, mat, fd):
+        coster = CoreCost(mat, rxn, 'Product')
         assert_frame_equal(coster.fulldata, fd)
 
     @pytest.mark.parametrize(
-            "rxn, mats, cost",
-            [(br_clean, mats, 43.05580071473825,),
-            (cl_clean, mats, 61.25477348169882,),
+            "rxn, mat, cost",
+            [(lin_clean, mat_clean, 66.40818831355247,),
+            (con_clean, mat_clean, 62.9051883439257,),
             ]
     )
-    def test_calc_cost_clean(self, rxn, mats, cost):
-        coster = CoreCost(mats, rxn, 'Product')
+    def test_calc_cost_clean(self, rxn, mat, cost):
+        coster = CoreCost(mat, rxn, 'Product')
         coster.calc_cost()
         assert_allclose(coster.cost, cost)
 
