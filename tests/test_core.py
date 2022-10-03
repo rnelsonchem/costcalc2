@@ -33,6 +33,22 @@ con_clean_fd = pd.read_csv(ddir / 'clean_conv_fd.csv',
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
+# Linear and convergent compact results DataFrames
+lin_clean_res_c = pd.read_csv(ddir / 'clean_lin_res_com.csv',
+        dtype={RXN_STP:str, })\
+                .set_index([RXN_STP, RXN_CPD])
+con_clean_res_c = pd.read_csv(ddir / 'clean_con_res_com.csv',
+        dtype={RXN_STP:str, })\
+                .set_index([RXN_STP, RXN_CPD])
+
+# Linear and convergent full results DataFrames
+lin_clean_res_f = pd.read_csv(ddir / 'clean_lin_res_ful.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+con_clean_res_f = pd.read_csv(ddir / 'clean_con_res_ful.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+
 
 ### Tests - Working reactions ###
 
@@ -57,5 +73,18 @@ class Test_CoreFunctions(object):
         coster = CoreCost(mat, rxn, 'Product')
         coster.calc_cost()
         assert_allclose(coster.cost, cost)
+
+    @pytest.mark.parametrize(
+            "rxn, mat, res, style",
+            [(lin_clean, mat_clean, lin_clean_res_c, 'compact'),
+            (con_clean, mat_clean, con_clean_res_c, 'compact'),
+            (lin_clean, mat_clean, lin_clean_res_f, 'full'),
+            (con_clean, mat_clean, con_clean_res_f, 'full'),
+            ]
+    )
+    def test_results(self, rxn, mat, res, style):
+        coster = CoreCost(mat, rxn, 'Product')
+        coster.calc_cost()
+        assert_frame_equal(coster.results(style=style), res)
 
 
