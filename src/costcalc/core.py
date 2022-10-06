@@ -638,6 +638,10 @@ class CoreCost(object):
         col_str = fd.columns.str.replace(SUFFIX, '')
         new_cols = {c:cn for (c, cn) in zip(fd.columns, col_str)}
         fd = fd.rename(new_cols, axis=1)
+
+        # Reset all "empty" cells to NaN. This is important for unit testing
+        # purposes.
+        fd = fd.where(fd != '', np.nan) 
         
         # Rerun the cost calculation without the excel stuff to get rid of all
         # the other columns
