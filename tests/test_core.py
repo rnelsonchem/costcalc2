@@ -49,6 +49,26 @@ con_clean_res_f = pd.read_csv(ddir / 'clean_con_res_ful.csv',
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
+# Linear and convergent Excel DataFrames
+# The "Cost" column has multiple dtypes, that are not set correctly when the
+# data is imported via Pandas. This function fixes the dyptes
+def dtype_fix(x):
+    try:
+        return float(x)
+    except:
+        return x
+
+lin_clean_excel = pd.read_csv(ddir / 'clean_lin_excel.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+lin_clean_excel['Cost'] = lin_clean_excel['Cost']\
+        .apply(dtype_fix)
+con_clean_excel = pd.read_csv(ddir / 'clean_con_excel.csv',
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+con_clean_excel['Cost'] = con_clean_excel['Cost']\
+        .apply(dtype_fix)
+
 
 ### Tests - Working reactions ###
 
@@ -86,5 +106,17 @@ class Test_CoreFunctions(object):
         coster = CoreCost(mat, rxn, 'Product')
         coster.calc_cost()
         assert_frame_equal(coster.results(style=style), res)
+
+
+    @pytest.mark.parametrize(
+            "rxn, mat, excel",
+            [(lin_clean, mat_clean, lin_clean_excel,),
+            (con_clean, mat_clean, con_clean_excel,),
+            ]
+    )
+    def test_excel(self, rxn, mat, excel):
+        coster = CoreCost(mat, rxn, 'Product')
+        coster.calc_cost()
+        assert_frame_equal(coster.excel(), excel)
 
 
