@@ -162,37 +162,17 @@ class CoreCost(object):
         mw_mask = self.fulldata[MAT_MW].isna()
         if mw_mask.any():
             err_line = err_lines['miss_mw'] 
-            print(err_line)
-            if self._disp_err_df:
-                disp(self.fulldata[mw_mask])
-            raise ValueError(err_line)
+            df = self.fulldata[mw_mask].iloc[:,:3]
+            raise CostError(err_line, df, self._disp_err_df)
 
         # Check for duplicated materials. This will probably be a big issue
         # with two materials sheets.
         dup_cpds = self.materials[RXN_CPD].duplicated()
         if dup_cpds.any():
             err_line = err_lines['dup_cpd'] 
-            print(err_line)
-            if self._disp_err_df:
-                print("These compounds are the duplicated compounds.")
-                disp(self.materials.loc[dup_cpds, RXN_CPD])
-            raise ValueError(err_line)
+            df = self.materials.loc[dup_cpds,].iloc[:, :3]
+            raise CostError(err_line, df, self._disp_err_df)
 
-        # Check for duplicated materials in a single reaction.
-        # When you select a single value from a reaction, you'll get a series
-        # and not a float, e.g.
-        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), MAT_MW]
-        if isinstance(dup_rxn, pd.Series):
-            err_line = err_lines['dup_rxn'] 
-            print(err_line)
-            if self._disp_err_df:
-                print('Check these lines:')
-                gb = self.fulldata.groupby([RXN_STP, RXN_CPD])
-                for prod, group in gb:
-                    if group.shape[0] > 1:
-                        print('Step: ' + prod[0] + '; Cpd: ' + prod[1])
-            raise ValueError(err_line)
-            
         # Check for a missing cost, which is not being calculated
         # This is a tricky error because the costing will run just fine with 
         # NaNs. Check for this by looking for NaN in both Cost and Calc columns
@@ -200,14 +180,25 @@ class CoreCost(object):
                     self.fulldata[MAT_CST].isna())
         if cost_mask.any():
             err_line = err_lines['mis_cst']
-
-            print(err_line)
-            if self._disp_err_df:
-                print('Check these columns.')
-                disp(self.fulldata.loc[cost_mask, [MAT_CST, RXN_CST]])
-            raise ValueError(err_line)
+            df = self.fulldata.loc[cost_mask, [MAT_CST, RXN_CST]]
+            raise CostError(err_line, df, self._disp_err_df)
         
+        # Check for duplicated materials in a single reaction.
+        # When you select a single value from a reaction, you'll get a series
+        # and not a float, e.g.
+        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), MAT_MW]
+        if isinstance(dup_rxn, pd.Series):
+            err_line = err_lines['dup_rxn'] 
+            df = []
+            gb = self.fulldata.groupby([RXN_STP, RXN_CPD])
+            for prod, group in gb:
+                if group.shape[0] > 1:
+                    df.append(group)
+            df = pd.concat(df).iloc[:, :3]
+            raise CostError(err_line, df, self._disp_err_df)
+            
         # Check that all the solvent information is given
+        sol_cols = [MAT_DEN, RXN_VOL, RXN_REL, RXN_RCY]
         sol_mask = ~self.fulldata[RXN_VOL].isna() 
         sol_chk = self.fulldata.loc[sol_mask, RXN_REL].isna() | \
                 self.fulldata.loc[sol_mask, MAT_DEN].isna() | \
@@ -215,31 +206,23 @@ class CoreCost(object):
         # If anything is missing, print a note
         if sol_chk.any():
             err_line = err_lines['mis_sol']
-            print(err_line)
-            if self._disp_err_df:
-                print('Check the following lines.')
-                sol_cols = [MAT_DEN, RXN_VOL, RXN_REL, RXN_RCY]
-                sol_mask2 = sol_mask & sol_chk
-                disp(self.fulldata.loc[sol_mask2, sol_cols])
-            raise ValueError(err_line)
+            sol_mask2 = sol_mask & sol_chk
+            df = self.fulldata.loc[sol_mask2, sol_cols]
+            raise CostError(err_line, df, self._disp_err_df)
         
         # Check to make sure that the "Relative" compound for a solvent
         # is acutally contained in the step
-        msg = False
         sol_mask = ~self.fulldata[RXN_REL].isna()
         bad = []
         for cpd in self.fulldata[sol_mask].itertuples():
             new_idx = (cpd.Index[0], getattr(cpd, RXN_REL) )
             if new_idx not in self.fulldata.index:
-                msg = True
                 bad.append( cpd.Index )
-        if msg:
+
+        if len(bad) > 0:
             err_line = err_lines['mis_rel']
-            print(err_line)
-            if self._disp_err_df:
-                print(f'Check the following Step/Solvents:')
-                [print(f'Step {s}: Solvent {sol}') for s, sol in bad]
-            raise ValueError(err_line)
+            df = self.fulldata.loc[bad, sol_cols]
+            raise CostError(err_line, df, self._disp_err_df)
         
     def calc_cost(self, excel=False):
         '''Calculate the cost of the route. 
@@ -648,35 +631,5 @@ class CoreCost(object):
         self.calc_cost(excel=False)
 
         return fd
-
-# Moved the error messages here to make it easier to format the lines.
-err_lines = {
-    'miss_mw': 'Missing MW error! \n'\
-            'This most commonly happens for 1 of 2 reasons:\n'\
-            '1. A reaction compound is not defined in the '\
-            ' materials table.\n'\
-            '2. The compound names in reaction/materials '\
-            'tables do not match *exactly* (even white space).',
-
-    'dup_cpd': 'Duplicated material error!\n'\
-            'Check that you do not have two or more compounds of the same\n'\
-            'name in your material sheet(s).',
-
-    'dup_rxn': 'Duplicated material in a reaction step error!\n'\
-            'Please combine multiple uses of a material into one entry.',
-
-    'mis_cst': 'Missing material cost error!\n'\
-           'First check your material table.\n'\
-           f'Otherwise, you may be missing a Step in the "{RXN_CST}" column.',
-
-    'mis_sol': 'Missing solvent info error!\n'\
-           'One of your solvent entries is missing critical info.',
-           
-    'mis_rel': f'"{RXN_REL}" solvent entry error!\n'\
-           f'A "{RXN_REL}" compound for one of your solvents is incorrect.\n'\
-           f'This may be due to a name mismatch with the "{RXN_CPD}" column.',
-           
-    }
-    
 
 

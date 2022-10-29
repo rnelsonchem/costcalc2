@@ -1,5 +1,5 @@
 {% set name = "costcalc2" %}
-{% set version = "0.8.0" %}
+{% set version = "0.8.1" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/costcalc2-{{ version }}.tar.gz
-  sha256: cf2cc754902e09e436880f207c7669a8faf01a0224c1a6d24e558599a959b1eb
+  sha256: e5fcaea9289808441ea2419a8db075d16606b1c290604d0a99bbc451bfeb5b48
 
 build:
   noarch: python
