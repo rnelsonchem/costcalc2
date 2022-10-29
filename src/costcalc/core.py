@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .constants import *
+from .exceptions import *
 
 class CoreCost(object):
     def __init__(self, materials, rxns, final_prod, disp_err_df=False):

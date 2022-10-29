@@ -10,6 +10,7 @@ from pandas.testing import *
 
 from costcalc import CoreCost
 from costcalc.constants import *
+from costcalc.exceptions import CostError
 
 # The data file directory
 ddir = Path(dirname(__file__), 'data')
@@ -120,3 +121,9 @@ class Test_CoreFunctions(object):
         assert_frame_equal(coster.excel(), excel)
 
 
+class Test_CoreErrors(object):
+    def test_miss_mw(self, ):
+        mat_clean_miss = mat_clean.copy().drop(0)
+        with pytest.raises(CostError, match='Missing MW error!') as err:
+            coster = CoreCost(mat_clean_miss, lin_clean, 'Product')
+        assert err.value.df.index == ('1', 'Starting Material')
