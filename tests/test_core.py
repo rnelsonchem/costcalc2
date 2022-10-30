@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import pandas as pd
+import numpy as np
 
 # Using some of the testing routines from third-party libraries
 from numpy.testing import *
@@ -74,6 +75,12 @@ con_clean_excel['Cost'] = con_clean_excel['Cost']\
 ### Tests - Working reactions ###
 
 class Test_CoreFunctions(object):
+    '''Tests for the public functions in the Core class.
+
+    The test names here incorporate the public function name. These checks are
+    parameterized with generic linear (lin) and convergent (con) routes, which
+    is the minimal types of routes.  
+    '''
     @pytest.mark.parametrize(
             "rxn, mat, fd",
             [(lin_clean, mat_clean, lin_clean_fd),
@@ -122,8 +129,99 @@ class Test_CoreFunctions(object):
 
 
 class Test_CoreErrors(object):
+    '''Test for known errors in the Core class.
+
+    These errors are all captured in the code, so these are forcing the known
+    errors to make sure they are correctly found/diagnosed.
+    '''
     def test_miss_mw(self, ):
+        '''Test for a missing material.
+        '''
         mat_clean_miss = mat_clean.copy().drop(0)
-        with pytest.raises(CostError, match='Missing MW error!') as err:
+        txt_match = 'Missing MW error!'
+        with pytest.raises(CostError, match=txt_match) as err:
             coster = CoreCost(mat_clean_miss, lin_clean, 'Product')
         assert err.value.df.index == ('1', 'Starting Material')
+
+    def test_missing_cost(self, ):
+        '''Test for a missing cost or cost calculation.
+        '''
+        lin_clean_miss = lin_clean.copy()
+        mask = lin_clean_miss['Compound'] == 'Product'
+        lin_clean_miss.loc[mask, RXN_CST] = np.nan 
+        txt_match = 'Missing material cost'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean, lin_clean_miss, 'Product')
+        assert err.value.df.index == ('3', 'Product')
+
+    def test_duplicate_mat(self, ):
+        '''Test for duplicated compound in the materials table.
+        '''
+        mat_clean_miss = mat_clean.copy()
+        first_cpd = mat_clean_miss.iloc[:1,:]
+        mat_clean_miss = pd.concat([mat_clean_miss, first_cpd])
+        txt_match = 'Duplicated material error'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean_miss, lin_clean, 'Product')
+        assert err.value.df.iloc[0, 0] == 'Starting Material'
+
+    def test_duplicate_rxn(self, ):
+        '''Test for duplicated compounds in a single rxn step.
+        '''
+        lin_clean_dup = lin_clean.copy()
+        bromine = lin_clean_dup.iloc[1:2,:]
+        lin_clean_dup = pd.concat([lin_clean_dup.iloc[:1,:], bromine, 
+                            lin_clean_dup.iloc[1:,:]]).reset_index(drop=True)
+        txt_match = 'Duplicated material in a reaction step'
+        with pytest.raises(CostError, match=txt_match) as err:
+            # This also throws a Pandas warning because of the index is no
+            # longer sorted. This captures the warning as well.
+            with pytest.warns(pd.errors.PerformanceWarning):
+                coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
+        assert err.value.df.index[0] == ('1', 'Bromine')
+
+    def test_missing_sol_rel(self, ):
+        '''Test for a missing relative compound for a solvent.
+        '''
+        lin_clean_dup = lin_clean.copy()
+        mask = (lin_clean[RXN_CPD] == 'Water') & (lin_clean[RXN_STP] == '2')
+        lin_clean_dup.loc[mask, RXN_REL] = np.nan
+        txt_match = 'Missing solvent info error!'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
+        assert err.value.df.index == ('2', 'Water')
+
+    def test_missing_sol_recyc(self, ):
+        '''Test for a missing solvent recyling %.
+        '''
+        lin_clean_dup = lin_clean.copy()
+        mask = (lin_clean[RXN_CPD] == 'Water') & (lin_clean[RXN_STP] == '2')
+        lin_clean_dup.loc[mask, RXN_RCY] = np.nan
+        txt_match = 'Missing solvent info error!'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
+        assert err.value.df.index == ('2', 'Water')
+
+    def test_missing_sol_density(self, ):
+        '''Test for a missing density for solvent.
+        '''
+        mat_clean_dup = mat_clean.copy()
+        mask = (mat_clean[RXN_CPD] == 'Water')
+        mat_clean_dup.loc[mask, MAT_DEN] = np.nan
+        txt_match = 'Missing solvent info error!'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean_dup, lin_clean, 'Product')
+        assert err.value.df.index == ('2', 'Water')
+
+    def test_bad_sol_relative(self, ):
+        '''Test for an incorect relative compound for a solvent.
+        '''
+        lin_clean_dup = lin_clean.copy()
+        mask = (lin_clean[RXN_CPD] == 'Water') & (lin_clean[RXN_STP] == '2')
+        lin_clean_dup.loc[mask, RXN_REL] = 'BAD!'
+        txt_match = 'solvent entry error!'
+        with pytest.raises(CostError, match=txt_match) as err:
+            coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
+        assert err.value.df.index == ('2', 'Water')
+
+
