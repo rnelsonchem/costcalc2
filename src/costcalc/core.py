@@ -13,6 +13,56 @@ from .exceptions import *
 
 class CoreCost(object):
     def __init__(self, materials, rxns, final_prod, disp_err_df=False):
+        '''Core class for calculating route costs and PMI.
+
+        Parameters
+        ----------
+        materials : DataFrame
+            A DataFrame containing  materials properties. At a minimum, this
+            table must include the materials used in the route; however, it
+            can contain an arbitrary number of additional materials as well,
+            as long as the names are unique. This DataFrame must contain the
+            following columns:
+                * Compound : str, the compound names.
+                * MW : float, the compound molecular weights.
+                * Density : float, the density (g/mL) of the compound.
+                Although this column must be present, density values are only
+                necessary for reaction solvents.
+                * Cost : float, the cost/price of the compound in $/kg. Can be
+                left blank for unknown costs, like intermediates and final
+                products
+                * Notes : str, optional notes about the compound.
+
+        rxns : DataFrame
+            A DataFrame containing reaction information. This DataFrame must
+            contain the following columns:
+                * Step : str, a unique identifier for each step such as "1" or
+                "1a"
+                * Compound: str, the compound names
+                * Equiv : float, the equivalents used for each compound, for
+                reaction products, this value should be the fractional yield
+                (e.g. 75% yield is 0.75 equiv)
+                * Volumes : float, volume equivalents of solvent (L/kg)
+                * Relative : str, the compound name to use as the reference
+                for converting solvent volumes to kg. This must correspond to
+                one of the Compound strs for the step
+                * Sol Recyc : float, fractional percentage of solvent that can
+                be recycled. E.g. 75% of solvent can be recycled = 0.75
+                * Cost step : str, the "Step" where compound costs are
+                calculated. For reaction products, this will be the current
+                "Step". This is used to trace the reaction network.
+                * OPEX : float, a $/kg-step charge that is (optionally) added
+                to the final raw-material cost of a reaction product. Is only
+                valid for reaction products.
+
+        final_prod : str
+            Name of the final product in the route.
+
+        disp_err_df : Boolean (False)
+            Prints the DataFrame when common errors occur. This is useful for
+            debugging issues with the code.
+
+        '''
         # We need to store the input values/DataFrames
         self.rxns = rxns
         self.materials = materials
