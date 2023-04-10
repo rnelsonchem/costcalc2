@@ -3,6 +3,8 @@
 from .core import CoreCost
 from .constants import *
 
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # Set up some plotting stuff for the notebooks
