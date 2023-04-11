@@ -13,60 +13,6 @@ plt.rc('figure', dpi=150)
 
 
 class HelperFuncs(CoreCost):
-    def rxn_data_setup(self, ):
-        # Add a modified variable placeholder. This will store modified
-        # values for later processing
-        self._mod_vals = []
-
-        super(HelperFuncs, self).rxn_data_setup()
-
-    def _column_clear(self, excel=False):
-        '''Clear out calculated values.
-
-        This method will reset all the calculated values in the `fulldata`
-        DataFrame. This is perhaps not strictly necessary, but it should help
-        to avoid unwanted errors in recalculations due to old data still being
-        present. This is not the same as a reset, though, because manually
-        modified values with `value_mod` method will be re-modified. 
-        '''
-        super(HelperFuncs, self)._column_clear(excel)
-
-        # Modify stored mod variables
-        for mod in self._mod_vals:
-            self._set_val(*mod)
-
-
-    def _set_val(self, cpd, val, val_type, step):
-        '''Set a modified value in the `fulldata` DataFrame
-        '''
-        # The first one sets all values w/ the compound name. The second one
-        # sets only a value for a specific reaction.
-        if not step:
-            cells = (slice(None), cpd)
-        else: 
-            # The step needs to be a string, not in int as might be expected
-            cells = (str(step), cpd)
-        
-        # Does this position actually exist???
-        try:
-            self.fulldata.loc[cells, val_type]
-        except KeyError:
-            # If not, remove the values from the list and throw an error
-            self._mod_vals.pop()
-            if not step:
-                err = '"' + cpd + '"'
-            else:
-                err = 'Step "' + str(step) + '", "' + cpd + '"'
-            print('Oops! ' + err + " doesn't exist. Check") 
-            print("your reactions to find the correct Step/Compound.")
-            raise 
-            
-        self.fulldata.loc[cells, val_type] = val
-        # The "Cost calc" flag must be set to np.nan when setting a cost. 
-        # This is necessary for % RM cost calcs, e.g.
-        if val_type == 'Cost':
-            self.fulldata.loc[cells, RXN_CST] = np.nan
-
     def value_mod(self, cpd, val, val_type='Cost', step=None):
         '''Manually set a value for a given material.
 
