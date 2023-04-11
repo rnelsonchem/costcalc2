@@ -1,6 +1,5 @@
 # Import everything from the core file to get all of the column variable
 # definitions
-from .core import CoreCost
 from .constants import *
 
 import numpy as np
