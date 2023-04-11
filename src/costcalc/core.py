@@ -1,10 +1,3 @@
-'''
-Chemical Reaction Cost Calculation and Excel Export Algorithms.
-Adapted from the Excel spreadsheets prepared by Saeed Ahmad, PhD.
-(C) Ryan Nelson
-'''
-import time
-
 import numpy as np
 import pandas as pd
 
@@ -42,6 +35,9 @@ class CoreCost(object):
                 * Equiv : float, the equivalents used for each compound, for
                 reaction products, this value should be the fractional yield
                 (e.g. 75% yield is 0.75 equiv)
+                * Mass : float, (Optional), the mass of material used. This is
+                used to calculate equivalents. If used, the first compound
+                for each reaction must be the limiting reagent.
                 * Volumes : float, volume equivalents of solvent (L/kg)
                 * Relative : str, the compound name to use as the reference
                 for converting solvent volumes to kg. This must correspond to
@@ -69,12 +65,10 @@ class CoreCost(object):
         self.final_prod = final_prod        
         self._disp_err_df = disp_err_df
 
-        # Correct typical input problems. This needs to be done before the
-        # setup method below, because it can affect the combining of the two
-        # tables
+        # Correct typical input problems. 
         self._problem_correct()
 
-        # Combine the reaction/materials sheets, add the new columns
+        # Combine the reaction/materials sheets, add new columns
         self.rxn_data_setup()
 
         # Look for other common errors in the input. Throw an error if found
@@ -83,6 +77,11 @@ class CoreCost(object):
         self._sanity_check()
 
     def _problem_correct(self, ):
+        '''Correct typical input problems in the input DataFrames.
+
+        These are problems that tend to cause problems before merging using
+        `rxn_data_setup` method, so they are automatically modified here. 
+        '''
         rxn = self.rxns.copy()
         mat = self.materials.copy()
         # Drop lines that are still empty, these cause all sorts of
@@ -107,8 +106,10 @@ class CoreCost(object):
         
         This method merges the materials and reaction sheets into a combined
         DataFrame called `fulldata`. It also serves as a "reset" of sorts
-        after a costing calculation, if you want to start over with a
-        different costing model.
+        after a costing calculation, because it uses the input materials and
+        reactions DataFrames to rebuild the `fulldata` table. This is
+        important if you are modifiying values, for example, and you want to
+        put the system back into its starting point. 
         '''
         # Merge the materials and reaction DataFrames. A few columns are
         # dropped, which are not necessary for calculations. The merge happens
@@ -211,9 +212,12 @@ class CoreCost(object):
     def _sanity_check(self, ):
         '''Run some sanity checks on the DataFrames to catch common errors.
 
-        Some of the errors are tricky, and the error output is unhelpful.
-        These are some checks that will throw some "sane" errors if things are
-        not correct.
+        Any problems found here will raise custom `CostError` exceptions. (See
+        `costcalc.expections` module for the `CostError` expection class and
+        error text.) Some of the errors are tricky, and the typical Python
+        error output is unhelpful. These errors will require user
+        intervention, unlike the issues corrected by the `_problem_correct`
+        method. 
         ''' 
         # Check for a missing material -- Everything should have a MW
         # If not, this may suggest that there is a line that should not be
@@ -285,6 +289,16 @@ class CoreCost(object):
         
     def calc_cost(self, excel=False):
         '''Calculate the cost of the route. 
+
+        This is the main costing method. This will fill in the `fulldata`
+        DataFrame with the appropriate values, and it will set a new class
+        attribute `cost`, which is the total RM cost of the final product.
+
+        Parameters
+        ----------
+        excel : boolean (False)
+            If True, the calculations will output Excel-formated equation
+            strings. By default (False), the output will be numerical values.
         '''
         # Save a time stamp so it can be displayed later
         self._now = pd.Timestamp.now('US/Eastern').strftime('%Y-%m-%d %H:%M')
@@ -310,17 +324,21 @@ class CoreCost(object):
         Parameters
         ----------
         prod : str
-            The name of the reaction to cost. This should also be the name of
-            the final product for that reaction.
+            The name of the product for a particular reaction.
 
         step : str
-            The step number for which to calculate the cost. Even though the
-            step numbers are numbers, this needs to be given as a string.
+            The step ID for which to calculate the cost. Because the step
+            labels can be numbers (e.g. step 1) and/or letters (e.g. step 1a),
+            this parameter is handled as a string.
 
         amp : float, optional (default = 1.0)
             This number is an amplifier that increases some of the values,
             e.g. masses of materials, based on how much material is being used
-            for the overall final product.   
+            to make 1 kg of the overall final product.   
+
+        excel : boolean (False)
+            Whether to output numerical values (False) or Excel-formatted
+            equation strings (True).
         '''
         # Select out the reaction of interest from the full data set. Saves
         # some typing. (Make this a copy to enusre it isn't given as a view.)
@@ -580,7 +598,18 @@ class CoreCost(object):
         return "=SUM(" + ','.join(cells) + ")"
 
     def results(self, style='compact'):
-        '''Preps an output DataFrame for the results method.
+        '''Returns a formatted/simplified full output DataFrame.
+
+        The `fulldata` attribute contains a number of potentially unnecessary
+        columns that need to be filtered out for presentation purposes. This
+        also combines the PMI data as well, so everything is in one table.
+
+        Parameters
+        ----------
+        style : str ('compact')
+            By default, this returns a minimal representation of the system
+            ('compact'); however, a more complete set of columns can be
+            returned if the value `'full'` is passed as the parameter here.
         '''
         # For compact display, these are the most important columns
         comp_col = [MAT_CST, RXN_EQ,] 
@@ -618,7 +647,7 @@ class CoreCost(object):
         # will sort by "Step" as it processes things. This will need to be
         # modified if this behavior is undesired, but as is, it is not trivial
         # to make this fix. The apply function doubles up the "Step" column.
-        # So one needs to be removed.
+        # So one needs to be dropped.
         gb = fd.groupby(RXN_STP)
         concated = gb.apply(self.__fd_pmi_concat, pmi)
         concated = concated.drop(RXN_STP, axis=1)\
@@ -643,9 +672,13 @@ class CoreCost(object):
         return pd.concat([df, pmi_small], ignore_index=True)
 
     def excel(self, ):
-        '''Prepare a DataFrame for Excel export.
+        '''Return an Excel-formatted DataFrame.
 
-        See `excel_save` method for the docstring info.
+        This table will have equation strings rather than numerical values,
+        and it can be saved to disk using the `DataFrame.to_excel` method, if
+        desired. Because the table contains equation strings, the Excel file
+        will be fully dynamic, in that value changes will cause a
+        recalculation of the entire sheet.
         '''
         # Run the cost calculation again, but using the excel keyword
         self.calc_cost(excel=True)
