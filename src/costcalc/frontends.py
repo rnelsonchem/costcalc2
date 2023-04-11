@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from .core import CoreCost
-from .helper import HelperFuncs
 from .constants import *
 
 # Set pandas to display lots of DataFrame rows so things don't get cut out
@@ -216,10 +215,6 @@ class ExcelCost(CoreCost):
                     sheet_name='As of ' + self._now.split()[0], )
             
 
-class ExcelCostAdv(ExcelCost, HelperFuncs):
-    pass
-
-
 class ColabCost(ExcelCost):
     '''Costing class designed for the Colab Python environment.
 
@@ -384,10 +379,6 @@ class ColabCost(ExcelCost):
         # Use the Colab function for downloading the file from the server
         files.download(fname)
         
-
-class ColabCostAdv(ColabCost, HelperFuncs):
-    pass
-
 
 class WebAppCost(ExcelCost):
     '''Costing class designed for the Streamlit Web App environment.
