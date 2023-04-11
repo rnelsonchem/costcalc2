@@ -14,9 +14,10 @@ pd.options.display.max_rows = 1000
 #pd.set_option('precision', 2)
 
 class ExcelCost(CoreCost):
-    '''Costing class designed for local Excel/csv spreadsheets.
+    '''Costing class designed for reading data from Excel/csv spreadsheets.
 
-    This can also act as the base class for other subclasses.
+    The Excel/csv files require specific columns to be present. See the
+    `CoreCost` class doc string for more information.
 
     Parameters
     ----------
@@ -24,66 +25,41 @@ class ExcelCost(CoreCost):
         The name/path of the materials list file. Can be xlsx or csv.
 
     rxn_file : str
-        The name/path of the file defining the reactions. can be xlsx or csv.
-
-    alt_mat_file : str, optional (default = None)
-        The name/path of an optional, secondary materials sheet.  sheet. This
-        is useful if you have separate master and user materials sheets, for
-        example. Can be an xlsx or csv.
+        The name/path of the file defining the reactions. Can be xlsx or csv.
+        Both `rxn_file` and `materials_file` can be the same file.
 
     final_prod : str
-        Defines the final product name for costing calculations. This should
-        be the same name as in the material/reaction sheet.
+        The name of the final product for route. 
 
     materials_sheet : int, str, optional (default = 0)
-        The sheet to pull out of the materials spreadsheet. The default
-        (0) is the first sheet in the spreadsheet. You could use a
-        different number or a name if you want a different sheet from the
+        The sheet in the Excel file that contains the materials information.
+        The default (0) is the first sheet in the spreadsheet. You could use a
+        different number or a name (str) if you want a different sheet from the
         spreadsheet.
 
     rxn_sheet : int, str, optional (default = 0)
-        See `materials_sheet` description, except this is for the reaction
-        Google Sheet.
+        See `materials_sheet` description, except this is for the sheet
+        defining the reactions.
+
+    alt_mat_file : str, optional (default = None)
+        The name/path of an optional, secondary materials sheet. This is
+        useful if you have separate master and route-specific materials
+        sheets, for example. Can be an xlsx or csv.
 
     alt_mat_sheet : int, str, optional (default = 0)
         The sheet number/name for the secondary materials sheet. See
         `materials_sheet` description. 
 
-    Attributes
-    ----------
-    final_prod : str
-        The name of the overall final product of this route.
-        
-    rxns : DataFrame
-        A DataFrame describing the original reactions in the given route. This 
-        is idential to the reactions Google Sheet, and is not changed by any 
-        of the helper functions in this class.
-        
-    materials : DataFrame
-        A DataFrame describing all of the known materials. This will contain
-        all of the materials from both of the given materials Google Sheets.
-        
-    cost : Numpy Float64
-        The final cost of the described route. This value *will* include OPEX
-        for the final reaction, if that value is given. 
-        
-    fulldata : DataFrame
-        A DataFrame containing all the costing related values for the given 
-        route. If the cost for the route has been calculated and an OPEX was 
-        given, the product "Cost" values *will* include this additional OPEX 
-        cost. The "RM cost/kg rxn" value will be the cost without the OPEX.
-
-    pmi : DataFrame
-        A DataGrame containing the PMI for each reaction and the overall
-        route. There will be an extra column with a bunch of weird names. This
-        is necessary for sorting and can be ignored.
+    dis_err_df : boolean (False)
+        If a `CostError` exception is raised, this controls whether the
+        offending section of the DataFrame will be printed along with the
+        error. This is useful for debugging, but is typically set to False, so
+        that potentially sensitive information is not printed to the error
+        logs.
 
     Notes
     -----
-    If there is a missing material or reaction, you'll get a printed
-    error. Materials that are marked as being cost calculated will have
-    their costs deleted, so they will need reactions defined in order to
-    reset their costs.
+    See the `CoreCost` class doc string for additional information. 
     '''
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, 
@@ -197,13 +173,13 @@ class ExcelCost(CoreCost):
             disp(fd.fillna(fill))
 
     def excel(self, fname, ):
-        '''Save the costing DataFrame as an Excel file.
+        '''Save the costing DataFrame as a dynamic Excel file.
 
         Parameters
         ----------
         fname : str, ExcelWriter
             The name you want to give to the Excel file, or an ExcelWriter
-            object to send multiple to the same file. See
+            object to send multiple costing sheets to the same file. See
             `pandas.DataFrame.to_excel` documentation for details.
 
         '''
@@ -218,20 +194,27 @@ class ExcelCost(CoreCost):
 class ColabCost(ExcelCost):
     '''Costing class designed for the Colab Python environment.
 
+    The materials and reaction information must be in Google Sheet format; the
+    urls below are the URL values for those sheets. The user must have read
+    access for the sheets to be able to use them. 
+
     Parameters
     ----------
     materials_url : str
-        The Google Sheet key to a materials list. This value can be found
-        in the URL of the sheet.
+        The URL to the Google sheet containing the materials list. 
 
     rxn_url : str
-        The Google Sheet key to the reaction list. This value can be found
-        in the URL of the sheet.
+        The URL to the Google sheet containing the reaction information. 
 
     alt_mat_url : str, optional (default = None)
-        A Google Sheet key for an optional, secondary materials sheet.
-        This is useful if you have separate master and user materials
-        sheets, for example.
+        The URL to the Google sheet containing an optional, secondary
+        materials list.  This is useful if you have separate master and user
+        materials sheets, for example.
+
+    Notes
+    -----
+    This is subclass of `ExcelCost` and `CoreCost`, so see those class
+    docstrings for more information.
 
     '''
     def __init__(self, materials_url, rxn_url, final_prod, materials_sheet=0,
@@ -280,7 +263,8 @@ class ColabCost(ExcelCost):
         return mats
         
     def _rxn_read(self, ):
-        '''Read a Google Sheet of reaction info.
+        '''Read a Google Sheet containing reaction info and convert it to a
+        DataFrame.
         '''
         rxns = self._get_sheet_vals(self._rxn_file,
                                      self._rxn_sheet)
@@ -297,7 +281,7 @@ class ColabCost(ExcelCost):
         return rxns
         
     def _get_sheet_vals(self, key, sheet):
-        '''General code for getting Google Sheet values and returning a 
+        '''General code for obtaining Google Sheet values and returning a 
         DataFrame.
         '''
         # Check if the `key` is a URL. If so, pull apart the url and grab the
@@ -335,21 +319,8 @@ class ColabCost(ExcelCost):
     def results(self, style='compact', decimals=2, fill='-'):
         '''Print the results of the costing calculation.
 
-        Parameters
-        ----------
-        style : str, optional (Default = 'compact')
-            This sets the style of the displayed costing DataFrame.
-            `'compact'` prints a DataFrame that has been truncated slightly.
-            `'full'` prints the entire DataFrame.
-
-        decimals : int or None, optional (Default = 2)
-            How many decimal places to show in the table. Set this to `None`
-            if you want full precision.
-
-        fill : str or None, optional (Default = '-')
-            Fill NaN values with this string. This makes the table a little
-            easier to read. Set this to `None` if you want to see the table
-            with the typical NaN labels.
+        See the `ExcelCost.results` method doc string for details on the
+        function parameters.
         '''
         # This makes the max Colab output window very large, so that
         # DataFrames are not put into separate scroll windows, which is very
@@ -363,7 +334,6 @@ class ColabCost(ExcelCost):
         # Call results method from ExcelCost
         super(ColabCost, self).results(style=style, decimals=decimals,
                                        fill=fill)
-
 
     def excel(self, fname):
         '''Download the costing DataFrame as an Excel file.
@@ -396,20 +366,15 @@ class WebAppCost(ExcelCost):
                 disp_err_df)
 
     def results(self, style='compact', decimals=2, fill=np.nan):
-        '''Print the results of the costing calculation.
+        '''Returns the results of the costing calculation.
+
+        See the `ExcelCost.results` method for additional documentation. This
+        is largely the same as that method except for the optional `fill`
+        keyword argument below.
 
         Parameters
         ----------
-        style : str, optional (Default = 'compact')
-            This sets the style of the displayed costing DataFrame.
-            `'compact'` prints a DataFrame that has been truncated slightly.
-            `'full'` prints the entire DataFrame.
-
-        decimals : int or None, optional (Default = 2)
-            How many decimal places to show in the table. Set this to `None`
-            if you want full precision.
-
-        fill : str or None, optional (Default = np.nan)
+        fill : str, None, or Numpy.nan (Default = Numpy.nan)
             Fill NaN values with this string. This makes the table a little
             easier to read. Set this to `None` if you want to see the table
             with the typical NaN labels.

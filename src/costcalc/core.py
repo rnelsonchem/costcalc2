@@ -16,6 +16,7 @@ class CoreCost(object):
             can contain an arbitrary number of additional materials as well,
             as long as the names are unique. This DataFrame must contain the
             following columns:
+
                 * Compound : str, the compound names.
                 * MW : float, the compound molecular weights.
                 * Density : float, the density (g/mL) of the compound.
@@ -26,9 +27,15 @@ class CoreCost(object):
                 products
                 * Notes : str, optional notes about the compound.
 
+            As noted above, the `Cost` column can be left blank for materials
+            that will have their costs calculated. However, placeholder prices
+            can be put here, if desired. These prices will be ignored if the
+            compounds RM cost is being calculated in the route.
+
         rxns : DataFrame
             A DataFrame containing reaction information. This DataFrame must
             contain the following columns:
+
                 * Step : str, a unique identifier for each step such as "1" or
                 "1a"
                 * Compound: str, the compound names
@@ -55,9 +62,44 @@ class CoreCost(object):
             Name of the final product in the route.
 
         disp_err_df : Boolean (False)
-            Prints the DataFrame when common errors occur. This is useful for
-            debugging issues with the code.
+            If a `CostError` exception is raised, this controls whether the
+            offending section of the DataFrame will be printed along with the
+            error. This is useful for debugging, but is typically set to
+            False, so that potentially sensitive information is not printed to
+            the error logs.
 
+        Attributes
+        ----------
+        final_prod : str
+            The name of the overall final product of this route.
+            
+        rxns : DataFrame
+            A DataFrame describing the reactions defined for the route. 
+            
+        materials : DataFrame
+            A DataFrame describing all of the known materials. This will contain
+            all of the materials from both the `materials_file` and the
+            `alt_mat_file`.
+            
+        cost : float
+            The final cost of the described route. This value is only present
+            after the `calc_cost` method is called. 
+            
+        fulldata : DataFrame
+            A combined DataFrame containing all of the reaction, material, and
+            costing related values for the given route. 
+
+        pmi : DataFrame
+            A DataGrame containing the PMI for each reaction and the overall
+            route. There will be an extra column with names used for sorting
+            purposes; this column can be ignored.
+
+        Notes
+        -----
+        Some automated value correction is done on the input DataFrames, such
+        as removing blank lines and extra whitespace in compound names.
+        However, other common errors will raise `CostError` exceptions, and
+        these problems will require manual error correction from the user.
         '''
         # We need to store the input values/DataFrames
         self.rxns = rxns
