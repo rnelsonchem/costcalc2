@@ -7,15 +7,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Set up some plotting stuff for the notebooks
-plt.style.use('ggplot')
-plt.rc('figure', dpi=150)
-
 def value_mod(model, cpd, val, val_type='Cost', step=None):
     '''Manually set a value for a given material.
 
     Parameters
     ----------
+    model : CoreCost or subclass
+        This is the costing model instance that will be modified.
+        
     cpd : str
         This the compound name for which the value will be modified.
 
@@ -47,7 +46,8 @@ def value_mod(model, cpd, val, val_type='Cost', step=None):
     # value. Keeps folks from getting confused b/c calculated values are
     # unchanged.
     model._column_clear()
-        
+
+
 def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     '''Scan a range of values for a given material.
     
@@ -98,6 +98,7 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     
     return pd.DataFrame({'Values':vals, 'Costs':all_costs})
 
+
 def plot_scan(model, cpd, start, stop, npts, val_type='Cost', step=None, 
             legend=None):
     '''Plot a range of values.
@@ -128,11 +129,15 @@ def plot_scan(model, cpd, start, stop, npts, val_type='Cost', step=None,
     if legend:
         plt.legend()
 
+
 def swap(model, cpd_old, cpd_new, step=None):
     '''Swap one compound for another in the route.
 
     Parameters
     ----------
+    model : CoreCost or subclass
+        This is the costing model instance that will be modified.
+        
     cpd_old : str
         This is the name of the compound that you want to remove from the
         route costing.
@@ -207,11 +212,15 @@ def swap(model, cpd_old, cpd_new, step=None):
     model.value_mod(cpd_name, density, val_type='Density', step=step)
     model.value_mod(cpd_name, cost, step=step)
 
+
 def sensitivity(model, col='Equiv', frac=0.1, decimals=2):
     '''Do a sensitivity analysis for the equivalents of reagents.
 
     Parameters
     ----------
+    model : CoreCost or subclass
+        This is the costing model instance that will be modified.
+        
     col : str, optional (Default = 'Equiv')
         Which column from the `fulldata` DataFrame should be used for the
         sensitivity analysis. 
