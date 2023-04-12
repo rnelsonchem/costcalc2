@@ -4,47 +4,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def value_mod(model, cpd, val, val_type='Cost', step=None):
-    '''Manually set a value for a given material.
-
-    Parameters
-    ----------
-    model : CoreCost or subclass
-        This is the costing model instance that will be modified.
-        
-    cpd : str
-        This the compound name for which the value will be modified.
-
-    val : int, float
-        This is the modified value for the parameter.
-
-    val_type : str, optional (Default = 'Cost')
-        This is the column name for the parameter that you'll be changing.
-        This must be for a non-calculated column, such as 'Cost', 'Equiv',
-        'OPEX', etc.
-
-    step : None, int, optional (Default = None)
-        The reaction step number for which this value will be changed. If
-        this is `None` (default), then all the values for the given
-        compound (`cpd`) will be set to the same value. This is mostly
-        important for something like `val_type`='Equiv'. Clearly, you
-        would only want to change the number of equivalents for a specific
-        reaction. If this parameter is left as `None`, the equivalents for
-        a given compound in all reactions will be set to the same value.
-    
-    Note
-    ----
-    This method will *NOT* recalculate the cost; this must be done as a
-    separate step.
-    '''
-    # Store the values
-    model._mod_vals.append( (cpd, val, val_type, step) )
-    # This will clear out the old calculation data and set the modified
-    # value. Keeps folks from getting confused b/c calculated values are
-    # unchanged.
-    model._column_clear()
-
-
 def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     '''Scan a range of values for a given material.
     
@@ -99,7 +58,7 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     fd_copy = model.fulldata.copy()
     all_costs = []
     for val in vals:
-        value_mod(model, cpd, val, val_type, step)
+        model.value_mod(cpd, val, val_type, step)
         model.calc_cost()
         all_costs.append(model.cost)
         # Reset the full data set 
@@ -267,7 +226,7 @@ def sensitivity(model, col='Equiv', frac=0.1, decimals=2):
     for step_cpd, vals in sens.iterrows():
         step, cpd = step_cpd
         # Low values
-        value_mod(model, cpd, vals['Val low'], val_type=col, step=step)
+        model.value_mod(cpd, vals['Val low'], val_type=col, step=step)
         model.calc_cost()
         cost_low = model.cost
         cost_low_per = (cost_low*100./cost_save) - 100
@@ -275,7 +234,7 @@ def sensitivity(model, col='Equiv', frac=0.1, decimals=2):
         model._mod_vals.pop()
 
         # High values
-        value_mod(model, cpd, vals['Val high'], val_type=col, step=step)
+        model.value_mod(cpd, vals['Val high'], val_type=col, step=step)
         model.calc_cost()
         cost_high = model.cost
         cost_high_per = (cost_high*100./cost_save) - 100

@@ -804,11 +804,11 @@ class CoreCost(object):
         recaclulated.
         '''
         # Store the values
-        model._mod_vals.append( (cpd, val, val_type, step) )
+        self._mod_vals.append( (cpd, val, val_type, step) )
         # This will clear out the old calculation data and set the modified
-        # value. Keeps folks from getting confused b/c calculated values are
-        # unchanged.
-        model._column_clear()
+        # value. Keeps folks from getting confused b/c previously calculated
+        # values appear unchanged.
+        self._column_clear()
 
     def _set_val(self, cpd, val, val_type, step):
         '''Set a modified value in the `fulldata` DataFrame.
