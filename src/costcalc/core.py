@@ -766,12 +766,56 @@ class CoreCost(object):
 
         return fd
 
+    def value_mod(self, cpd, val, val_type='Cost', step=None):
+        '''Manually set a value for a given material.
+
+        This is useful for creating alternative models without having to
+        import completely new reactions and materials tables. The original
+        input tables are not modified, so the model can be reset with the
+        `rxn_data_setup` method. 
+
+        Parameters
+        ----------
+        cpd : str
+            This the compound name for which the value will be modified.
+
+        val : int, float
+            This is the modified value for the parameter.
+
+        val_type : str, optional (Default = 'Cost')
+            This is the column name for the parameter that you'll be changing.
+            This must be for a non-calculated column, such as 'Cost', 'Equiv',
+            'OPEX', etc.
+
+        step : None, int, optional (Default = None)
+            The reaction step number for which this value will be changed. If
+            this is `None` (default), then all the values for the given
+            compound (`cpd`) will be set to the same value. This is mostly
+            important for something like `val_type`='Equiv'. Clearly, you
+            would only want to change the number of equivalents for a specific
+            reaction. If this parameter is left as `None`, the equivalents for
+            a given compound in all reactions will be set to the same value.
+        
+        Note
+        ----
+        This method will *NOT* recalculate the cost; this must be done as a
+        separate step. This behavior is by design so that several `value_mod`
+        method calls can be made, if necessary, before the costs are
+        recaclulated.
+        '''
+        # Store the values
+        model._mod_vals.append( (cpd, val, val_type, step) )
+        # This will clear out the old calculation data and set the modified
+        # value. Keeps folks from getting confused b/c calculated values are
+        # unchanged.
+        model._column_clear()
+
     def _set_val(self, cpd, val, val_type, step):
         '''Set a modified value in the `fulldata` DataFrame.
 
-        The modified values are set using the functions from the `helper`
-        module. This function cycles through the _mod_vals list and changing
-        the associated values.
+        The modified values are set using the `value_mod` method, which adds
+        the values to a `_mod_vals` list. This function cycles through that
+        list, changing the associated values.
         '''
         # The first one sets all values w/ the compound name. The second one
         # sets only a value for a specific reaction.
