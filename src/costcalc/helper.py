@@ -50,7 +50,11 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     
     Parameters
     ----------
-    See `value_mod` method description, except for the following.
+    model : CoreCost or subclass
+        This is the costing model instance that will be modified.
+        
+    cpd : str
+        This the compound name for which the value will be modified.
 
     start : int, float
         The starting value for the scan.
@@ -61,6 +65,20 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     npts : int
         The numbers of points to calculate the costs between `start` and
         `stop`
+
+    val_type : str, optional (Default = 'Cost')
+        This is the column name for the parameter that you'll be changing.
+        This must be for a non-calculated column, such as 'Cost', 'Equiv',
+        'OPEX', etc.
+
+    step : None, int, optional (Default = None)
+        The reaction step number for which this value will be changed. If
+        this is `None` (default), then all the values for the given
+        compound (`cpd`) will be set to the same value. This is mostly
+        important for something like `val_type`='Equiv'. Clearly, you
+        would only want to change the number of equivalents for a specific
+        reaction. If this parameter is left as `None`, the equivalents for
+        a given compound in all reactions will be set to the same value.
 
     Returns
     -------
