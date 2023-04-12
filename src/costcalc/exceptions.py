@@ -1,5 +1,13 @@
 from .constants import *
 
+# Setting the display function
+# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
+# are displayed in a fancier format
+try:
+    from IPython.display import display as disp
+except:
+    disp = print
+
 class CostError(Exception):
     '''A custom exception for catching common input errors.
 

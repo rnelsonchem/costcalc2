@@ -6,6 +6,15 @@ import pandas as pd
 from .core import CoreCost
 from .constants import *
 
+# Setting the display function
+# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
+# are displayed in a fancier format
+try:
+    from IPython.display import display as disp
+    from IPython.display import Javascript
+except:
+    disp = print
+
 # Set pandas to display lots of DataFrame rows so things don't get cut out
 pd.options.display.max_rows = 1000
 # For future reference -- Can't use this in conjunction with "fillna" becuase

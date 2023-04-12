@@ -1,17 +1,5 @@
-'''Constants that can be ported to the different modules.
+'''Constants that are used across different modules.
 '''
-# This is a blank variable for import, see __init__
-_blank = None
-
-# Setting the display to print function
-# This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
-# are displayed in a fancier format
-try:
-    from IPython.display import display as disp
-    from IPython.display import Javascript
-except:
-    disp = print
-
 # Column name mapper: This is setting variable names for many of the important
 # DataFrame columns. 
 # Reactions Table Columns
