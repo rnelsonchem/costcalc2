@@ -633,7 +633,12 @@ class CoreCost(object):
 
     def _excel_pmi(self, col):
         # A function for creating the dynamic Excel cells for PMI
-        cells = [f'{ECOLS[RXN_KG]}{i}' for i in col]
+        # Pull the Step value from the index
+        step = col.index[0][0]
+        # Mask out the reaction product, use mask values only to avoid 
+        # indexng errors in the `cells` loop
+        mask = (self.fulldata.loc[step, RXN_CST] != step).values
+        cells = [f'{ECOLS[RXN_KG]}{i}' for i in col[mask]]
         return "=SUM(" + ','.join(cells) + ")"
 
     def results(self, style='compact'):
