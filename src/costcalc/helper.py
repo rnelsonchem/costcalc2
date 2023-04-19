@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
+def value_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None):
     '''Scan a range of values for a given material.
     
     Parameters
@@ -25,9 +25,9 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
         The numbers of points to calculate the costs between `start` and
         `stop`
 
-    val_type : str, optional (Default = 'Cost')
+    val_type : str, optional (Default = '$/kg')
         This is the column name for the parameter that you'll be changing.
-        This must be for a non-calculated column, such as 'Cost', 'Equiv',
+        This must be for a non-calculated column, such as '$/kg', 'Equiv',
         'OPEX', etc.
 
     step : None, int, optional (Default = None)
@@ -42,7 +42,7 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     Returns
     -------
     Pandas DataFrame
-        This DataFrame has 'Values' and 'Costs' columns for the input
+        This DataFrame has 'Values' and '$/kg' columns for the input
         values and output costs, repectively. 
 
     Notes
@@ -70,10 +70,10 @@ def value_scan(model, cpd, start, stop, npts, val_type='Cost', step=None):
     model.cost = model.fulldata.loc[(model._fp_idx, model.final_prod), 
                               'RM cost/kg rxn']
     
-    return pd.DataFrame({'Values':vals, 'Costs':all_costs})
+    return pd.DataFrame({'Values':vals, '$/kg':all_costs})
 
 
-def plot_scan(model, cpd, start, stop, npts, val_type='Cost', step=None, 
+def plot_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None, 
             legend=None):
     '''Plot a range of values.
 
@@ -98,7 +98,7 @@ def plot_scan(model, cpd, start, stop, npts, val_type='Cost', step=None,
         label = legend
 
     # Plot the values
-    plt.plot(costs['Values'], costs['Costs'], 'o', label=label)
+    plt.plot(costs['Values'], costs['$/kg'], 'o', label=label)
     # Generate the legend, if requested
     if legend:
         plt.legend()
