@@ -1,4 +1,4 @@
-Step,Compound,MW,Density,Cost,Material Notes,Equiv,Volumes,Relative,Sol Recyc,Cost step,OPEX,Reaction Notes,kg/kg rxn,RM cost/kg rxn,% RM cost/kg rxn,kg/kg prod,RM cost/kg prod,% RM cost/kg prod
+Step,Compound,MW,Density,$/kg,Material Notes,Equiv,Volumes,Relative,Sol Recyc,Cost step,OPEX,Reaction Notes,kg/kg rxn,RM cost/kg rxn,% RM cost/kg rxn,kg/kg prod,RM cost/kg prod,% RM cost/kg prod
 1,Starting Material,151.0,,15.0,,1.0,,,,,,,,,,,,
 1,Bromine,159.8,,2.0,,1.5,,,,,,,,,,,,
 1,Dichloromethane (DCM),84.93,1.33,1.0,,,10.0,Starting Material,0.75,,,,,,,,,

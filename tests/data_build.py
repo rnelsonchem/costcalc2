@@ -55,12 +55,12 @@ def dtype_fix(x):
 lin_clean_excel = pd.read_csv(ddir / 'clean_lin_excel.csv',
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
-lin_clean_excel['Cost'] = lin_clean_excel['Cost']\
+lin_clean_excel[MAT_CST] = lin_clean_excel[MAT_CST]\
         .apply(dtype_fix)
 con_clean_excel = pd.read_csv(ddir / 'clean_con_excel.csv',
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
-con_clean_excel['Cost'] = con_clean_excel['Cost']\
+con_clean_excel[MAT_CST] = con_clean_excel[MAT_CST]\
         .apply(dtype_fix)
 
 
