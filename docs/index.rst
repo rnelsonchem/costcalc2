@@ -22,16 +22,33 @@ the cost calculations directly in Python. This provides more flexibility
 in the specifics of the user input/output and access to additional features
 that are not implemented in the web application.
 
+Installation
+------------
+
+The *costcalc2* package can be installed using either ``pip``
+
+.. code-block:: console 
+
+    $ pip install costcalc2
+    
+or ``conda``
+
+.. code-block:: console 
+
+    $ conda install -c rnelsonchem costcalc2
+
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    tables_basics
    interpret_results
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
