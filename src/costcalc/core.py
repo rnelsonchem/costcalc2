@@ -766,7 +766,7 @@ class CoreCost(object):
 
         return fd
 
-    def value_mod(self, cpd, val, val_type='Cost', step=None):
+    def value_mod(self, cpd, val, val_type='$/kg', step=None):
         '''Manually set a value for a given material.
 
         This is useful for creating alternative models without having to
@@ -782,9 +782,9 @@ class CoreCost(object):
         val : int, float
             This is the modified value for the parameter.
 
-        val_type : str, optional (Default = 'Cost')
+        val_type : str, optional (Default = '$/kg')
             This is the column name for the parameter that you'll be changing.
-            This must be for a non-calculated column, such as 'Cost', 'Equiv',
+            This must be for a non-calculated column, such as '$/kg', 'Equiv',
             'OPEX', etc.
 
         step : None, int, optional (Default = None)
@@ -842,7 +842,7 @@ class CoreCost(object):
         self.fulldata.loc[cells, val_type] = val
         # The "Cost calc" flag must be set to np.nan when setting a cost. 
         # This is necessary for % RM cost calcs, e.g.
-        if val_type == 'Cost':
+        if val_type == MAT_CST:
             self.fulldata.loc[cells, RXN_CST] = np.nan
 
 

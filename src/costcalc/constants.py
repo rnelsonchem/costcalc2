@@ -16,7 +16,7 @@ NOTES = 'Notes' # The notes column name, same for materials table
 # Materials Table Columns
 MAT_MW = 'MW' # Molecular weight
 MAT_DEN = 'Density' # Density, only used for solvents
-MAT_CST = 'Cost' # The estimated material price/cost ($/kg)
+MAT_CST = '$/kg' # The estimated material price/cost ($/kg)
 # Calculated columns
 RXN_KG = 'kg/kg rxn' # kg of materials used per kg reaction/step product
 RXN_RMC = 'RM cost/kg rxn' # Cost of a material to make 1 kg rxn product
