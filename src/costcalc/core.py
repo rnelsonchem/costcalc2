@@ -429,6 +429,10 @@ class CoreCost(object):
 
         # Normalize the kg of reaction
         data[RXN_KG] /= data.loc[prod, RXN_KG]
+        # Remove the 1 kg of product
+        data.loc[prod, RXN_KG] = np.nan
+        if excel:
+            data.loc[prod, DYN_RKG] = ''
 
         # Calculate unknown costs. Looks for any empty values in the "Cost" 
         # column. Don't use the RXN_CST column directly, because some of
@@ -448,11 +452,9 @@ class CoreCost(object):
             # And for dynamic excel output
             if excel:
                 new_amp_enum = data.loc[cpd, RNUM]
-                new_amp_eden = data.loc[prod, RNUM]
                 kg_col = ECOLS[RXN_KG]
-            # This will be '*(C#/D#)'. This is different for Excel because we
-            # can't normalize the kg/kg rxn column
-                new_eamp = f'*({kg_col}{new_amp_enum}/{kg_col}{new_amp_eden})'
+                # This will be '*(C#)'. 
+                new_eamp = f'*({kg_col}{new_amp_enum})'
 
             # The new step is needed as well
             new_stp = data.loc[cpd, RXN_CST]
@@ -493,10 +495,9 @@ class CoreCost(object):
             rs = ','.join(cells)
             # Combine them together into a sum
             data.loc[prod, DYN_RRMC] = '=SUM(' + rs + ')'
-            # Need to divide by the total number of kgs
+            # Set the cost to the calculated value
             data.loc[prod, DYN_CST] = '=' + ECOLS[RXN_RMC] +\
-                    data.loc[prod, RNUM] + '/' + ECOLS[RXN_KG] +\
-                    data.loc[prod, RNUM]
+                    data.loc[prod, RNUM] 
 
         # Calculate % costs for individual rxn
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
