@@ -594,10 +594,6 @@ class CoreCost(object):
         self.fulldata.loc[mask, PRD_KG] = np.nan
         if excel:
             self.fulldata.loc[mask, DYN_PKG] = ''
-        # But we are making 1 kg of final product so that needs to be reset
-        self.fulldata.loc[(step, prod), PRD_KG] = 1.
-        if excel:
-            self.fulldata.loc[(step, prod), DYN_PKG] = '=1.'
 
         # PMI Calculations
         # Adding a prefix for display purposes
