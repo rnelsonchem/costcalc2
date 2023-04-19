@@ -1,3 +1,5 @@
+.. _tablesbasics:
+
 Translate Route Into Tables
 ===========================
 
@@ -188,6 +190,9 @@ will be ignored during the costing operation.
   usages of Intermediate A must be labeled as "1"*. A simplified version of a
   longer linear and convergent route are provide below for additional
   demonstration purposes.
+
+.. _OPEXinput:
+
 
 * *OPEX*: (Optional) An estimate, in $/kg, of the operating expenses for a
   given reaction step. This number is only valid for the product of any given

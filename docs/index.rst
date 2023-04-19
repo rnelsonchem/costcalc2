@@ -28,6 +28,7 @@ that are not implemented in the web application.
    :caption: Contents:
 
    tables_basics
+   interpret_results
 
 Indices and tables
 ==================
