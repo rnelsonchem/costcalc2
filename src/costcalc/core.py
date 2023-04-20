@@ -178,28 +178,45 @@ class CoreCost(object):
         self._fp_idx = fulldata.loc[fp_mask, RXN_CST].iloc[0]
 
         # If the RXN_MS column is present, then you will need calculate the
-        # "Equiv" based on the Amount given
+        # "Equiv" based on the mass given. Assumes that the first compound
+        # is the limiting reagent.
         if amt:
             # Group everything by "Step" column
             grp = fulldata.groupby(RXN_STP)
             for idx, sb_grp in grp:
+                # Grab the columns of interest, copy the ones to be modified
+                masses = sb_grp[RXN_MS]
+                equivs = sb_grp[RXN_EQ].copy()
+                molwts = sb_grp[MAT_MW]
+                volums = sb_grp[RXN_VOL].copy()
+                densit = sb_grp[MAT_DEN]
+                reltos = sb_grp[RXN_REL]
                 # If there are no amounts for a given Step, then skip
-                if ~sb_grp[RXN_MS].any():
+                if ~masses.any():
                     continue
-                # Mask out only the values that have amounts. This is
+                # If the first compound is not given as a mass,
+                # raise an error
+                if pd.isna(masses.iloc[0]):
+                    err = f'Mass for limiting reagent in Step "{idx}" must '\
+                            'be provided for masses to be used.'
+                    raise ValueError(err)
+                # Mask out only the values that have masses. This is
                 # important in case a mixture of mass and equiv is used.
-                # Also check to make sure this isn't a solvent
-                mask = ~sb_grp[RXN_MS].isna() & sb_grp[RXN_VOL].isna()
+                mask = ~masses.isna()
                 # Calculate the Equivalents
-                sb_grp.loc[mask, RXN_EQ] = sb_grp.loc[mask, MAT_MW]*\
-                                        sb_grp.loc[mask, RXN_MS]
+                equivs[mask] = masses[mask]/molwts[mask]
                 # Assume the first entry is the limiting reagent. Normalize
                 # the rest of the equivalents to that value
-                sb_grp.loc[mask, RXN_EQ] = sb_grp.loc[mask, RXN_EQ]/\
-                                       (sb_grp.iloc[0][RXN_EQ])
+                equivs[mask] = equivs[mask]/equivs.iloc[0]
+                # Set the volumes if a relative compound is given and the
+                # volumes entries are empty 
+                mask = ~reltos.isna() & volums.isna()
+                volums[mask] = (masses[mask]/densit[mask])/masses.iloc[0]
+                equivs[mask] = np.nan 
                 # Set the values in the full DataFrame
                 mask = fulldata[RXN_STP] == idx
-                fulldata.loc[mask, RXN_EQ] = sb_grp[RXN_EQ]
+                fulldata.loc[mask, RXN_EQ] = equivs
+                fulldata.loc[mask, RXN_VOL] = volums
             # Remove the Amount column
             fulldata.drop(RXN_MS, axis=1, inplace=True)
 
