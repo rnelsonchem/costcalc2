@@ -208,9 +208,8 @@ class CoreCost(object):
                 # Assume the first entry is the limiting reagent. Normalize
                 # the rest of the equivalents to that value
                 equivs[mask] = equivs[mask]/equivs.iloc[0]
-                # Set the volumes if a relative compound is given and the
-                # volumes entries are empty 
-                mask = ~reltos.isna() & volums.isna()
+                # Set the volumes if a relative compound and mass are given 
+                mask = ~reltos.isna() & ~masses.isna()
                 volums[mask] = (masses[mask]/densit[mask])/masses.iloc[0]
                 equivs[mask] = np.nan 
                 # Set the values in the full DataFrame
