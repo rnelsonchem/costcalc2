@@ -130,8 +130,9 @@ A snapshot of the Route table for the demo route above is shown below.
 Pictures (ChemDraw or regular images files) of the route can be added to this
 tab, and they will be ignored by the *costcalc* algorithm. Descriptions of the
 columns are provided in the list below the figure. As with the Materials
-table, additional user-defined columns or blank lines can be added, but they
-will be ignored during the costing operation.
+table, additional user-defined columns or blank lines can be added (:ref:`with
+one exception <massinput>`), but they will be ignored during the costing
+operation.
 
 .. image:: ./_images/reactions.png
    :align: center
@@ -233,6 +234,57 @@ that must be the same.
 .. image:: ./_images/3step_conv.png
    :align: center
 
+.. _massinput:
 
+Mass-based Inputs
+_________________
+
+In some cases (e.g. using scale-up batch records), it is more convenient to
+input the amounts of materials as masses rather than equivalents/volumes. This
+can be done by adding a new column named "Mass" to the Route table. This
+column can be populated by mass values in metric mass units (g, kg, metric
+ton, etc.), as long as the units are the same for all values. In the
+*costcalc* code, these mass values are converted back to equivalents/volumes,
+which is somewhat counter-intuitive, but must be done for algorithmic
+purposes. As a result, there are some important notes here, which are given
+roughly order of importance.
+
+#. *Masses can be added on a per reaction basis.* This means that masses can
+   be given for one or more reactions in the synthetic route, rather than
+   having to define masses for every reaction. This can be helpful if you want
+   to mix and match reaction information from different sources.
+
+#. *The first compound in a reaction is assumed to be the limiting reagent,
+   and the mass must be given for this compound.* Some mixing and matching of
+   masses/equivalents/volumes is allowed (below), but this only works if the
+   first compound follows the rule defined here.
+
+#. *Mass values override equivalent and volume values.* If a single compound
+   defines an equivalent/volume value and a mass, the mass will be converted
+   into an equivalent/volume and will override the original value. This makes
+   it possible, for example, to double check that the conversions are correct,
+   but it may lead to some unexpected behavior if you don't check the tables
+   carefully.
+
+#. *Mixtures of masses and equivalents/volumes are acceptable.* For example,
+   solid reagents could be included as masses with solvents given as volumes;
+   however, the two rules above must be followed.
+
+#. *Solvent masses are converted to equivalents, unless the "Relative"
+   compound and "Sol Recyc" parameter are also defined.* This is important if
+   you want to factor in solvent recycling.  When a "Relative" compound name
+   is provided along with a mass, the *costcalc* code will convert the mass
+   into volumes, which are affected by the solvent recycling parameter.
+
+Below is a picture of a example Route table for our demo route using a *Mass*
+column; this table will give the same results in the *costcalc* costing
+routine. (The color coded cells are due to the conditional formatting in the
+template Excel files.) Notice that only one reaction has been given mass
+values (note #1 above). The amount of intermediate A was only given in percent
+yield (75%), so no mass has been given (note #4 above). Note: the *Mass*
+column will be dropped from the results table/Excel file.
+
+.. image:: ./_images/br_route_mass.png
+   :align: center
 
 
