@@ -672,6 +672,11 @@ class CoreCost(object):
             ('compact'); however, a more complete set of columns can be
             returned if the value `'full'` is passed as the parameter here.
         '''
+        if not self.cost:
+            err = 'No cost calculation information. Use the `calc_cost`'\
+                    ' method first.'
+            raise RuntimeError(err)
+
         # For compact display, these are the most important columns
         comp_col = [MAT_CST, RXN_EQ,] 
         if self.fulldata.Volumes.any():
