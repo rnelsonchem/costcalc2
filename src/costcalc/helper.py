@@ -207,10 +207,14 @@ def sensitivity(model, col='Equiv', frac=0.1, decimals=2):
         How many decimal places to display. If `None`, the full precision
         DataFrame will be displayed.
     '''
-    # Make a new DF for sensitivity analysis
+    # Make a new DF for sensitivity analysis. If material costs are being
+    # screened, then remove the compounds being costed
+    sens = model.fulldata[[col]].dropna()
+    if col == MAT_CST:
+        mask = model.fulldata[RXN_CST].isna()
+        sens = sens[mask]
     # Make values that are a certain percent above and below the current
     # numbers
-    sens = model.fulldata[[col]].dropna()
     sens['Val low'] = sens[col]*(1 - frac)
     sens['Val high'] = sens[col]*(1 + frac)
     
