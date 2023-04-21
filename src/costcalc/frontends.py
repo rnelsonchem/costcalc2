@@ -261,6 +261,9 @@ class ColabCost(ExcelCost):
         '''
         mats = self._get_sheet_vals(mat_url, wsheet)
 
+        # Warning for bad column name "Cost"
+        self.__cost_warn(mats)
+
         # Convert numeric/date columns. Everything is read from a Google sheet
         # as strings
         num_cols = [MAT_MW, MAT_DEN, MAT_CST] 

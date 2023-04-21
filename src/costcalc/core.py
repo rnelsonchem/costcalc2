@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -126,6 +128,10 @@ class CoreCost(object):
         '''
         rxn = self.rxns.copy()
         mat = self.materials.copy()
+
+        # Warn about bad column name "Cost"
+        self.__cost_warn(mat)
+
         # Drop lines that are still empty, these cause all sorts of
         # problems. Assume rxn/materials tables should have compound names
         # for valid entries
@@ -142,6 +148,20 @@ class CoreCost(object):
 
         self.rxns = rxn.copy()
         self.materials = mat.copy()
+
+    def __cost_warn(self, mat_df):
+        '''Throw a warning if the deprecated "Cost" column name is used in the
+        materials DataFrame, and change to correct column name.  
+
+        This is set as a temporary method because it is used here and the
+        frontends.py module. If this is removed, be sure to correct both
+        places.
+        '''
+        if "Cost" in mat_df.columns:
+            err = 'The "Cost" column name is no longer valid; '\
+                    f'changing column name to "{MAT_CST}".'
+            warnings.warn(err)
+            mat_df.rename(columns={"Cost": MAT_CST}, inplace=True) 
 
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 
