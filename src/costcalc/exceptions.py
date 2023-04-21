@@ -44,9 +44,8 @@ class CostError(Exception):
 
     def __str__(self, ):
         if self.disp_df:
-            print(self.message)
-            print('See the following entries:')
-            disp(self.df)
+            self.message += '\nSee the following entries:\n'
+            self.message += self.df.to_string()
         return self.message
 
 
