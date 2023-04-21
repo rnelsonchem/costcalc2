@@ -75,34 +75,33 @@ def value_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None):
 
 
 def plot_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None, 
-            legend=None):
+            label=None):
     '''Plot a range of values.
 
     Parameters
     ----------
     See `value_scan` method description, except for the following.
 
-    legend : bool, str
-        This will add a legend to the plot. If you use the value `True`,
-        the compound name will be added to the legend. Otherwise, you can
-        pass a custom string if you want that to be in the legend instead.
-
+    label : None, bool, str (Default = None)
+        This will add a legend label. If you use the value `True`, the
+        compound name will be added to the legend. Otherwise, you can pass a
+        custom string if you want that to be in the legend instead. If None
+        (default) or False is used, then no legend entry will be given. This
+        function does add the legend to the plot; use pyplot.legend as a
+        separate function call.
     '''
     # Calculate all the costs for the given values
     costs = value_scan(model, cpd, start, stop, npts, val_type=val_type,
                         step=step)
     
-    # If legend is selected, make sure the label is set properly
-    if legend == True:
+    # If label is boolean, make sure the label is set properly
+    if label == True:
         label = cpd
-    else:
-        label = legend
+    elif label == False:
+        label = None
 
     # Plot the values
     plt.plot(costs['Values'], costs['$/kg'], 'o', label=label)
-    # Generate the legend, if requested
-    if legend:
-        plt.legend()
 
 
 def swap(model, cpd_old, cpd_new, step=None):
