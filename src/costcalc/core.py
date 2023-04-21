@@ -232,6 +232,9 @@ class CoreCost(object):
         # Save the full data set
         self.fulldata = fulldata
 
+        # Reset the cost variable
+        self.cost = None
+
         # Add a modified variable placeholder. This will store modified
         # values for the helper functions
         self._mod_vals = []
