@@ -167,16 +167,12 @@ class ExcelCost(CoreCost):
         print('As of', self._now, '--')
         
         # Print a string about the final cost of the product
-        if decimals:
-            dec_str = ':.{:d}f'.format(decimals)
-        else:
-            dec_str = ':f'
         cost_str = f'The final cost of {self.final_prod} is '\
                 f'${self.cost:.2f}/kg.'
         print(cost_str)
             
         # Display the correct format of data based on the kwargs
-        if decimals:
+        if isinstance(decimals, int):
             disp(fd.round(decimals).fillna(fill))
         else:
             disp(fd.fillna(fill))
@@ -392,7 +388,7 @@ class WebAppCost(ExcelCost):
         fd = super(ExcelCost, self).results(style)
 
         # Display the DataFrames for different permutations of kwargs
-        if decimals:
+        if isinstance(decimals, int):
             fd = fd.round(decimals).fillna(fill)
         else:
             fd = fd.fillna(fill)
