@@ -679,9 +679,9 @@ class CoreCost(object):
 
         # For compact display, these are the most important columns
         comp_col = [MAT_CST, RXN_EQ,] 
-        if self.fulldata.Volumes.any():
+        if self.fulldata[RXN_VOL].any():
             comp_col.extend([RXN_VOL, RXN_RCY,])
-        if self.fulldata.OPEX.any():
+        if self.fulldata[RXN_OPX].any():
             comp_col.append(RXN_OPX) 
         comp_col.extend([RXN_KG, RXN_RMC, RXN_RMP, PRD_KG, PRD_RMC, PRD_RMP])
 
