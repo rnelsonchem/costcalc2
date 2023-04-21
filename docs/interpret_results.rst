@@ -37,12 +37,14 @@ route. Brief descriptions of these columns are below.
 
 * *kg/kg rxn*: These values are the number of kgs that are needed for each
   reagent/solvent in order to make 1 kg of reaction product. Notice that the
-  number of kgs of reaction product is always 1.0.
+  reaction product does not have a number here because of the assumed value of
+  1 kg.
 
 * *RM cost/kg rxn*: These are the costs ($/kg) for each reagent/solvent that
   would be needed to make 1 kg of reaction product. This is simply the *kg/kg
   rxn* column multiplied by the *$/kg* column. The sum of these values would
-  be the RMC for each reaction product.
+  be the RMC for each reaction product and is the value in the product cell
+  for this column.
 
 * *% RM cost/kg rxn*: These are the *RM cost/kg rxn* expressed as percentages
   of the RMC for the reaction product. In other words, this is the *RM cost/kg
@@ -57,18 +59,19 @@ values should be interpreted for the entire route. Brief descriptions of these
 columns are below.
 
 * *kg/kg prod*: The number of kgs needed for each reagent/solvent in order to
-  synthesize 1 kg of the final product of the route.
+  synthesize 1 kg of the final product of the route. The 1 kg of final product
+  is not included in this column.
 
 * *RM cost/kg prod*: The RM cost contribution ($/kg) of each reagent/solvent
   to the RMC of the route product. This is simply *kg/kg prod* multiplied by
   the *$/kg* column. The sum of these values across the entire route should
   equal the RMC of the route product, *unless* OPEX is being added to one or
-  more reaction steps. 
+  more reaction steps. See :ref:`the OPEX section below <OPEX>`.
 
 * *% RM cost/kg prod*: Again, this is simply the *RM cost/kg prod* expressed
   as a percentage of the RMC for the overall route product. The sum of these
   values across the entire route should be 100%, *unless* OPEX is being added
-  to one or more reaction steps.
+  to one or more reaction steps. See :ref:`the OPEX section below <OPEX>`.
 
 PMI Values
 ----------
@@ -78,9 +81,10 @@ intensity (PMI) for each reaction (rows 6 and 11) and the overall route (row
 12). PMI can be defined as the number of kgs of materials needed to make 1 kg
 of product. This is a common metric for process waste, as larger PMI values
 can be interpreted as more materials being used, and potentially wasted, to
-create 1 kg of product. These values are shown in different columns because
-the per reaction PMI is calculated from the *kg/kg rxn* data, whereas the per
-route PMI is calculated from the *kg/kg prod* data. 
+create 1 kg of product. A "perfect" PMI is 1, which means that 1 kg of
+material was used to make 1 kg of product. These values are shown in different
+columns because the per reaction PMI is calculated from the *kg/kg rxn* data,
+whereas the per route PMI is calculated from the *kg/kg prod* data. 
 
 .. note:: 
    
@@ -92,6 +96,8 @@ route PMI is calculated from the *kg/kg prod* data.
    Recyc" column) to zero for all solvents, and the Excel file will
    recalculate the PMI parameters. These all-solvent PMI values will likely be
    dominated by solvent usage, though.
+
+.. _OPEX:
 
 OPEX Additions
 --------------

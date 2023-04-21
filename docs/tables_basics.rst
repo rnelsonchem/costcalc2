@@ -194,17 +194,15 @@ operation.
 
 .. _OPEXinput:
 
-
 * *OPEX*: (Optional) An estimate, in $/kg, of the operating expenses for a
   given reaction step. This number is only valid for the product of any given
   step.  Although these values are not given for the current demo route, they
   could have been given for Intermediate A in Step 1 (Cell H5) and/or Product in
   Step 2 (cell H10). For route intermediates, these values are added to the
-  RMC values in subsequent steps. For example, an OPEX of $10/kg for
-  Intermediate A would add this value to the calculated RMC from Step 1 when
-  it is used in Step 2. This can be a bit confusing at first, so it is
-  recommended to add some numbers here and then examine the costing output
-  carefully.
+  RMC values in subsequent steps; the OPEX for the final product is added to
+  the final RMC value in the *$/kg* column. This can be a bit confusing at
+  first, so a :ref:`second model using OPEX values <OPEX>` will be presented
+  in the next section. 
 
 * *Notes*: (Optional) Notes for this particular compound. For example, a
   reference can be included here if the reaction was taken from the
