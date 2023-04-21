@@ -164,7 +164,8 @@ class ExcelCost(CoreCost):
         fd = super(ExcelCost, self).results(style)
 
         # Print the time the calculation was run
-        print('As of', self._now, '--')
+        utc_datetime = self._now.strftime('%Y-%m-%d %H:%M UTC')
+        print(f'As of {utc_datetime} --')
         
         # Print a string about the final cost of the product
         cost_str = f'The final cost of {self.final_prod} is '\
@@ -190,10 +191,11 @@ class ExcelCost(CoreCost):
         '''
         # Get the process DataFrame
         fd = super(ExcelCost, self).excel()
-
+       
+        # Can't use a ":" in an Excel sheet name for time
+        utc_datetime = self._now.strftime('%Y-%m-%d %Hh%Mm UTC')
         # Create the excel file. Can only save with the date and not the time
-        fd.to_excel(fname, 
-                    sheet_name='As of ' + self._now.split()[0], )
+        fd.to_excel(fname, sheet_name=f'As of {utc_datetime}')
             
 
 class ColabCost(ExcelCost):

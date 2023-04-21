@@ -359,7 +359,7 @@ class CoreCost(object):
             strings. By default (False), the output will be numerical values.
         '''
         # Save a time stamp so it can be displayed later
-        self._now = pd.Timestamp.now('US/Eastern').strftime('%Y-%m-%d %H:%M')
+        self._now = pd.Timestamp.utcnow()
         # Prep the DataFrame
         self._column_clear(excel=excel)
         # Set a column of unique row labels
