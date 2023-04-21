@@ -25,12 +25,12 @@ def value_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None):
         The numbers of points to calculate the costs between `start` and
         `stop`
 
-    val_type : str, optional (Default = '$/kg')
+    val_type : str (Default = '$/kg')
         This is the column name for the parameter that you'll be changing.
         This must be for a non-calculated column, such as '$/kg', 'Equiv',
         'OPEX', etc.
 
-    step : None, int, optional (Default = None)
+    step : None, int (Default = None)
         The reaction step number for which this value will be changed. If
         this is `None` (default), then all the values for the given
         compound (`cpd`) will be set to the same value. This is mostly
@@ -125,7 +125,7 @@ def swap(model, cpd_old, cpd_new, step=None):
         then, the `cost_calc` method must have been run on that instance
         to define the final cost of that material.
 
-    step : int or None, optional (default = None)
+    step : int or None (default = None)
         This is the step number for which to do the swap. The default
         (None) is to swap all instances of the particular compound.
 
@@ -195,15 +195,15 @@ def sensitivity(model, col='Equiv', frac=0.1, decimals=2):
     model : CoreCost or subclass
         This is the costing model instance that will be modified.
         
-    col : str, optional (Default = 'Equiv')
+    col : str (Default = 'Equiv')
         Which column from the `fulldata` DataFrame should be used for the
         sensitivity analysis. 
 
-    frac : float, optional (Default = 0.1)
+    frac : float (Default = 0.1)
         Fractional percentage to increase/decrease the values by before
         recosting. The default is 0.1, which is the same as +/- 10%. 
 
-    decimals : int or None, optional (Default = 2)
+    decimals : int or None (Default = 2)
         How many decimal places to display. If `None`, the full precision
         DataFrame will be displayed.
     '''
