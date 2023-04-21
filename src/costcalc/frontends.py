@@ -1,10 +1,15 @@
 import urllib.parse as parse
+import warnings
 
 import numpy as np
 import pandas as pd
 
 from .core import CoreCost
 from .constants import *
+
+# Filter warnings about data validation in Excel files
+warnings.filterwarnings('ignore', category=UserWarning, 
+                module='openpyxl')
 
 # Setting the display function
 # This gets changed for Jupyter Notebook/IPython sessions, so that DataFrames
