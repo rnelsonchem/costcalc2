@@ -54,7 +54,8 @@ def value_scan(model, cpd, start, stop, npts, val_type='$/kg', step=None):
     vals = np.linspace(start, stop, npts)
    
     # I need a copy of the full data set in order to reset for each
-    # iteration. Otherwise, I was noticing some issues.
+    # iteration. Using this rather than rxn_data_setup because this makes it
+    # possible to use a modified model with this function
     fd_copy = model.fulldata.copy()
     all_costs = []
     for val in vals:
