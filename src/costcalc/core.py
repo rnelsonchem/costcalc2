@@ -24,7 +24,7 @@ class CoreCost(object):
                 * Density : float, the density (g/mL) of the compound.
                 Although this column must be present, density values are only
                 necessary for reaction solvents.
-                * Cost : float, the cost/price of the compound in $/kg. Can be
+                * $/kg : float, the cost/price of the compound in $/kg. Can be
                 left blank for unknown costs, like intermediates and final
                 products
                 * Notes : str, optional notes about the compound.
@@ -40,7 +40,11 @@ class CoreCost(object):
 
                 * Step : str, a unique identifier for each step such as "1" or
                 "1a"
-                * Compound: str, the compound names
+                * Compound: str, the compound names. The first compound in any
+                given Step should always be the reference compound for the
+                reaction (i.e.  limiting reagent, solvent volume relative
+                mass). The final compound for any given Step should always be
+                the product.
                 * Equiv : float, the equivalents used for each compound, for
                 reaction products, this value should be the fractional yield
                 (e.g. 75% yield is 0.75 equiv)
@@ -48,9 +52,6 @@ class CoreCost(object):
                 used to calculate equivalents. If used, the first compound
                 for each reaction must be the limiting reagent.
                 * Volumes : float, volume equivalents of solvent (L/kg)
-                * Relative : str, the compound name to use as the reference
-                for converting solvent volumes to kg. This must correspond to
-                one of the Compound strs for the step
                 * Sol Recyc : float, fractional percentage of solvent that can
                 be recycled. E.g. 75% of solvent can be recycled = 0.75
                 * Cost step : str, the "Step" where compound costs are

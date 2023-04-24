@@ -160,9 +160,18 @@ costing operation.
 * *Compound*: The name of a reagent/solvent/product for the step. These names
   must *exactly* correspond to the Materials table, so a drop-down selector is
   provided to ensure that a valid name is selected. (This is why the Materials
-  table should be created first.) As noted above, duplicate compound names are
-  *NOT* allowed per Step, so multiple usages of the same compound in one Step
-  (e.g.  extraction solvent) should be added into one entry.
+  table should be created first.) The order of the compounds per Step is
+  arbitrary, with *two important exceptions.* 
+
+    * The first compound must be the reference compound for the reaction,
+      which is typically the limiting reagent. If two or more compounds are
+      added in equal molar amounts, this is the compound for which the mass
+      will be used for solvent volume calculations. 
+    * The last compound must be the reaction product. 
+
+  As noted above, duplicate compound names are *NOT* allowed per Step, so
+  multiple usages of the same compound in one Step (e.g.  extraction solvent)
+  should be added into one entry.
 
 * *Equiv*: Molar equivalents of a reagent or product. Although this value can
   be used for solvents, it is more common to define solvent utilization with
@@ -177,18 +186,11 @@ costing operation.
 
 * *Volumes*: The amount of solvent utilization in volumes. This value is only
   required if *Equiv* for a particular compound is not given; if this column
-  is used, the next two columns (*Relative* and *Sol Recyc*) are required. The
+  is used, the next column (*Sol Recyc*) is required. The
   unit for volumes is L/kg, which can be interpreted as "liters of this
   solvent per kg of a reference compound." This is numerically equivalent to
-  mL/g. The reference compound is defined in the next column. 
-
-* *Relative*: The reference compound for solvent volume calculations. This is
-  typically the starting material/limiting reagent of the reaction, but that
-  may not always be the case. Again, the name here must correspond to a
-  compound from the Materials table; this cell contains a drop-down selector to
-  ensure that a valid compound name is selected. The material name must also
-  be defined in the current reaction *Step*, otherwise the cost calculation
-  will result in an error.
+  mL/g. The reference compound is assumed to be the first compound in the
+  reaction.  
 
 * *Sol Recyc*: The fractional percentage of this solvent that it is expected
   could be recycled. For example, if 95% of the solvent can be recycled, then
