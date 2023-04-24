@@ -47,10 +47,10 @@ materials, such as molecular weight, density, and price. A "Route" table will
 contain the route-specific information, such as equivalents of reagents,
 volumes of solvent, etc. These tables require some specific formatting, which
 will be outlined here. The web application uses an Excel file as the tabular
-input. A :download:`blank template <./_downloads/blank_v3.xlsx>` is provided
+input. A :download:`blank template <./_downloads/blank_v4.xlsx>` is provided
 here, which contains the proper column names and tabs as well as well as some
 conditional formatting to help guide user input. A complete :download:`working
-Excel file <./_downloads/working_v4.xlsx>` containing this demo route
+Excel file <./_downloads/working_v5.xlsx>` containing this demo route
 information is also available.
 
 Materials Table
