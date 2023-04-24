@@ -475,7 +475,13 @@ class CoreCost(object):
         if mask.any():
             data.loc[mask, RXN_KG] *= (1 - data.loc[mask, RXN_RCY]) 
             if excel:
-                sols[DYN_RKG] += '*(1 - ' + ECOLS[RXN_RCY] + sols[RNUM] + ')'
+                dyn_rkg = data.loc[mask, DYN_RKG]
+                # Wrap the original equation in parentheses
+                dyn_rkg = '=(' + dyn_rkg.str.slice(1) + ')'
+                # Multiply by the recycling parameter
+                dyn_rkg += '*(1 - ' + ECOLS[RXN_RCY] +\
+                        sols[RNUM] + ')'
+                data.loc[mask, DYN_RKG] = dyn_rkg
 
         # Normalize the kg of reaction
         data[RXN_KG] /= data.loc[prod, RXN_KG]
