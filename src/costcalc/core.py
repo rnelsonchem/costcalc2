@@ -412,14 +412,38 @@ class CoreCost(object):
             labels can be numbers (e.g. step 1) and/or letters (e.g. step 1a),
             this parameter is handled as a string.
 
-        amp : float, optional (default = 1.0)
+        amp : float (default = 1.0)
             This number is an amplifier that increases some of the values,
             e.g. masses of materials, based on how much material is being used
             to make 1 kg of the overall final product.   
 
+        eamp : str (default = '')
+            This is the string amplifier value to use when creating dynamic
+            Excel output.
+
         excel : boolean (False)
             Whether to output numerical values (False) or Excel-formatted
             equation strings (True).
+
+        Notes
+        -----
+        The simplified algorithm here is as follows::
+
+            Calculate kg of solids
+            Calculate kg of solvents
+            Normalize kg values
+            For missing $/kg values:
+                _rxn_cost(missing_compound, amp=kg_needed_for_miss_cpd)
+            Calculate RMC and % for reaction
+            Calculate RMC for product (multiply by amp)
+            Return reaction product RMC
+
+        The default behavior is to calculate the costs and other values as
+        floating point numbers. However, there is also an Excel version here
+        that returns the calculated values as equation strings, which will be
+        executed when the table is opened in Excel. This uses an `ECOL`
+        dictionary to map DF column names to Excel column letters, and an
+        `RNUM` column that is the expected row numbers for the Excel output.
         '''
         # Select out the reaction of interest from the full data set. Saves
         # some typing. (Make this a copy to enusre it isn't given as a view.)
@@ -427,15 +451,13 @@ class CoreCost(object):
 
         # Kg of nonsolvent materials used per equivalent
         data[RXN_KG] = data[RXN_EQ]*data[MAT_MW]
-        # And for Excel
+        # For Excel, normalize the data here. This will get overwritten for
+        # solvents. 
         if excel:
+            # Essentially "=Equivs*MW"
             data[DYN_RKG] = '=' + ECOLS[RXN_EQ] + data[RNUM] + '*'\
                     + ECOLS[MAT_MW] + data[RNUM]
-        # For Excel, normalize the data here. This will get overwritten for
-        # solvents. This is a little weird for the product because it will be
-        # the same in numerator and denominator, but that will keep things
-        # fully interactive.
-        if excel:
+            # Essentially above + "/(Prod_eq*Prod_MW)
             data[DYN_RKG] += '/(' + ECOLS[RXN_EQ] +\
                     data.loc[prod,RNUM] + '*' + ECOLS[MAT_MW] +\
                     data.loc[prod, RNUM] + ')'
@@ -473,10 +495,10 @@ class CoreCost(object):
         if excel:
             data.loc[prod, DYN_RKG] = ''
 
-        # Calculate unknown costs. Looks for any empty values in the "Cost" 
-        # column. Don't use the RXN_CST column directly, because some of
-        # the costs may have been manually set using the `value_mod` method
-        # unknown_cost = ~data[RXN_CST].isna()
+        # Calculate unknown costs. 
+        # Looks for any empty values in the "Cost" column. Don't use the
+        # RXN_CST column directly, because some of the costs may have been
+        # manually set using the `value_mod` method
         unknown_cost = data[MAT_CST].isna()
         # This is recursive. The final cost per kg of product will be
         # amplified by each subsequent step, which is where the new_amp
