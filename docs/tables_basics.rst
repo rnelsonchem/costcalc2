@@ -287,11 +287,11 @@ roughly order of importance.
    solid reagents could be included as masses with solvents given as volumes;
    however, the two rules above must be followed.
 
-#. *Solvent masses are converted to equivalents, unless the "Relative"
-   compound and "Sol Recyc" parameter are also defined.* This is important if
-   you want to factor in solvent recycling.  When a "Relative" compound name
-   is provided along with a mass, the *costcalc* code will convert the mass
-   into volumes, which are affected by the solvent recycling parameter.
+#. *Solvent masses are converted to equivalents, unless the "Sol Recyc"
+   parameter is also defined.* This is important if you want to factor in
+   solvent recycling.  When a "Sol Recyc" parameter is provided along with a
+   mass, the *costcalc* code will convert the mass into volumes, which are
+   affected by the given recycling parameter.
 
 Below is a picture of a example Route table for our demo route using a *Mass*
 column; this table will give the same results in the *costcalc* costing
