@@ -211,7 +211,7 @@ class CoreCost(object):
                 molwts = sb_grp[MAT_MW]
                 volums = sb_grp[RXN_VOL].copy()
                 densit = sb_grp[MAT_DEN]
-                reltos = sb_grp[RXN_REL]
+                recycl = sb_grp[RXN_RCY]
                 # If there are no amounts for a given Step, then skip
                 if ~masses.any():
                     continue
@@ -230,7 +230,7 @@ class CoreCost(object):
                 # the rest of the equivalents to that value
                 equivs[mask] = equivs[mask]/equivs.iloc[0]
                 # Set the volumes if a relative compound and mass are given 
-                mask = ~reltos.isna() & ~masses.isna()
+                mask = ~recycl.isna() & ~masses.isna()
                 volums[mask] = (masses[mask]/densit[mask])/masses.iloc[0]
                 equivs[mask] = np.nan 
                 # Set the values in the full DataFrame
