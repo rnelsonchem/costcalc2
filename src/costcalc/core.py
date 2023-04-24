@@ -461,16 +461,21 @@ class CoreCost(object):
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)
-            sols[RXN_KG] = sols[RXN_VOL]*sols[MAT_DEN]*\
-                    (1 - sols[RXN_RCY])*amt_rel
+            sols[RXN_KG] = sols[RXN_VOL]*sols[MAT_DEN]*amt_rel
             # And for Excel
             if excel:
                 sols[DYN_RKG] = '=' + ECOLS[RXN_VOL] +\
                         sols[RNUM] + '*' + ECOLS[MAT_DEN] +\
-                        sols[RNUM] + '*' + '(1 - ' + ECOLS[RXN_RCY]\
-                        + sols[RNUM] + ')*' + ECOLS[RXN_KG] +\
+                        sols[RNUM] + '*' + ECOLS[RXN_KG] +\
                         amt_rel_e
             data[mask] = sols
+
+        # Set a recycle parameter, if given
+        mask = ~data[RXN_RCY].isna()
+        if mask.any():
+            data.loc[mask, RXN_KG] *= (1 - data.loc[mask, RXN_RCY]) 
+            if excel:
+                sols[DYN_RKG] += '*(1 - ' + ECOLS[RXN_RCY] + sols[RNUM] + ')'
 
         # Normalize the kg of reaction
         data[RXN_KG] /= data.loc[prod, RXN_KG]
