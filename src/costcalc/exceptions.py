@@ -72,9 +72,5 @@ err_lines = {
     'mis_sol': 'Missing solvent info error!\n'\
            'One of your solvent entries is missing critical info.',
            
-    'mis_rel': f'"{RXN_REL}" solvent entry error!\n'\
-           f'A "{RXN_REL}" compound for one of your solvents is incorrect.\n'\
-           f'This may be due to a name mismatch with the "{RXN_CPD}" column.',
-           
     }
     

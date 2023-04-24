@@ -141,7 +141,7 @@ class CoreCost(object):
         # Remove white space from before/after these columns
         # This is another tricky problem because trailing white space for
         # example is very hard to notice
-        rxn_col = [RXN_STP, RXN_CPD, RXN_REL, RXN_CST]
+        rxn_col = [RXN_STP, RXN_CPD, RXN_CST]
         rxn[rxn_col] = rxn[rxn_col].apply(lambda x: x.str.strip())
         mat_col = [RXN_CPD, ]
         mat[mat_col] = mat[mat_col].apply(lambda x: x.str.strip())
@@ -179,8 +179,8 @@ class CoreCost(object):
         # will be fairly obvious (no MW, e.g.).
         mat_keeps = [RXN_CPD, MAT_MW, MAT_DEN, MAT_CST, NOTES]
 
-        rxn_keeps = [RXN_STP, RXN_CPD, RXN_EQ, RXN_VOL, RXN_REL,
-                    RXN_RCY, RXN_CST, RXN_OPX, NOTES]
+        rxn_keeps = [RXN_STP, RXN_CPD, RXN_EQ, RXN_VOL, RXN_RCY, RXN_CST, 
+                RXN_OPX, NOTES]
         # Check if an RXN_MS column is present. This is used to calculate
         # equivalents. If this is present, add this column to our "keep" list
         amt = False
@@ -342,30 +342,15 @@ class CoreCost(object):
             raise CostError(err_line, df, self._disp_err_df)
             
         # Check that all the solvent information is given
-        sol_cols = [MAT_DEN, RXN_VOL, RXN_REL, RXN_RCY]
+        sol_cols = [MAT_DEN, RXN_VOL, RXN_RCY]
         sol_mask = ~self.fulldata[RXN_VOL].isna() 
-        sol_chk = self.fulldata.loc[sol_mask, RXN_REL].isna() | \
-                self.fulldata.loc[sol_mask, MAT_DEN].isna() | \
+        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna() | \
                 self.fulldata.loc[sol_mask, RXN_RCY].isna()
         # If anything is missing, print a note
         if sol_chk.any():
             err_line = err_lines['mis_sol']
             sol_mask2 = sol_mask & sol_chk
             df = self.fulldata.loc[sol_mask2, sol_cols]
-            raise CostError(err_line, df, self._disp_err_df)
-        
-        # Check to make sure that the "Relative" compound for a solvent
-        # is acutally contained in the step
-        sol_mask = ~self.fulldata[RXN_REL].isna()
-        bad = []
-        for cpd in self.fulldata[sol_mask].itertuples():
-            new_idx = (cpd.Index[0], getattr(cpd, RXN_REL) )
-            if new_idx not in self.fulldata.index:
-                bad.append( cpd.Index )
-
-        if len(bad) > 0:
-            err_line = err_lines['mis_rel']
-            df = self.fulldata.loc[bad, sol_cols]
             raise CostError(err_line, df, self._disp_err_df)
         
     def calc_cost(self, excel=False):
@@ -467,13 +452,11 @@ class CoreCost(object):
         mask = ~data[RXN_VOL].isna()
         sols = data[mask].copy()
         if sols.size != 0:
-            # Find the material that the volumes are relative to (taking only
-            # the first one... This might not be great.
-            cpd_rel = sols[RXN_REL][0]
-            # What is the kg of relative cpd?
-            amt_rel = data.loc[cpd_rel, RXN_KG]
+            # Find the material mass that the volumes are relative, which
+            # should be for the first compound in the reaction
+            amt_rel = data[RXN_KG].iloc[0]
             if excel:
-                amt_rel_e = data.loc[cpd_rel, RNUM]
+                amt_rel_e = data[RNUM].iloc[0]
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)

@@ -8,7 +8,6 @@ RXN_CPD = 'Compound' # The compound names column, same for materials table
 RXN_EQ = 'Equiv' # Molar equivalents of reagent
 RXN_MS = 'Mass' # Mass of material used, typically kg, just be consistent
 RXN_VOL = 'Volumes' # Volumes of solvent L/kg of limiting reagent (usually)
-RXN_REL = 'Relative' # Limiting reagent name for volumes->mass calculation
 RXN_RCY = 'Sol Recyc' # Fractional amount of solvent that is recycled
 RXN_CST = 'Cost step' # Step where cost is calculated
 RXN_OPX = 'OPEX' # Operational expenditures in $/kg, only for rxn product
@@ -41,10 +40,9 @@ DYN_PRMP = PRD_RMP + SUFFIX # dynamic %RM cost/kg prod
 # This dictionary will be used for creating dynamic excel sheets, for which
 # I'll need to know the DataFrame<->Excel column name mapping
 ECOLS = {RXN_STP:'A', RXN_CPD:'B', MAT_MW:'C', MAT_DEN:'D', MAT_CST:'E',
-        RXN_EQ:'F', RXN_VOL:'G', RXN_REL:'H', RXN_RCY:'I', RXN_CST:'J',
-        RXN_OPX:'K', RXN_KG:'L', RXN_RMC:'M', RXN_RMP:'N', PRD_KG:'O',
-        PRD_RMC:'P', PRD_RMP:'Q', }
-
+        RXN_EQ:'F', RXN_VOL:'G', RXN_RCY:'H', RXN_CST:'I',
+        RXN_OPX:'J', RXN_KG:'K', RXN_RMC:'L', RXN_RMP:'M', PRD_KG:'N',
+        PRD_RMC:'O', PRD_RMP:'P', }
 
 ### References ###
 # https://stackoverflow.com/questions/1383239/can-i-use-init-py-to-define-global-variables
