@@ -1,4 +1,4 @@
-﻿Step,Compound,Equiv,Volumes,Sol Recyc,Cost step,OPEX,Notes
+{RXN_STP},{RXN_CPD},{RXN_EQ},{RXN_VOL},{RXN_RCY},{RXN_CST},{RXN_OPX},{NOTES}
 1,Starting Material,1,,,,,
 1,Bromine ,1.5,,,,,
 1,Dichloromethane (DCM),,10,0.75,,,

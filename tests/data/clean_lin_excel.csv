@@ -1,4 +1,4 @@
-Step,Compound,MW,Density,$/kg,Equiv,Volumes,Sol Recyc,Cost step,OPEX,kg/kg rxn,RM cost/kg rxn,% RM cost/kg rxn,kg/kg prod,RM cost/kg prod,% RM cost/kg prod,Material Notes,Reaction Notes
+{RXN_STP},{RXN_CPD},{MAT_MW},{MAT_DEN},{MAT_CST},{RXN_EQ},{RXN_VOL},{RXN_RCY},{RXN_CST},{RXN_OPX},{RXN_KG},{RXN_RMC},{RXN_RMP},{PRD_KG},{PRD_RMC},{PRD_RMP},Material {NOTES},Reaction {NOTES}
 1,Starting Material,151,,15,1,,,,,=F2*C2/(F5*C5),=K2*E2,=L2*100/L5,=K2*(K12)*(K7),=L2*(K12)*(K7),=O2*100/L15,,
 1,Bromine,159.8,,2,1.5,,,,,=F3*C3/(F5*C5),=K3*E3,=L3*100/L5,=K3*(K12)*(K7),=L3*(K12)*(K7),=O3*100/L15,,
 1,Dichloromethane (DCM),84.93,1.33,1,,10,0.75,,,=(G4*D4*K2)*(1 - H4),=K4*E4,=L4*100/L5,=K4*(K12)*(K7),=L4*(K12)*(K7),=O4*100/L15,,
