@@ -142,7 +142,7 @@ class CoreCost(object):
         # Remove white space from before/after these columns
         # This is another tricky problem because trailing white space for
         # example is very hard to notice
-        rxn_col = [RXN_STP, RXN_CPD, RXN_CST]
+        rxn_col = [RXN_STP, RXN_CPD]
         rxn[rxn_col] = rxn[rxn_col].apply(lambda x: x.str.strip())
         mat_col = [RXN_CPD, ]
         mat[mat_col] = mat[mat_col].apply(lambda x: x.str.strip())
@@ -174,6 +174,22 @@ class CoreCost(object):
         important if you are modifiying values, for example, and you want to
         put the system back into its starting point. 
         '''
+        # Setup the reaction connectivity matrix. This is done by looking at
+        # each reaction product, and assigning all usages of that product to
+        # the correct step number. First, create an empty column for the steps
+        self.rxns[RXN_CST] = np.nan
+        steps = self.rxns.groupby(RXN_STP)
+        for step, rxn in steps:
+            # The product is the last compound in a given, save the final
+            # index
+            rxn_prod = rxn[RXN_CPD].iloc[-1]
+            if rxn_prod == self.final_prod:
+                self._fp_idx = step
+            # Find all instances of the same product being used
+            mask = self.rxns[RXN_CPD] == rxn_prod
+            # Create the new costing column, add 
+            self.rxns.loc[mask, RXN_CST] = step
+
         # Merge the materials and reaction DataFrames. A few columns are
         # dropped, which are not necessary for calculations. The merge happens
         # on the rxns DataFrame ('right'), which means that missing materials
@@ -193,10 +209,6 @@ class CoreCost(object):
                             on=RXN_CPD, how='right')\
                             .rename({'Notes_x': 'Material Notes',
                                 'Notes_y': 'Reaction Notes'}, axis=1)
-
-        # Find the step number for the final product. 
-        fp_mask = fulldata.Compound == self.final_prod
-        self._fp_idx = fulldata.loc[fp_mask, RXN_CST].iloc[0]
 
         # If the RXN_MS column is present, then you will need calculate the
         # "Equiv" based on the mass given. Assumes that the first compound
@@ -480,7 +492,6 @@ class CoreCost(object):
                 # Multiply by the recycling parameter
                 dyn_rkg += '*(1 - ' + ECOLS[RXN_RCY] +\
                             data.loc[mask, RNUM] + ')'
-                print(dyn_rkg)
                 data.loc[mask, DYN_RKG] = dyn_rkg
 
         # Normalize the kg of reaction
