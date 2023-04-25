@@ -50,15 +50,12 @@ class CoreCost(object):
                 (e.g. 75% yield is 0.75 equiv)
                 * Mass : float, (Optional), the mass of material used. This is
                 used to calculate equivalents. If used, the first compound
-                for each reaction must be the limiting reagent.
+                for each reaction must have a mass provided.
                 * Volumes : float, volume equivalents of solvent (L/kg)
-                * Sol Recyc : float, fractional percentage of solvent that can
-                be recycled. E.g. 75% of solvent can be recycled = 0.75
-                * Cost step : str, the "Step" where compound costs are
-                calculated. For reaction products, this will be the current
-                "Step". This is used to trace the reaction network.
-                * OPEX : float, a $/kg-step charge that is (optionally) added
-                to the final raw-material cost of a reaction product. Is only
+                * Recycle : float, fractional percentage of material that can
+                be recycled. E.g. 75% of a solvent can be recycled = 0.75
+                * OPEX : float (Optional) a $/kg-step charge that is added to
+                the final raw-material cost of a reaction product. Is only
                 valid for reaction products.
 
         final_prod : str
