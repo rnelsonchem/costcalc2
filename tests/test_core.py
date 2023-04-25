@@ -119,17 +119,6 @@ class Test_CoreErrors(object):
                 coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
         assert err.value.df.index[0] == ('1', 'Bromine')
 
-    def test_missing_sol_recyc(self, ):
-        '''Test for a missing solvent recyling %.
-        '''
-        lin_clean_dup = lin_clean.copy()
-        mask = (lin_clean[RXN_CPD] == 'Water') & (lin_clean[RXN_STP] == '2')
-        lin_clean_dup.loc[mask, RXN_RCY] = np.nan
-        txt_match = 'Missing solvent info error!'
-        with pytest.raises(CostError, match=txt_match) as err:
-            coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
-        assert err.value.df.index == ('2', 'Water')
-
     def test_missing_sol_density(self, ):
         '''Test for a missing density for solvent.
         '''

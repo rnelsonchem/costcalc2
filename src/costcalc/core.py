@@ -343,10 +343,9 @@ class CoreCost(object):
             raise CostError(err_line, df, self._disp_err_df)
             
         # Check that all the solvent information is given
-        sol_cols = [MAT_DEN, RXN_VOL, RXN_RCY]
+        sol_cols = [MAT_DEN, RXN_VOL]
         sol_mask = ~self.fulldata[RXN_VOL].isna() 
-        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna() | \
-                self.fulldata.loc[sol_mask, RXN_RCY].isna()
+        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna()
         # If anything is missing, print a note
         if sol_chk.any():
             err_line = err_lines['mis_sol']
@@ -480,7 +479,8 @@ class CoreCost(object):
                 dyn_rkg = '=(' + dyn_rkg.str.slice(1) + ')'
                 # Multiply by the recycling parameter
                 dyn_rkg += '*(1 - ' + ECOLS[RXN_RCY] +\
-                        sols[RNUM] + ')'
+                            data.loc[mask, RNUM] + ')'
+                print(dyn_rkg)
                 data.loc[mask, DYN_RKG] = dyn_rkg
 
         # Normalize the kg of reaction
