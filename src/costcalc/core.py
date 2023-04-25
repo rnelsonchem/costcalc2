@@ -190,6 +190,10 @@ class CoreCost(object):
             # Create the new costing column, add 
             self.rxns.loc[mask, RXN_CST] = step
 
+        # Create an OPEX column, if it does not exist
+        if RXN_OPX not in self.rxns.columns:
+            self.rxns[RXN_OPX] = np.nan
+
         # Merge the materials and reaction DataFrames. A few columns are
         # dropped, which are not necessary for calculations. The merge happens
         # on the rxns DataFrame ('right'), which means that missing materials
@@ -833,7 +837,7 @@ class CoreCost(object):
         # Reset all "empty" cells to NaN. This is important for unit testing
         # purposes.
         fd = fd.where(fd != '', np.nan) 
-        
+
         # Rerun the cost calculation without the excel stuff to get rid of all
         # the other columns
         self.calc_cost(excel=False)
