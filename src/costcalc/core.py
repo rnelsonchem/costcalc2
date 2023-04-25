@@ -245,14 +245,9 @@ class CoreCost(object):
                 # Assume the first entry is the limiting reagent. Normalize
                 # the rest of the equivalents to that value
                 equivs[mask] = equivs[mask]/equivs.iloc[0]
-                # Set the volumes if a relative compound and mass are given 
-                mask = ~recycl.isna() & ~masses.isna()
-                volums[mask] = (masses[mask]/densit[mask])/masses.iloc[0]
-                equivs[mask] = np.nan 
                 # Set the values in the full DataFrame
                 mask = fulldata[RXN_STP] == idx
                 fulldata.loc[mask, RXN_EQ] = equivs
-                fulldata.loc[mask, RXN_VOL] = volums
             # Remove the Amount column
             fulldata.drop(RXN_MS, axis=1, inplace=True)
 
