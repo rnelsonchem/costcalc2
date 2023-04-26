@@ -131,7 +131,7 @@ class CoreCost(object):
         mat = self.materials.copy()
 
         # Warn about bad column name "Cost"
-        self.__cost_warn(mat)
+        self._cost_warn(mat)
 
         # Drop lines that are still empty, these cause all sorts of
         # problems. Assume rxn/materials tables should have compound names
@@ -150,7 +150,7 @@ class CoreCost(object):
         self.rxns = rxn.copy()
         self.materials = mat.copy()
 
-    def __cost_warn(self, mat_df):
+    def _cost_warn(self, mat_df):
         '''Throw a warning if the deprecated "Cost" column name is used in the
         materials DataFrame, and change to correct column name.  
 
