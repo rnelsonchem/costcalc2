@@ -127,8 +127,9 @@ class CoreCost(object):
         rxn = self.rxns.copy()
         mat = self.materials.copy()
 
-        # Warn about bad column name "Cost"
-        self._cost_warn(mat)
+        # Warn about bad column names
+        self._col_warn(mat)
+        self._col_warn(rxn)
 
         # Drop lines that are still empty, these cause all sorts of
         # problems. Assume rxn/materials tables should have compound names
@@ -147,19 +148,25 @@ class CoreCost(object):
         self.rxns = rxn.copy()
         self.materials = mat.copy()
 
-    def _cost_warn(self, mat_df):
-        '''Throw a warning if the deprecated "Cost" column name is used in the
-        materials DataFrame, and change to correct column name.  
+    def _col_warn(self, df):
+        '''Throw a warning if deprecated column names are used in the
+        input DataFrames, and change to correct column name.  
 
         This is set as a temporary method because it is used here and the
         frontends.py module. If this is removed, be sure to correct both
         places.
         '''
-        if "Cost" in mat_df.columns:
+        if "Cost" in df.columns:
             err = 'The "Cost" column name is no longer valid; '\
                     f'changing column name to "{MAT_CST}".'
             warnings.warn(err)
-            mat_df.rename(columns={"Cost": MAT_CST}, inplace=True) 
+            df.rename(columns={"Cost": MAT_CST}, inplace=True) 
+
+        if "Sol Recyc" in df.columns:
+            err = 'The "Sol Recyc" column is no longer valid; '\
+                    f'changing column name to "{RXN_RCY}".'
+            warnings.warn(err)
+            df.rename(columns={"Sol Recyc": RXN_RCY}, inplace=True)
 
     def rxn_data_setup(self, ):
         '''Setup the full data set for the upcoming cost calculations. 

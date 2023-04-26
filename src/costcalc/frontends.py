@@ -266,7 +266,7 @@ class ColabCost(ExcelCost):
         '''
         mats = self._get_sheet_vals(mat_url, wsheet)
 
-        # Warning for bad column name "Cost"
+        # Warning for bad column namen
         self._cost_warn(mats)
 
         # Convert numeric/date columns. Everything is read from a Google sheet
@@ -284,14 +284,15 @@ class ColabCost(ExcelCost):
         rxns = self._get_sheet_vals(self._rxn_file,
                                      self._rxn_sheet)
 
+        # Warning for bad column names
+        self._col_warn(rxns)
+
         # Set some rxns columns to numeric values. Everything is read from a
         # Google sheet as strings
-        num_cols = [RXN_EQ, RXN_VOL, RXN_RCY, RXN_OPX]
-        # Check if RXN_MS column is present, and add it if so
-        if RXN_MS in rxns.columns:
-            num_cols.append(RXN_MS)
+        num_cols = [RXN_EQ, RXN_VOL, RXN_RCY, RXN_OPX, RXN_MS]
         for nc in num_cols:
-            rxns[nc] = pd.to_numeric(rxns[nc])
+            if nc in rxns.columns:
+                rxns[nc] = pd.to_numeric(rxns[nc])
         
         return rxns
         
