@@ -89,7 +89,7 @@ Additional user-defined columns can be added, but will be ignored by the
 
 * *Compound*: This is the desired name for the compounds in the route. These
   names must be unique, i.e. there can not be two compounds with the same
-  name. As stated above, at a minium, all of the compounds for the route need
+  name. As stated above, at a minimum, all of the compounds for the route need
   to be defined; however, any number of additional compounds can be present.
   Starting a compound name with the number sign (#) will comment out that row,
   so it will be ignored when the table is processed. This can be useful if you
@@ -110,7 +110,7 @@ Additional user-defined columns can be added, but will be ignored by the
 * *$/kg*: The price of the compound in $/kg. Most compounds will need to have
   a defined price with the following exception. If the compound represents a
   product of a reaction, then the price is optional. In these cases a price
-  can be provided, if desired, but it may be ignored during the calculations. 
+  can be provided, if desired, but it will be ignored during the calculations. 
 
 * *Notes*: (Optional) Notes for the compound information. For example, this is
   a good place to add the date and source of the pricing information and the
@@ -144,9 +144,9 @@ entered as a single row.
    :align: center
 
 Descriptions of the Route columns are provided in the list below. As with the
-Materials table, additional user-defined columns or blank lines can be added
-(:ref:`with one exception <massinput>`), but they will be ignored during the
-costing operation.
+Materials table, additional user-defined columns (with two exceptions:
+:ref:`Mass <massinput>` and :ref:`OPEX <OPEXinput>`) or blank lines can be
+added, but they will be ignored during the costing operation.
 
 * *Step*: An unique identifier to delineate the synthetic step in the route.
   These can be simply numerical numbers (e.g. 1, 2, 3) and/or text ("1a" or
@@ -159,15 +159,17 @@ costing operation.
 
 * *Compound*: The name of a reagent/solvent/product for the step. These names
   must *exactly* correspond to the Materials table, so a drop-down selector is
-  provided to ensure that a valid name is selected. (This is why the Materials
-  table should be created first.) The order of the compounds per Step is
-  arbitrary, with *two important exceptions.* 
+  provided in the template files above to ensure that a valid name is
+  selected. (This is why the Materials table should be created first.) The
+  order of the compounds per Step is arbitrary, with *two important
+  exceptions.* 
 
     * The first compound must be the reference compound for the reaction,
       which is typically the limiting reagent. If two or more compounds are
       added in equal molar amounts, this is the compound for which the mass
       will be used for solvent volume calculations. 
-    * The last compound must be the reaction product. 
+    * The last compound must be the reaction product. This ensures that the
+      correct order of reactions can be determined.
 
   As noted above, duplicate compound names are *NOT* allowed per Step, so
   multiple usages of the same compound in one Step (e.g.  extraction solvent)
@@ -185,71 +187,25 @@ costing operation.
   equivalents of product would be :math:`2*0.75=1.5`.
 
 * *Volumes*: The amount of solvent utilization in volumes. This value is only
-  required if *Equiv* for a particular compound is not given; if this column
-  is used, the next column (*Sol Recyc*) is required. The
-  unit for volumes is L/kg, which can be interpreted as "liters of this
-  solvent per kg of a reference compound." This is numerically equivalent to
-  mL/g. The reference compound is assumed to be the first compound in the
-  reaction.  
+  required if *Equiv* for a particular compound is not given. The unit for
+  volumes is L/kg, which can be interpreted as "liters of this solvent per kg
+  of a reference compound." (This is numerically equivalent to mL/g.) The
+  reference compound is assumed to be the first compound in the reaction.  
 
-* *Sol Recyc*: The fractional percentage of this solvent that it is expected
-  could be recycled. For example, if 95% of the solvent can be recycled, then
-  this cell will contain the value 0.95. In our demo example, we are assuming
-  that 75% of the solvents can be recycled; however, if you are unsure, set
-  this value to 0, which means that none (0%) of this solvent can be recycled.
-
-* *Cost Step*: The step identifier that indicates where the RMC for this
-  compound will be calculated. The value here must be a valid entry from the
-  *Step* column, and these entries are only necessary for route intermediates
-  and the overall product. (I.e. any compound that does not have a $/kg entry
-  in the Materials table.) This column is critical as it provides a "roadmap"
-  of sorts to define how the different reactions are connected. In our demo
-  example, the RMC for Intermediate A is calculated in step "1", so *all
-  usages of Intermediate A must be labeled as "1"*. A simplified version of a
-  longer linear and convergent route :ref:`are provide below <linVSconv>` for
-  additional demonstration purposes.
-
-.. _OPEXinput:
-
-* *OPEX*: (Optional) An estimate, in $/kg, of the operating expenses for a
-  given reaction step. This number is only valid for the product of any given
-  step.  Although these values are not given for the current demo route, they
-  could have been given for Intermediate A in Step 1 (Cell H5) and/or Product in
-  Step 2 (cell H10). For route intermediates, these values are added to the
-  RMC values in subsequent steps; the OPEX for the final product is added to
-  the final RMC value in the *$/kg* column. This can be a bit confusing at
-  first, so a :ref:`second model using OPEX values <OPEX>` will be presented
-  in the next section. 
+* *Recycle*: (Values are optional.) The fractional percentage of this compound
+  that it is expected could be recycled, which could be useful for solvents or
+  catalysts. For example, if 95% of the solvent can be recycled, then this
+  cell will contain the value 0.95. In our demo example, we are assuming that
+  75% of the solvents can be recycled. This is largely a convenience column,
+  because the input equivalents/volumes could simply be adjusted by hand.
+  However, when this column is used, the Excel output file will have some
+  dynamic character associated with the values given here. Some additional
+  information on recycling is provided in the :ref:`section below <recycle>`.
 
 * *Notes*: (Optional) Notes for this particular compound. For example, a
   reference can be included here if the reaction was taken from the
   literature, or a short bit of text can be added to acknowledge any
   assumptions in the numbers.
-
-.. _linVSconv:
-
-Linear vs Convergent Syntheses
-______________________________
-
-The *Step* and *Cost Step* columns and their connections are vital to ensure
-that the route is costed correctly. Using these connection schemes we can also
-define routes of arbitrary number of steps and level of convergence. Below are
-two very simplified Route tables for the products of two different three-step
-synthetic routes. One is completely linear and the other is convergent. 
-
-Below is the simplified Route table for the products of a three step linear
-route, which is shown in the figure as well. The identifiers in the *Step* and
-*Cost Step* columns have been color coded for additional clarity.
-
-.. image:: ./_images/3step_linear.png
-   :align: center
-
-The next figure is a simplified Route table for the products of a convergent
-three-step route, as shown. Again, color coding is added to clarify values
-that must be the same.
-
-.. image:: ./_images/3step_conv.png
-   :align: center
 
 .. _massinput:
 
@@ -271,14 +227,14 @@ roughly order of importance.
    having to define masses for every reaction. This can be helpful if you want
    to mix and match reaction information from different sources.
 
-#. *The first compound in a reaction is assumed to be the limiting reagent,
-   and the mass must be given for this compound.* Some mixing and matching of
-   masses/equivalents/volumes is allowed (below), but this only works if the
-   first compound follows the rule defined here.
+#. *Because the first compound in a reaction is assumed to be the limiting
+   reagent, the mass must be given for this compound.* Some mixing and
+   matching of masses/equivalents/volumes is allowed (below), but this only
+   works if the first compound follows the rule defined here.
 
 #. *Mass values override equivalent and volume values.* If a single compound
    defines an equivalent/volume value and a mass, the mass will be converted
-   into an equivalent/volume and will override the original value. This makes
+   into equivalents and will override the original value. This makes
    it possible, for example, to double check that the conversions are correct,
    but it may lead to some unexpected behavior if you don't check the tables
    carefully.
@@ -287,13 +243,11 @@ roughly order of importance.
    solid reagents could be included as masses with solvents given as volumes;
    however, the two rules above must be followed.
 
-#. *Solvent masses are converted to equivalents, unless the "Sol Recyc"
-   parameter is also defined.* This is important if you want to factor in
-   solvent recycling.  When a "Sol Recyc" parameter is provided along with a
-   mass, the *costcalc* code will convert the mass into volumes, which are
-   affected by the given recycling parameter.
+#. *Solvent masses are converted to equivalents.* This doesn't affect the
+   calculations in any way, but it will lead to some strange looking values in
+   the equivalents column. 
 
-Below is a picture of a example Route table for our demo route using a *Mass*
+Below is a picture of an example Route table for our demo route using a *Mass*
 column; this table will give the same results in the *costcalc* costing
 routine. (The color coded cells are due to the conditional formatting in the
 template Excel files.) Notice that only one reaction has been given mass
@@ -303,6 +257,27 @@ column will be dropped from the results table/Excel file.
 
 .. image:: ./_images/br_route_mass.png
    :align: center
+
+.. _OPEXinput:
+
+Operational Expenses (OPEX)
+___________________________
+
+In some cases, some indication of the per step operational expenses (OPEX, in
+$/kg) may be known. These can be incorporated into the calculation by adding a
+new column to the Route table, as described below. 
+
+* *OPEX*: (Optional) An estimate, in $/kg, of the operating expenses for a
+  given reaction step. This number is only valid for the product of any given
+  step.  Although these values are not given for the current demo route, they
+  could have been given for Intermediate A in Step 1 (Cell H5) and/or Product in
+  Step 2 (cell H10). For route intermediates, these values are added to the
+  RMC values in subsequent steps; the OPEX for the final product is added to
+  the final RMC value in the *$/kg* column. 
+  
+This may be a bit confusing at first, so a :ref:`second model using OPEX
+values <OPEX>` will be presented in the interpretation section, which
+clarifies this input. 
 
 Special Case Inputs
 --------------------
@@ -329,19 +304,27 @@ a particular limiting reagent. In our example above, for example, you may want
 to use the name "Pd/C_IntA" and "Pd/C_SM" for Pd/C with molecular weights for
 Intermediate A (Step 2) and Starting Material (Step 1), respectively.
 
-Recyclable Solids
-_________________
+.. _recycle:
 
-Some solid materials can be recycled in two or more runs of the same reaction.
-This won't be the same as solvent recycling, so you'll have to use a little
-math to get the correct equivalent amounts for these compounds. As you'll see,
-some additional data may need to be assumed or empirically determined in the
-lab. 
+Recycling and Batch Number
+__________________________
+
+The recycling calculation that is done using the *Recycle* values is
+simplistic as implemented in the core *costcalc* algorithm. It essentially
+just reduces the kg utilization of the compound to take into account that some
+of the material has been recovered. (In other words, the kgs of this compound
+in the cost calculation are the amount of material lost in the batch.) This
+can be helpful to reduce the impact of solvents on the RMC calculation, for
+example. However, when the material can only be used in a certain number of
+batches, such as a catalyst that slowly loses activity, then some additional
+math is required.  
 
 If a material is simply being reused over several batches, the math is pretty
 simple. For the expected number of usages (:math:`n`), the scaled equivalents
 (:math:`eq_{scaled}`) will just be the initial equivalents (:math:`eq_{init}`)
-divided by the number of usages.
+divided by the number of usages. For a very large number of batches, this
+value is going to trend to zero. In other words, the relative cost
+contribution of this material will disappear. 
 
 .. math::
 
@@ -349,48 +332,67 @@ divided by the number of usages.
 
 In real situations, it may be hard to fully reuse all of the original
 material, so some extra material should be added on each subsequent run, a
-so-called "top-up" addition, to account for lost material. If this top-up is
-given as a fractional percentage of the original addition (:math:`per_{tu}`),
+so-called "top-up" addition, to account for lost/deactivated material. If this
+top-up is given as a fractional percentage of the original addition
+(:math:`per_{tu}`, this is essentially 1 minus the *Recycle* column value),
 then the top-up amount (:math:`eq_{tu}`) for a given number of usages
 (:math:`n`) is as shown below.  The less one for the number of usages takes
-into account that the first usage will not require a top-up addition. 
+into account that the first usage will not require a top-up addition; the
+:math:`n` in the denominator divides the total amount of top-up between all of
+the batches (for costing purposes, not in practice). For a very large number
+of batches, the :math:`n` terms in the numerator and denominator will cancel
+out. This makes the scaled number of equivalents just the initial equivalents
+multiplied by the top-up percentage. This is essentially how the *costcalc*
+algorithm handles recycling. 
 
 .. math::
 
-   eq_{tu} = eq_{init}*per_{tu}*(n - 1)
+   eq_{tu} = \frac{eq_{init}*per_{tu}*(n - 1)}{n}
 
 These two equations can be combined to give the scaled equivalents given a
-certain number of material usages and a small top-up.
+certain number of material usages and a small top-up. 
 
 .. math::
 
-   eq_{scaled} &= \frac{eq_{init}}{n} + eq_{init}*per_{tu}*(n - 1) \\
-               &= \frac{eq_{init}*(1 + per_{tu}*(n^2 - n))}{n}
+   eq_{scaled} &= \frac{eq_{init}}{n} + \frac{eq_{init}*per_{tu}*(n - 1)}{n} \\
+               &= eq_{init}*\frac{(1 + per_{tu}*(n - 1))}{n}
 
-We can use some simple Python code to visualize the difference between these
-different scenarios. In this model, the material is a catalyst, so its amount
+The second form of the equation above shows we are multiplying our initial
+equivalents (:math:`eq_{init}`) by some scaling factor. This is essentially
+how *costcalc* handles the recycling; however, to make the scaling factors
+equivalent, we would need to subtract the above scaling factor from 1. *So if
+a number of batches and the top-up percentage is known, the value to use in
+the Recycle column will be as follows.*
+
+.. math::
+
+   Recycle = 1 - \frac{(1 + per_{tu}*(n - 1))}{n}
+
+We can use some simple Python code to visualize these different scenarios. In
+this model, we will assume that the material is a catalyst, so its amount
 relative to the limiting reagent is 10% (``eq_init``). We will assume that
 this material can be recycled up to 10 cycles (``n``), but that each
 subsequent recycle requires that 10% of the initial amount of catalyst is
-added as a top-up (``top_up``). The simulation code for this scenario and the
-resulting plot are shown below.
+added as a top-up (``per_tu``). The simulation code for these scenarios and
+the resulting plot are below.
 
 .. code-block:: python
 
    import numpy as np
    import matplotlib.pyplot as plt
    
-   eq_init = 0.1
-   n = np.arange(1, 11)
+   n = 10
+   ns = np.arange(1, n+1)
+   eq_init = 0.1*np.ones(n)
    per_tu = 0.1
    
-   no_recyc = load*n # Assuming a new batch of material in each run
-   simple = load/n # Assuming a simple recycle of material per run
-   top_up = load*(1+per*(n**2 - n))/n # With top-up
+   no_recyc = eq_init # Assuming a new batch of material in each run
+   simple = eq_init/ns # Assuming a simple recycle of material per run
+   top_up = eq_init*(1+per_tu*(ns - 1))/ns # With top-up
    
-   plt.plot(n, no_recyc, 'o-', label='No recycle')
-   plt.plot(n, simple, 'o-', label='No top-up')
-   plt.plot(n, top_up, 'o-', label='With top-up')
+   plt.plot(ns, no_recyc, 'o-', label='No recycle')
+   plt.plot(ns, simple, 'o-', label='No top-up')
+   plt.plot(ns, top_up, 'o-', label='With top-up')
    
    plt.title('Amount of material vs number of batches')
    plt.xlabel('Number of batches')
@@ -402,5 +404,4 @@ resulting plot are shown below.
 
 .. image:: ./_images/recycle.png
    :align: center
-
 

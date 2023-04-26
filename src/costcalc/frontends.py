@@ -45,26 +45,26 @@ class ExcelCost(CoreCost):
     final_prod : str
         The name of the final product for route. 
 
-    materials_sheet : int, str, optional (default = 0)
+    materials_sheet : int, str (default = 0)
         The sheet in the Excel file that contains the materials information.
         The default (0) is the first sheet in the spreadsheet. You could use a
         different number or a name (str) if you want a different sheet from the
         spreadsheet.
 
-    rxn_sheet : int, str, optional (default = 0)
+    rxn_sheet : int, str (default = 0)
         See `materials_sheet` description, except this is for the sheet
         defining the reactions.
 
-    alt_mat_file : str, optional (default = None)
+    alt_mat_file : str (default = None)
         The name/path of an optional, secondary materials sheet. This is
         useful if you have separate master and route-specific materials
         sheets, for example. Can be an xlsx or csv.
 
-    alt_mat_sheet : int, str, optional (default = 0)
+    alt_mat_sheet : int, str (default = 0)
         The sheet number/name for the secondary materials sheet. See
         `materials_sheet` description. 
 
-    dis_err_df : boolean (False)
+    dis_err_df : boolean (default = False)
         If a `CostError` exception is raised, this controls whether the
         offending section of the DataFrame will be printed along with the
         error. This is useful for debugging, but is typically set to False, so
@@ -100,7 +100,7 @@ class ExcelCost(CoreCost):
         '''Read an Excel sheet that defines the reactions.
         '''
         rxns = self._get_sheet_vals(self._rxn_file, self._rxn_sheet,
-                            dtypes={RXN_STP:str, RXN_CST:str})
+                            dtypes={RXN_STP:str,})
         return rxns
 
     def _get_sheet_vals(self, fname, fsheet, dtypes=None):

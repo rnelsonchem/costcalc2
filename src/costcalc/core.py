@@ -50,15 +50,12 @@ class CoreCost(object):
                 (e.g. 75% yield is 0.75 equiv)
                 * Mass : float, (Optional), the mass of material used. This is
                 used to calculate equivalents. If used, the first compound
-                for each reaction must be the limiting reagent.
+                for each reaction must have a mass provided.
                 * Volumes : float, volume equivalents of solvent (L/kg)
-                * Sol Recyc : float, fractional percentage of solvent that can
-                be recycled. E.g. 75% of solvent can be recycled = 0.75
-                * Cost step : str, the "Step" where compound costs are
-                calculated. For reaction products, this will be the current
-                "Step". This is used to trace the reaction network.
-                * OPEX : float, a $/kg-step charge that is (optionally) added
-                to the final raw-material cost of a reaction product. Is only
+                * Recycle : float, fractional percentage of material that can
+                be recycled. E.g. 75% of a solvent can be recycled = 0.75
+                * OPEX : float (Optional) a $/kg-step charge that is added to
+                the final raw-material cost of a reaction product. Is only
                 valid for reaction products.
 
         final_prod : str
@@ -142,7 +139,7 @@ class CoreCost(object):
         # Remove white space from before/after these columns
         # This is another tricky problem because trailing white space for
         # example is very hard to notice
-        rxn_col = [RXN_STP, RXN_CPD, RXN_CST]
+        rxn_col = [RXN_STP, RXN_CPD]
         rxn[rxn_col] = rxn[rxn_col].apply(lambda x: x.str.strip())
         mat_col = [RXN_CPD, ]
         mat[mat_col] = mat[mat_col].apply(lambda x: x.str.strip())
@@ -174,6 +171,26 @@ class CoreCost(object):
         important if you are modifiying values, for example, and you want to
         put the system back into its starting point. 
         '''
+        # Setup the reaction connectivity matrix. This is done by looking at
+        # each reaction product, and assigning all usages of that product to
+        # the correct step number. First, create an empty column for the steps
+        self.rxns[RXN_CST] = np.nan
+        steps = self.rxns.groupby(RXN_STP)
+        for step, rxn in steps:
+            # The product is the last compound in a given, save the final
+            # index
+            rxn_prod = rxn[RXN_CPD].iloc[-1]
+            if rxn_prod == self.final_prod:
+                self._fp_idx = step
+            # Find all instances of the same product being used
+            mask = self.rxns[RXN_CPD] == rxn_prod
+            # Create the new costing column, add 
+            self.rxns.loc[mask, RXN_CST] = step
+
+        # Create an OPEX column, if it does not exist
+        if RXN_OPX not in self.rxns.columns:
+            self.rxns[RXN_OPX] = np.nan
+
         # Merge the materials and reaction DataFrames. A few columns are
         # dropped, which are not necessary for calculations. The merge happens
         # on the rxns DataFrame ('right'), which means that missing materials
@@ -193,10 +210,6 @@ class CoreCost(object):
                             on=RXN_CPD, how='right')\
                             .rename({'Notes_x': 'Material Notes',
                                 'Notes_y': 'Reaction Notes'}, axis=1)
-
-        # Find the step number for the final product. 
-        fp_mask = fulldata.Compound == self.final_prod
-        self._fp_idx = fulldata.loc[fp_mask, RXN_CST].iloc[0]
 
         # If the RXN_MS column is present, then you will need calculate the
         # "Equiv" based on the mass given. Assumes that the first compound
@@ -229,14 +242,9 @@ class CoreCost(object):
                 # Assume the first entry is the limiting reagent. Normalize
                 # the rest of the equivalents to that value
                 equivs[mask] = equivs[mask]/equivs.iloc[0]
-                # Set the volumes if a relative compound and mass are given 
-                mask = ~recycl.isna() & ~masses.isna()
-                volums[mask] = (masses[mask]/densit[mask])/masses.iloc[0]
-                equivs[mask] = np.nan 
                 # Set the values in the full DataFrame
                 mask = fulldata[RXN_STP] == idx
                 fulldata.loc[mask, RXN_EQ] = equivs
-                fulldata.loc[mask, RXN_VOL] = volums
             # Remove the Amount column
             fulldata.drop(RXN_MS, axis=1, inplace=True)
 
@@ -343,10 +351,9 @@ class CoreCost(object):
             raise CostError(err_line, df, self._disp_err_df)
             
         # Check that all the solvent information is given
-        sol_cols = [MAT_DEN, RXN_VOL, RXN_RCY]
+        sol_cols = [MAT_DEN, RXN_VOL]
         sol_mask = ~self.fulldata[RXN_VOL].isna() 
-        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna() | \
-                self.fulldata.loc[sol_mask, RXN_RCY].isna()
+        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna()
         # If anything is missing, print a note
         if sol_chk.any():
             err_line = err_lines['mis_sol']
@@ -461,16 +468,27 @@ class CoreCost(object):
             # Calculate the mass of solvent. Take into account the solvent
             # recycyling 
             # kg sol = Volume*Density*(1-Recycle)*(kg SM)
-            sols[RXN_KG] = sols[RXN_VOL]*sols[MAT_DEN]*\
-                    (1 - sols[RXN_RCY])*amt_rel
+            sols[RXN_KG] = sols[RXN_VOL]*sols[MAT_DEN]*amt_rel
             # And for Excel
             if excel:
                 sols[DYN_RKG] = '=' + ECOLS[RXN_VOL] +\
                         sols[RNUM] + '*' + ECOLS[MAT_DEN] +\
-                        sols[RNUM] + '*' + '(1 - ' + ECOLS[RXN_RCY]\
-                        + sols[RNUM] + ')*' + ECOLS[RXN_KG] +\
+                        sols[RNUM] + '*' + ECOLS[RXN_KG] +\
                         amt_rel_e
             data[mask] = sols
+
+        # Set a recycle parameter, if given
+        mask = ~data[RXN_RCY].isna()
+        if mask.any():
+            data.loc[mask, RXN_KG] *= (1 - data.loc[mask, RXN_RCY]) 
+            if excel:
+                dyn_rkg = data.loc[mask, DYN_RKG]
+                # Wrap the original equation in parentheses
+                dyn_rkg = '=(' + dyn_rkg.str.slice(1) + ')'
+                # Multiply by the recycling parameter
+                dyn_rkg += '*(1 - ' + ECOLS[RXN_RCY] +\
+                            data.loc[mask, RNUM] + ')'
+                data.loc[mask, DYN_RKG] = dyn_rkg
 
         # Normalize the kg of reaction
         data[RXN_KG] /= data.loc[prod, RXN_KG]
@@ -811,7 +829,7 @@ class CoreCost(object):
         # Reset all "empty" cells to NaN. This is important for unit testing
         # purposes.
         fd = fd.where(fd != '', np.nan) 
-        
+
         # Rerun the cost calculation without the excel stuff to get rid of all
         # the other columns
         self.calc_cost(excel=False)

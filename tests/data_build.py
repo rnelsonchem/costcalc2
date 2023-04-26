@@ -1,3 +1,4 @@
+import io
 from os.path import dirname
 from pathlib import Path
 
@@ -8,38 +9,50 @@ from costcalc.constants import *
 # The data file directory
 ddir = Path(dirname(__file__), 'data')
 
+# Read all of the csv files here as strings and format out column names
+# Resave the formated strings as StringIO objects to be passed to the read_csv
+# function. This allows the csv files to use generic column names
+
+csvs = ddir.glob('*.csv')
+IOs = {}
+for csv in csvs:
+    print(csv)
+    with open(csv) as txt:
+        txt_file = txt.read().format(**globals())
+        IOs[csv.parts[-1]] = io.StringIO(txt_file)
+
 # Load the test data for comparisons
 # For some sheets, the dtype must be specified for string columns
 # Materials file
-mat_clean = pd.read_csv(ddir / 'clean_mat.csv')
+mat_clean = pd.read_csv(IOs['clean_mat.csv'])
 
 # Linear and convergent rxn sheets
-lin_clean = pd.read_csv(ddir / 'clean_lin_route.csv', 
+lin_clean = pd.read_csv(IOs['clean_lin_route.csv'], 
         dtype={RXN_STP:str, RXN_CST:str})
-con_clean = pd.read_csv(ddir / 'clean_conv_route.csv', 
+con_clean = pd.read_csv(IOs['clean_conv_route.csv'], 
         dtype={RXN_STP:str, RXN_CST:str})
 
 # Linear and convergent fulldata DataFrames
-lin_clean_fd = pd.read_csv(ddir / 'clean_lin_fd.csv',
+lin_clean_fd = pd.read_csv(IOs['clean_lin_fd.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
-con_clean_fd = pd.read_csv(ddir / 'clean_conv_fd.csv',
+con_clean_fd = pd.read_csv(IOs['clean_conv_fd.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
 # Linear and convergent compact results DataFrames
-lin_clean_res_c = pd.read_csv(ddir / 'clean_lin_res_com.csv',
+lin_clean_res_c = pd.read_csv(IOs['clean_lin_res_com.csv'],
         dtype={RXN_STP:str, })\
                 .set_index([RXN_STP, RXN_CPD])
-con_clean_res_c = pd.read_csv(ddir / 'clean_con_res_com.csv',
+con_clean_res_c = pd.read_csv(IOs['clean_con_res_com.csv'],
         dtype={RXN_STP:str, })\
                 .set_index([RXN_STP, RXN_CPD])
 
 # Linear and convergent full results DataFrames
-lin_clean_res_f = pd.read_csv(ddir / 'clean_lin_res_ful.csv',
+lin_clean_res_f = pd.read_csv(IOs['clean_lin_res_ful.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
-con_clean_res_f = pd.read_csv(ddir / 'clean_con_res_ful.csv',
+con_clean_res_f = pd.read_csv(IOs['clean_con_res_ful.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
@@ -52,12 +65,12 @@ def dtype_fix(x):
     except:
         return x
 
-lin_clean_excel = pd.read_csv(ddir / 'clean_lin_excel.csv',
+lin_clean_excel = pd.read_csv(IOs['clean_lin_excel.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 lin_clean_excel[MAT_CST] = lin_clean_excel[MAT_CST]\
         .apply(dtype_fix)
-con_clean_excel = pd.read_csv(ddir / 'clean_con_excel.csv',
+con_clean_excel = pd.read_csv(IOs['clean_con_excel.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 con_clean_excel[MAT_CST] = con_clean_excel[MAT_CST]\
