@@ -66,8 +66,7 @@ err_lines = {
             'Please combine multiple uses of a material into one entry.',
 
     'mis_cst': 'Missing material cost error!\n'\
-           'This may be due to a missing material and/or its cost.\n'\
-           f'Otherwise, you may be missing a Step in the "{RXN_CST}" column.',
+           'This may be due to a missing material and/or its cost.\n',
 
     'mis_sol': 'Missing solvent info error!\n'\
            'One of your solvent entries is missing critical info.',
