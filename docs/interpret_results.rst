@@ -17,21 +17,38 @@ transferred unchanged from the input file.)
 Calculated RMCs
 ---------------
 
-Columns A-K are translated directly from the input tables with one important
-exception; the *$/kg* values for the two reaction products (cells E5, E7, and
-E10) are now the total raw material costs (RMCs) for those two compounds. The
-RMC for the route is $54.41/kg, which is the value for the overall product of
-the route (cell E10). All three of these cells are fully dynamic because they
-are stored in the cell as equations rather than hard-coded values. So changes
-in other parts of the worksheet should cause these values to be recalculated.
-(Keep in mind, though, that the original input file and this new output file
-are not connected in any way, so changes here will not be reflected in the
-input file.)
+Columns A-H (and J, if :ref:`OPEX was used <OPEXinput>`) are translated
+directly from the input tables with one important exception; the *$/kg* values
+for the two reaction products (cells E5, E7, and E10) are now the total raw
+material costs (RMCs) for those two compounds. The RMC for the route is
+$54.41/kg, which is the value for the overall product of the route (cell E10).
+All three of these cells are fully dynamic because they are stored in the cell
+as equations rather than hard-coded values. So changes in other parts of the
+worksheet should cause these values to be recalculated.  (Keep in mind,
+though, that the original input file and this new output file are not
+connected in any way, so changes here will not be reflected in the input
+file.)
+
+New Column Descriptions
+-----------------------
+
+Cost Step Column
+________________
+
+A new column named "Cost step" has been added to this output. This column
+simply defines the reaction connectivity matrix. The values here are "Step"
+column values where the costs of particular materials are calculated. This is
+used by the *costcalc* algorithm to determine which reactions need to be used
+for calculating RMCs. Use this column to troubleshoot any unusual behavior in
+the costing output; otherwise, this column can be removed for clarity. A
+common error here may be if a reaction product is not the final compound in
+any particular reaction. The "Cost step" matrix is determined assuming that
+the final reaction compound is the product. 
 
 Per kg Rxn Columns
-------------------
+__________________
 
-The values in Excel columns L-N are per 1 kg of *reaction* product, in that
+The values in Excel columns K-M are per 1 kg of *reaction* product, in that
 they should be interpreted on a per reaction basis and not for the entire
 route. Brief descriptions of these columns are below.
 
@@ -52,9 +69,9 @@ route. Brief descriptions of these columns are below.
   reaction, these values should add up to 100%. 
 
 Per kg Prod Columns
--------------------
+___________________
 
-The values in Excel columns O-Q are per 1 kg of *route* product, so these
+The values in Excel columns N-P are per 1 kg of *route* product, so these
 values should be interpreted for the entire route. Brief descriptions of these
 columns are below.
 
@@ -82,20 +99,22 @@ intensity (PMI) for each reaction (rows 6 and 11) and the overall route (row
 of product. This is a common metric for process waste, as larger PMI values
 can be interpreted as more materials being used, and potentially wasted, to
 create 1 kg of product. A "perfect" PMI is 1, which means that 1 kg of
-material was used to make 1 kg of product. These values are shown in different
-columns because the per reaction PMI is calculated from the *kg/kg rxn* data,
-whereas the per route PMI is calculated from the *kg/kg prod* data. 
+material was used to make 1 kg of product, for example a gas-phase
+polymerization may be expected to have a PMI close to 1.  These values are
+shown in different columns because the per reaction PMI is calculated from the
+*kg/kg rxn* data, whereas the per route PMI is calculated from the *kg/kg
+prod* data. 
 
 .. note:: 
    
    The PMI calculations as implemented by *costcalc* may not be strictly
-   correct, because the solvent recycling is factored into the calculation.
-   The final PMI here only considers solvent masses that go to waste (are not
+   correct, because compound recycling is factored into the calculation.  The
+   final PMI here only considers compound masses that go to waste (are not
    recycled), whereas a true PMI may not always consider recycling. To get
-   these PMI values, you can simply set the solvent recycling parameters ("Sol
-   Recyc" column) to zero for all solvents, and the Excel file will
-   recalculate the PMI parameters. These all-solvent PMI values will likely be
-   dominated by solvent usage, though.
+   these PMI values, you can simply set the recycling parameters ("Recycle"
+   column) to zero for all compounds, and the Excel file will recalculate the
+   PMI parameters. Without recycling solvents, the PMI will likely be
+   dominated by these materials, though.
 
 .. _OPEX:
 
@@ -121,10 +140,10 @@ based on intermediate utilization and reaction yield in subsequent steps. This
 will be demonstrated below. 
 
 The OPEX is handled a little differently for the final product of the route,
-as highlighted in red. In that case, the OPEX is added directly to the final product
-RMC in the *$/kg* column (cell E10). This can be see by comparing the *RM
-cost/kg rxn* for the final product (cell M10), which is the raw materials-only
-value and the *$/kg* value (cell E10). 
+as highlighted in red. In that case, the OPEX is added directly to the final
+product RMC in the *$/kg* column (cell E10). This can be see by comparing the
+*RM cost/kg rxn* for the final product (cell L10), which is the raw
+materials-only value and the *$/kg* value (cell E10). 
 
 Separating the contribution of the OPEX costs from the raw materials is
 relatively straightforward. The sum of the *RM cost/kg prod* column
