@@ -88,7 +88,7 @@ Additional user-defined columns can be added, but will be ignored by the
 *costcalc* algorithm.
 
 * *Compound*: This is the desired name for the compounds in the route. These
-  names must be unique, i.e. there can not be two compounds with the same
+  names must be unique, i.e. there cannot be two compounds with the same
   name. As stated above, at a minimum, all of the compounds for the route need
   to be defined; however, any number of additional compounds can be present.
   Starting a compound name with the number sign (#) will comment out that row,
@@ -135,25 +135,22 @@ current route tab.
 A snapshot of the Route table for the demo route above is shown below.
 Although not shown, pictures (ChemDraw or regular images files) of the route
 can be added to this tab, and they will be ignored by the *costcalc*
-algorithm. However, duplicate materials in a single reaction are *NOT*
-allowed, and this will cause an error. For example, if three extractions with
-ethyl acetate are used, the extraction volumes need to be added together and
-entered as a single row.
+algorithm. 
 
 .. image:: ./_images/reactions.png
    :align: center
 
 Descriptions of the Route columns are provided in the list below. As with the
-Materials table, additional user-defined columns (with two exceptions:
-:ref:`Mass <massinput>` and :ref:`OPEX <OPEXinput>`) or blank lines can be
-added, but they will be ignored during the costing operation.
+Materials table, arbitrary user-defined columns (with two exceptions:
+:ref:`Mass <massinput>` and :ref:`OPEX <OPEXinput>`) or blank rows can be
+added; they will be ignored during the costing operation.
 
 * *Step*: An unique identifier to delineate the synthetic step in the route.
   These can be simply numerical numbers (e.g. 1, 2, 3) and/or text ("1a" or
   "Int A"). Steps do not need to be added into the table in any particular
   order, as they will be automatically sorted during the costing calculation.
   In fact, the compounds from every step could be added in arbitrary order;
-  however, this is not recommended from a clarity standpoint.  Starting a Step
+  however, this is not recommended from a clarity standpoint. Starting a Step
   with the number sign (#) will comment out that row, so it will be ignored
   when the table is processed.  
 
@@ -170,10 +167,6 @@ added, but they will be ignored during the costing operation.
       will be used for solvent volume calculations. 
     * The last compound must be the reaction product. This ensures that the
       correct order of reactions can be determined.
-
-  As noted above, duplicate compound names are *NOT* allowed per Step, so
-  multiple usages of the same compound in one Step (e.g.  extraction solvent)
-  should be added into one entry.
 
 * *Equiv*: Molar equivalents of a reagent or product. Although this value can
   be used for solvents, it is more common to define solvent utilization with
