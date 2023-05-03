@@ -875,7 +875,7 @@ class CoreCost():
             This must be for a non-calculated column, such as '$/kg', 'Equiv',
             'OPEX', etc.
 
-        step : None, int, optional (Default = None)
+        step : None, int, str (Default = None)
             The reaction step number for which this value will be changed. If
             this is `None` (default), then all the values for the given
             compound (`cpd`) will be set to the same value. This is mostly
@@ -890,6 +890,12 @@ class CoreCost():
         separate step. This behavior is by design so that several `value_mod`
         method calls can be made, if necessary, before the costs are
         recaclulated.
+
+        In addition, if several entries of the same compound names are found
+        in a particular reaction Step, they will all be modified equally.
+        There is no way (currently) to separate these compounds. In principle,
+        a user could make a new subclass of the CoreCost class or its
+        subclasses to add an additional indexing level.
         '''
         # Store the values
         self._mod_vals.append( (cpd, val, val_type, step) )
@@ -919,13 +925,12 @@ class CoreCost():
         except KeyError:
             # If not, remove the values from the list and throw an error
             self._mod_vals.pop()
-            if not step:
-                err = '"' + cpd + '"'
-            else:
-                err = 'Step "' + str(step) + '", "' + cpd + '"'
-            print('Oops! ' + err + " doesn't exist. Check") 
-            print("your reactions to find the correct Step/Compound.")
-            raise 
+            err = f'Compound "{cpd}"'
+            if step:
+                err = f'Step "{step}", {err}'
+            err += " does not exist. Check "
+            err += "your reactions to find the correct Step/Compound."
+            raise KeyError(err) 
             
         self.fulldata.loc[cells, val_type] = val
         # The "Cost calc" flag must be set to np.nan when setting a cost. 
