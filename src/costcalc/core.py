@@ -6,6 +6,11 @@ import pandas as pd
 from .constants import *
 from .exceptions import *
 
+# There are a bunch of warnings because the index isn't sorted; this filters
+# those out. However, these performance warnings aren't really a problem
+# because the DataFrames here are relatively small.
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
 class CoreCost(object):
     def __init__(self, materials, rxns, final_prod, disp_err_df=False):
         '''Core class for calculating route costs and PMI.
@@ -255,15 +260,8 @@ class CoreCost(object):
             # Remove the Amount column
             fulldata.drop(RXN_MS, axis=1, inplace=True)
 
-        # Add an indexing column, which will be used for sorting purposes
-        fulldata['idx_col'] = np.arange(fulldata.shape[0])
         # Set MultiIndex
-        fulldata.set_index(['idx_col', RXN_STP, RXN_CPD], inplace=True)
-        # This is necessary so that slices of the DataFrame are views and not
-        # copies
-        fulldata = fulldata.sort_index()
-        # Remove sorting index, drop column
-        fulldata = fulldata.reset_index('idx_col').drop('idx_col', axis=1)
+        fulldata.set_index([RXN_STP, RXN_CPD], inplace=True)
         
         # Save the full data set
         self.fulldata = fulldata
@@ -343,20 +341,6 @@ class CoreCost(object):
             df = self.fulldata.loc[cost_mask, [MAT_CST, RXN_CST]]
             raise CostError(err_line, df, self._disp_err_df)
         
-        # Check for duplicated materials in a single reaction.
-        # When you select a single value from a reaction, you'll get a series
-        # and not a float, e.g.
-        dup_rxn = self.fulldata.loc[(self._fp_idx, self.final_prod), MAT_MW]
-        if isinstance(dup_rxn, pd.Series):
-            err_line = err_lines['dup_rxn'] 
-            df = []
-            gb = self.fulldata.groupby([RXN_STP, RXN_CPD])
-            for prod, group in gb:
-                if group.shape[0] > 1:
-                    df.append(group)
-            df = pd.concat(df).iloc[:, :3]
-            raise CostError(err_line, df, self._disp_err_df)
-            
         # Check that all the solvent information is given
         sol_cols = [MAT_DEN, RXN_VOL]
         sol_mask = ~self.fulldata[RXN_VOL].isna() 
@@ -393,6 +377,7 @@ class CoreCost(object):
         # Run the costing and set the cost attribute
         self.cost = self._rxn_cost(self.final_prod, self._fp_idx, excel=excel)
         # Post process the DataFrame
+#        self.fulldata = self.fulldata.sort_index()
         self._rxn_data_post(excel=excel)
         
     def _rxn_cost(self, prod, step, amp=1.0, eamp='', excel=False):
@@ -539,14 +524,18 @@ class CoreCost(object):
             # And for Excel -- This cost will need to get swapped out later.
             # Also need to check if an OPEX is necessary
             if excel:
-                if np.isnan(self.fulldata.loc[(new_stp, cpd), RXN_OPX]):
-                    data.loc[cpd, DYN_CST] = '=' + ECOLS[MAT_CST] +\
-                            self.fulldata.loc[(new_stp, cpd), RNUM]
+                eopex = self.fulldata.loc[(new_stp, cpd), RXN_OPX]
+                ernum = self.fulldata.loc[(new_stp, cpd), RNUM]
+                if isinstance(eopex, pd.Series):
+                    eopex = eopex.iloc[0]
+                    ernum = ernum.iloc[0]
+
+                if np.isnan(eopex):
+                    data.loc[cpd, DYN_CST] = '=' + ECOLS[MAT_CST] + ernum
+                            
                 else:
-                    data.loc[cpd, DYN_CST] = '=' + ECOLS[MAT_CST] +\
-                            self.fulldata.loc[(new_stp, cpd), RNUM] + '+'\
-                            + ECOLS[RXN_OPX] +\
-                            self.fulldata.loc[(new_stp, cpd), RNUM]
+                    data.loc[cpd, DYN_CST] = '=' + ECOLS[MAT_CST] + ernum +\
+                            '+' + ECOLS[RXN_OPX] + ernum
 
         # Calculate the cost for each material in the reaction
         data[RXN_RMC] = data[RXN_KG]*data[MAT_CST]
@@ -627,6 +616,9 @@ class CoreCost(object):
         # If an OPEX for the final reaction is given, add that to the cost
         # of the final product
         opex = self.fulldata.loc[(step, prod), RXN_OPX]
+        if isinstance(opex, pd.Series): 
+            opex = opex.iloc[0]
+
         if not np.isnan(opex):
             self.fulldata.loc[(step, prod), MAT_CST] = self.cost
             # And for Excel
@@ -640,10 +632,14 @@ class CoreCost(object):
 
         # And for Excel
         if excel:
+            prd_rnum = self.fulldata.loc[(step, prod), RNUM]
+            if isinstance(prd_rnum, pd.Series):
+                prd_rnum = prd_rnum.iloc[0]
+
             self.fulldata[DYN_PRMP] = '=' +\
                     ECOLS[PRD_RMC] + self.fulldata[RNUM] +\
-                    '*100/' + ECOLS[RXN_RMC] +\
-                    self.fulldata.loc[(step, prod), RNUM]
+                    '*100/' + ECOLS[RXN_RMC] + prd_rnum
+                    
         
         # Filter out certain values to simplify full data set
         # Remove the cost and %s for cost-calculated materials

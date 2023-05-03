@@ -62,9 +62,6 @@ err_lines = {
             'Check that you do not have two or more compounds of the same\n'\
             'name in your material sheet(s).',
 
-    'dup_rxn': 'Duplicated material in a reaction step error!\n'\
-            'Please combine multiple uses of a material into one entry.',
-
     'mis_cst': 'Missing material cost error!\n'\
            'This may be due to a missing material and/or its cost.\n',
 

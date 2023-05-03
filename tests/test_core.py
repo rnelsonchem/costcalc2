@@ -104,21 +104,6 @@ class Test_CoreErrors(object):
             coster = CoreCost(mat_clean_miss, lin_clean, 'Product')
         assert err.value.df.iloc[0, 0] == 'Starting Material'
 
-    def test_duplicate_rxn(self, ):
-        '''Test for duplicated compounds in a single rxn step.
-        '''
-        lin_clean_dup = lin_clean.copy()
-        bromine = lin_clean_dup.iloc[1:2,:]
-        lin_clean_dup = pd.concat([lin_clean_dup.iloc[:1,:], bromine, 
-                            lin_clean_dup.iloc[1:,:]]).reset_index(drop=True)
-        txt_match = 'Duplicated material in a reaction step'
-        with pytest.raises(CostError, match=txt_match) as err:
-            # This also throws a Pandas warning because of the index is no
-            # longer sorted. This captures the warning as well.
-            with pytest.warns(pd.errors.PerformanceWarning):
-                coster = CoreCost(mat_clean, lin_clean_dup, 'Product')
-        assert err.value.df.index[0] == ('1', 'Bromine')
-
     def test_missing_sol_density(self, ):
         '''Test for a missing density for solvent.
         '''
