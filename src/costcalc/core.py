@@ -11,7 +11,7 @@ from .exceptions import *
 # because the DataFrames here are relatively small.
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
-class CoreCost(object):
+class CoreCost():
     def __init__(self, materials, rxns, final_prod, disp_err_df=False,
                 filter_vals=True):
         '''Core class for calculating route costs and PMI.

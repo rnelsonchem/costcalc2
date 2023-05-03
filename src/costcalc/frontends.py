@@ -93,7 +93,7 @@ class ExcelCost(CoreCost):
         materials = self._materials_build()                
 
         # Run the __init__ method from the CoreCost class
-        super(ExcelCost, self).__init__(materials, rxns, final_prod,
+        super().__init__(materials, rxns, final_prod,
                 disp_err_df=disp_err_df, **kwargs)
 
     def _rxn_read(self, ):
@@ -166,7 +166,7 @@ class ExcelCost(CoreCost):
             with the typical NaN labels.
         '''
         # Get the prepared DataFrame for printing 
-        fd = super(ExcelCost, self).results(style)
+        fd = super().results(style)
 
         # Print the time the calculation was run
         utc_datetime = self._now.strftime('%Y-%m-%d %H:%M UTC')
@@ -195,7 +195,7 @@ class ExcelCost(CoreCost):
 
         '''
         # Get the process DataFrame
-        fd = super(ExcelCost, self).excel()
+        fd = super().excel()
        
         # Can't use a ":" in an Excel sheet name for time
         utc_datetime = self._now.strftime('%Y-%m-%d %Hh%Mm UTC')
@@ -249,7 +249,7 @@ class ColabCost(ExcelCost):
         self._gc = gspread.authorize(creds)
         
         # Fix the final product and setup a mod variable
-        super(ColabCost, self).__init__(materials_url, rxn_url, final_prod,
+        super().__init__(materials_url, rxn_url, final_prod,
                 materials_sheet, rxn_sheet, alt_mat_url, alt_mat_sheet, 
                 **kwargs)
         
@@ -349,8 +349,7 @@ class ColabCost(ExcelCost):
                    '})'
         disp(Javascript(iframe_h)) 
         # Call results method from ExcelCost
-        super(ColabCost, self).results(style=style, decimals=decimals,
-                                       fill=fill)
+        super().results(style=style, decimals=decimals, fill=fill)
 
     def excel(self, fname):
         '''Download the costing DataFrame as an Excel file.
@@ -361,7 +360,7 @@ class ColabCost(ExcelCost):
             The name you want to give to the Excel file.
 
         '''
-        super(ColabCost, self).excel(fname, )
+        super().excel(fname, )
 
         # Use the Colab function for downloading the file from the server
         files.download(fname)
@@ -378,7 +377,7 @@ class WebAppCost(ExcelCost):
             alt_mat_file=None, alt_mat_sheet=0,
             disp_err_df=False, **kwargs):
 
-        super(WebAppCost, self).__init__(materials_file, rxn_file, final_prod,
+        super().__init__(materials_file, rxn_file, final_prod,
                 materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet,
                 disp_err_df=disp_err_df, **kwargs)
 
