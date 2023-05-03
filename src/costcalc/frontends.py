@@ -78,7 +78,7 @@ class ExcelCost(CoreCost):
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, 
             alt_mat_file=None, alt_mat_sheet=0,
-            disp_err_df = True):
+            disp_err_df=True, **kwargs):
         # Set up the reaction DataFrame
         self._rxn_file = rxn_file
         self._rxn_sheet = rxn_sheet
@@ -94,7 +94,7 @@ class ExcelCost(CoreCost):
 
         # Run the __init__ method from the CoreCost class
         super(ExcelCost, self).__init__(materials, rxns, final_prod,
-                disp_err_df)
+                disp_err_df=disp_err_df, **kwargs)
 
     def _rxn_read(self, ):
         '''Read an Excel sheet that defines the reactions.
@@ -230,7 +230,7 @@ class ColabCost(ExcelCost):
 
     '''
     def __init__(self, materials_url, rxn_url, final_prod, materials_sheet=0,
-            rxn_sheet=0, alt_mat_url=None, alt_mat_sheet=0):
+            rxn_sheet=0, alt_mat_url=None, alt_mat_sheet=0, **kwargs):
         # Do some imports that are only possible in the Colab environment
         # This should prevent these from running in a non-Colab environment
         from google.auth import default
@@ -250,7 +250,8 @@ class ColabCost(ExcelCost):
         
         # Fix the final product and setup a mod variable
         super(ColabCost, self).__init__(materials_url, rxn_url, final_prod,
-                materials_sheet, rxn_sheet, alt_mat_url, alt_mat_sheet)
+                materials_sheet, rxn_sheet, alt_mat_url, alt_mat_sheet, 
+                **kwargs)
         
     def _materials_read(self, mat_url, wsheet):
         '''Read a Google sheet that defines the materials used in costing.
@@ -375,11 +376,11 @@ class WebAppCost(ExcelCost):
     def __init__(self, materials_file, rxn_file, final_prod,
             materials_sheet=0, rxn_sheet=0, 
             alt_mat_file=None, alt_mat_sheet=0,
-            disp_err_df=False):
+            disp_err_df=False, **kwargs):
 
         super(WebAppCost, self).__init__(materials_file, rxn_file, final_prod,
                 materials_sheet, rxn_sheet, alt_mat_file, alt_mat_sheet,
-                disp_err_df)
+                disp_err_df=disp_err_df, **kwargs)
 
     def results(self, style='compact', decimals=2, fill=np.nan):
         '''Returns the results of the costing calculation.

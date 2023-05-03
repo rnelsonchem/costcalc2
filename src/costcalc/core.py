@@ -12,7 +12,8 @@ from .exceptions import *
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 class CoreCost(object):
-    def __init__(self, materials, rxns, final_prod, disp_err_df=False):
+    def __init__(self, materials, rxns, final_prod, disp_err_df=False,
+                filter_vals=True):
         '''Core class for calculating route costs and PMI.
 
         Parameters
@@ -73,6 +74,17 @@ class CoreCost(object):
             False, so that potentially sensitive information is not printed to
             the error logs.
 
+        filter_vals : Boolean (True)
+            This keyword argument acts as a switch for filtering out certain
+            values from the final DataFrame after a cost calculation is
+            performed. By default (True), values will be filtered to correct
+            several calculated columns for the route; however, switching this
+            value may be convenient for evaluating all of the data per
+            reaction. WARNING! Although the cost of the final product will
+            still be correct if this argument is False, the "/kg rxn" and "/kg
+            prod" columns as well as the PMI values will not be correct for
+            the route as a whole.
+
         Attributes
         ----------
         final_prod : str
@@ -110,6 +122,7 @@ class CoreCost(object):
         self.rxns = rxns
         self.materials = materials
         self.final_prod = final_prod        
+        self.filter_vals = filter_vals
         self._disp_err_df = disp_err_df
 
         # Correct typical input problems. 
@@ -377,7 +390,6 @@ class CoreCost(object):
         # Run the costing and set the cost attribute
         self.cost = self._rxn_cost(self.final_prod, self._fp_idx, excel=excel)
         # Post process the DataFrame
-#        self.fulldata = self.fulldata.sort_index()
         self._rxn_data_post(excel=excel)
         
     def _rxn_cost(self, prod, step, amp=1.0, eamp='', excel=False):
@@ -485,9 +497,10 @@ class CoreCost(object):
         # Normalize the kg of reaction
         data[RXN_KG] /= data.loc[prod, RXN_KG]
         # Remove the 1 kg of product
-        data.loc[prod, RXN_KG] = np.nan
-        if excel:
-            data.loc[prod, DYN_RKG] = ''
+        if self.filter_vals:
+            data.loc[prod, RXN_KG] = np.nan
+            if excel:
+                data.loc[prod, DYN_RKG] = ''
 
         # Calculate unknown costs. 
         # Looks for any empty values in the "Cost" column. Don't use the
@@ -568,10 +581,11 @@ class CoreCost(object):
                     data[RNUM] + '*100/' + ECOLS[RXN_RMC] +\
                     data.loc[prod, RNUM]
         # Remove the % cost for the rxn product
-        data.loc[prod, RXN_RMP] = np.nan
-        # And for Excel
-        if excel:
-            data.loc[prod, DYN_RRMP] = ''
+        if self.filter_vals:
+            data.loc[prod, RXN_RMP] = np.nan
+            # And for Excel
+            if excel:
+                data.loc[prod, DYN_RRMP] = ''
 
         # These are the costs for ultimate product
         # For one reaction amp=1, so the individual rxn cost = ultimate rxn 
@@ -642,25 +656,26 @@ class CoreCost(object):
                     
         
         # Filter out certain values to simplify full data set
-        # Remove the cost and %s for cost-calculated materials
-        # This is necessary so that this column adds up to 100% (w/o OPEX)
-        mask = ~self.fulldata[RXN_CST].isna()
-        self.fulldata.loc[mask, PRD_RMP] = np.nan
-        if excel:
-            self.fulldata.loc[mask, DYN_PRMP] = ''
+        if self.filter_vals:
+            # Remove the cost and %s for cost-calculated materials
+            # This is necessary so that this column adds up to 100% (w/o OPEX)
+            mask = ~self.fulldata[RXN_CST].isna()
+            self.fulldata.loc[mask, PRD_RMP] = np.nan
+            if excel:
+                self.fulldata.loc[mask, DYN_PRMP] = ''
 
-        # This filters some of the costs which are simply the sum of raw
-        # materials from earlier rxns. The sum of this column will now be
-        # equal to the cost of the final product.
-        self.fulldata.loc[mask, PRD_RMC] = np.nan
-        if excel:
-            self.fulldata.loc[mask, DYN_PRMC] = ''
+            # This filters some of the costs which are simply the sum of raw
+            # materials from earlier rxns. The sum of this column will now be
+            # equal to the cost of the final product.
+            self.fulldata.loc[mask, PRD_RMC] = np.nan
+            if excel:
+                self.fulldata.loc[mask, DYN_PRMC] = ''
 
-        # This filters out the kg/kg prod values that were calculated, so that
-        # the sum of this column is the PMI
-        self.fulldata.loc[mask, PRD_KG] = np.nan
-        if excel:
-            self.fulldata.loc[mask, DYN_PKG] = ''
+            # This filters out the kg/kg prod values that were calculated, so that
+            # the sum of this column is the PMI
+            self.fulldata.loc[mask, PRD_KG] = np.nan
+            if excel:
+                self.fulldata.loc[mask, DYN_PKG] = ''
 
         # PMI Calculations
         # Adding a prefix for display purposes
