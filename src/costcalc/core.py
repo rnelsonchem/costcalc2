@@ -364,7 +364,19 @@ class CoreCost():
             sol_mask2 = sol_mask & sol_chk
             df = self.fulldata.loc[sol_mask2, sol_cols]
             raise CostError(err_line, df, self._disp_err_df)
-        
+       
+    def _val_extract(self, df, idx, col):
+        '''A convenience function for pulling a value from a DataFrame.
+
+        In some circumstances, when you try to pull a single value, you get a
+        Series instead. This just pulls a single value (first one) if a Series
+        is returned.
+        '''
+        val = df.loc[idx, col]
+        if isinstance(val, pd.Series):
+            val = val.iloc[0]
+        return val
+
     def calc_cost(self, excel=False):
         '''Calculate the cost of the route. 
 
@@ -382,10 +394,15 @@ class CoreCost():
         self._now = pd.Timestamp.utcnow()
         # Prep the DataFrame
         self._column_clear(excel=excel)
-        # Set a column of unique row labels
+        # Add an index of unique row labels to ensure that multiple entries of
+        # the same compound name per row are handled correctly. This index
+        # will need to be removed later
         nrows = self.fulldata.shape[0]
-        nrowdig = len(str(nrows))
+        self.fulldata['row'] = np.arange(nrows)
+        self.fulldata.set_index('row', append=True, inplace=True)
+        # For excel, there needs to be a string-based row numbering as well
         if excel:
+            nrowdig = len(str(nrows))
             self.fulldata[RNUM] = [f'r{i:0{nrowdig:d}d}' for i in range(nrows)]
         # Run the costing and set the cost attribute
         self.cost = self._rxn_cost(self.final_prod, self._fp_idx, excel=excel)
@@ -451,13 +468,13 @@ class CoreCost():
         # For Excel, normalize the data here. This will get overwritten for
         # solvents. 
         if excel:
+            prod_row = self._val_extract(data, prod, RNUM)
             # Essentially "=Equivs*MW"
             data[DYN_RKG] = '=' + ECOLS[RXN_EQ] + data[RNUM] + '*'\
                     + ECOLS[MAT_MW] + data[RNUM]
             # Essentially above + "/(Prod_eq*Prod_MW)
-            data[DYN_RKG] += '/(' + ECOLS[RXN_EQ] +\
-                    data.loc[prod,RNUM] + '*' + ECOLS[MAT_MW] +\
-                    data.loc[prod, RNUM] + ')'
+            data[DYN_RKG] += '/(' + ECOLS[RXN_EQ] + prod_row + '*'\
+                    + ECOLS[MAT_MW] + prod_row + ')'
 
         # Amount of solvent
         # First figure out which materials are solvents 
@@ -495,7 +512,8 @@ class CoreCost():
                 data.loc[mask, DYN_RKG] = dyn_rkg
 
         # Normalize the kg of reaction
-        data[RXN_KG] /= data.loc[prod, RXN_KG]
+        prod_kg = self._val_extract(data, prod, RXN_KG)
+        data[RXN_KG] /= prod_kg
         # Remove the 1 kg of product
         if self.filter_vals:
             data.loc[prod, RXN_KG] = np.nan
@@ -510,22 +528,23 @@ class CoreCost():
         # This is recursive. The final cost per kg of product will be
         # amplified by each subsequent step, which is where the new_amp
         # calculation comes into play
-        for cpd, row in data.loc[unknown_cost].iterrows():
+        for cpd_num, row in data.loc[unknown_cost].iterrows():
+            cpd = cpd_num[0]
             # Don't do this for the product of the current reaction
             if cpd == prod: 
                 continue
             # The amounts needed will be amplified by the appropriate kg ratio.
             # Set that ratio
-            new_amp = data.loc[cpd, RXN_KG]
+            new_amp = self._val_extract(data, cpd, RXN_KG)
             # And for dynamic excel output
             if excel:
-                new_amp_enum = data.loc[cpd, RNUM]
+                new_amp_enum = self._val_extract(data, cpd, RNUM)
                 kg_col = ECOLS[RXN_KG]
                 # This will be '*(C#)'. 
                 new_eamp = f'*({kg_col}{new_amp_enum})'
 
             # The new step is needed as well
-            new_stp = data.loc[cpd, RXN_CST]
+            new_stp = self._val_extract(data, cpd, RXN_CST)
             # Run the cost calculation for the unknown compound
             if excel:
                 cst = self._rxn_cost(cpd, new_stp, amp*new_amp, 
@@ -537,11 +556,10 @@ class CoreCost():
             # And for Excel -- This cost will need to get swapped out later.
             # Also need to check if an OPEX is necessary
             if excel:
-                eopex = self.fulldata.loc[(new_stp, cpd), RXN_OPX]
-                ernum = self.fulldata.loc[(new_stp, cpd), RNUM]
-                if isinstance(eopex, pd.Series):
-                    eopex = eopex.iloc[0]
-                    ernum = ernum.iloc[0]
+                eopex = self._val_extract(self.fulldata, (new_stp, cpd), 
+                                        RXN_OPX)
+                ernum = self._val_extract(self.fulldata, (new_stp, cpd), 
+                                        RNUM)
 
                 if np.isnan(eopex):
                     data.loc[cpd, DYN_CST] = '=' + ECOLS[MAT_CST] + ernum
@@ -553,33 +571,32 @@ class CoreCost():
         # Calculate the cost for each material in the reaction
         data[RXN_RMC] = data[RXN_KG]*data[MAT_CST]
         # The product cost will be the sum of all the reactant/solvent costs
-        data.loc[prod, RXN_RMC] = data[RXN_RMC].sum()
-        # Set the "Cost" to the calculated value
-        data.loc[prod, MAT_CST] = data.loc[prod, RXN_RMC]
+        prd_cost = data[RXN_RMC].sum()
+        data.loc[prod, RXN_RMC] = prd_cost
+        data.loc[prod, MAT_CST] = prd_cost
         # And for Excel
         if excel:
             data[DYN_RRMC] = '=' + ECOLS[RXN_KG] + data[RNUM] + '*' + \
                             ECOLS[MAT_CST] + data[RNUM]
             # And for Excel, first we need the rows that are not the product
-            mask = data.index != prod
+            mask = data.index[:-1]
             # Then we need to make a comma-separated list of these rows
             cells = [f'{ECOLS[RXN_RMC]}{r}' for r in data.loc[mask, RNUM]]
             rs = ','.join(cells)
             # Combine them together into a sum
             data.loc[prod, DYN_RRMC] = '=SUM(' + rs + ')'
             # Set the cost to the calculated value
-            data.loc[prod, DYN_CST] = '=' + ECOLS[RXN_RMC] +\
-                    data.loc[prod, RNUM] 
+            data.loc[prod, DYN_CST] = '=' + ECOLS[RXN_RMC] + prod_row
 
         # Calculate % costs for individual rxn
         # = (RM cost/kg rxn)/(RM cost/kg rxn for the rxn product)
-        p_rm_cost = data[RXN_RMC]*100/data.loc[prod, RXN_RMC]
-        data[RXN_RMP] = p_rm_cost.values
+        prod_rmc = self._val_extract(data, prod, RXN_RMC)
+        per_rm_cost = data[RXN_RMC]*100/prod_rmc
+        data[RXN_RMP] = per_rm_cost.values
         # And for Excel
         if excel:
-            data[DYN_RRMP] = '=' + ECOLS[RXN_RMC] +\
-                    data[RNUM] + '*100/' + ECOLS[RXN_RMC] +\
-                    data.loc[prod, RNUM]
+            data[DYN_RRMP] = '=' + ECOLS[RXN_RMC] + data[RNUM] +\
+                    '*100/' + ECOLS[RXN_RMC] + prod_row
         # Remove the % cost for the rxn product
         if self.filter_vals:
             data.loc[prod, RXN_RMP] = np.nan
@@ -604,17 +621,17 @@ class CoreCost():
         if excel:
             data[DYN_PKG] = '=' + ECOLS[RXN_KG] + data[RNUM] + eamp
         
-        # Set the values in the big DataFrame with this slice. This goofy call
-        # is necessary to make sure the data are set correctly. 
-        self.fulldata.loc[(step, data.index), data.columns] = data.values
+        # Set the values in the big DataFrame with this slice.  
+        self.fulldata.loc[step, data.columns] = data.values
         
         # Return the calculated product cost, which is required for the 
         # recursive nature of the algorithm. In addition, an optional OPEX
         # may be added to take into account production costs of the cpd
-        if np.isnan(data.loc[prod, RXN_OPX]):
-            return data.loc[prod, RXN_RMC]
+        opex = self._val_extract(data, prod, RXN_OPX)
+        if np.isnan(opex):
+            return self._val_extract(data, prod, RXN_RMC)
         else:
-            return data.loc[prod, RXN_RMC] + data.loc[prod, RXN_OPX]
+            return self._val_extract(data, prod, RXN_RMC) + opex
     
     def _rxn_data_post(self, excel=False):
         '''Calculate some values after the final cost of the reaction is
@@ -626,33 +643,32 @@ class CoreCost():
         '''
         prod = self.final_prod
         step = self._fp_idx
+
+        # Remove the "row" index
+        self.fulldata.reset_index(level=2, drop=True, inplace=True)
         
         # If an OPEX for the final reaction is given, add that to the cost
         # of the final product
-        opex = self.fulldata.loc[(step, prod), RXN_OPX]
-        if isinstance(opex, pd.Series): 
-            opex = opex.iloc[0]
+        opex = self._val_extract(self.fulldata, (step, prod), RXN_OPX)
 
         if not np.isnan(opex):
             self.fulldata.loc[(step, prod), MAT_CST] = self.cost
             # And for Excel
             if excel:
+                prod_row = self._val_extract(self.fulldata, (step, prod), 
+                        RNUM)
                 self.fulldata.loc[(step, prod), DYN_CST] += '+' + \
-                        ECOLS[RXN_OPX] + \
-                        self.fulldata.loc[(step, prod), RNUM]
+                        ECOLS[RXN_OPX] + prod_row
                 
         # Calculate % overall costs relative to the prod
         self.fulldata[PRD_RMP] = self.fulldata[PRD_RMC]*100/self.cost
 
         # And for Excel
         if excel:
-            prd_rnum = self.fulldata.loc[(step, prod), RNUM]
-            if isinstance(prd_rnum, pd.Series):
-                prd_rnum = prd_rnum.iloc[0]
-
+            prod_row = self._val_extract(self.fulldata, (step, prod), RNUM)
             self.fulldata[DYN_PRMP] = '=' +\
                     ECOLS[PRD_RMC] + self.fulldata[RNUM] +\
-                    '*100/' + ECOLS[RXN_RMC] + prd_rnum
+                    '*100/' + ECOLS[RXN_RMC] + prod_row
                     
         
         # Filter out certain values to simplify full data set
