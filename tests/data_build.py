@@ -40,6 +40,13 @@ con_clean_fd = pd.read_csv(IOs['clean_conv_fd.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
+# Linear rxn sheets with duplicated, split materials
+lin_split = pd.read_csv(IOs['split_solv_lin_route.csv'],
+        dtype={RXN_STP: str, RXN_CST: str})
+lin_split_fd = pd.read_csv(IOs['split_solv_lin_fd.csv'],
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+
 # Linear and convergent compact results DataFrames
 lin_clean_res_c = pd.read_csv(IOs['clean_lin_res_com.csv'],
         dtype={RXN_STP:str, })\
@@ -70,10 +77,17 @@ lin_clean_excel = pd.read_csv(IOs['clean_lin_excel.csv'],
                 .set_index([RXN_STP, RXN_CPD])
 lin_clean_excel[MAT_CST] = lin_clean_excel[MAT_CST]\
         .apply(dtype_fix)
+
 con_clean_excel = pd.read_csv(IOs['clean_con_excel.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 con_clean_excel[MAT_CST] = con_clean_excel[MAT_CST]\
+        .apply(dtype_fix)
+
+lin_split_excel = pd.read_csv(IOs['split_solv_lin_excel.csv'],
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+lin_split_excel[MAT_CST] = lin_split_excel[MAT_CST]\
         .apply(dtype_fix)
 
 

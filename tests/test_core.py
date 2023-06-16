@@ -24,6 +24,7 @@ class Test_CoreFunctions(object):
             "rxn, mat, fd",
             [(lin_clean, mat_clean, lin_clean_fd),
             (con_clean, mat_clean, con_clean_fd),
+            (lin_split, mat_clean, lin_split_fd),
             ]
     )
     def test_rxn_data_setup(self, rxn, mat, fd):
@@ -34,6 +35,7 @@ class Test_CoreFunctions(object):
             "rxn, mat, cost",
             [(lin_clean, mat_clean, 66.40818831355247,),
             (con_clean, mat_clean, 62.9051883439257,),
+            (lin_split, mat_clean, 66.40818831355247,),
             ]
     )
     def test_calc_cost_clean(self, rxn, mat, cost):
@@ -59,6 +61,7 @@ class Test_CoreFunctions(object):
             "rxn, mat, excel",
             [(lin_clean, mat_clean, lin_clean_excel,),
             (con_clean, mat_clean, con_clean_excel,),
+            (lin_split, mat_clean, lin_split_excel,),
             ]
     )
     def test_excel(self, rxn, mat, excel):
