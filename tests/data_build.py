@@ -76,6 +76,16 @@ lin_opex_res_f = pd.read_csv(IOs['opex_lin_res_ful.csv'],
         dtype={RXN_STP:str, RXN_CST:str})\
                 .set_index([RXN_STP, RXN_CPD])
 
+# Linear rxn sheets with Mass column
+lin_mass = pd.read_csv(IOs['mass_lin_route.csv'],
+        dtype={RXN_STP: str, RXN_CST: str})
+lin_mass_fd = pd.read_csv(IOs['mass_lin_fd.csv'],
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+lin_mass_res_f = pd.read_csv(IOs['mass_lin_res_ful.csv'],
+        dtype={RXN_STP:str, RXN_CST:str})\
+                .set_index([RXN_STP, RXN_CPD])
+
 # Linear and convergent Excel DataFrames
 # The "Cost" column has multiple dtypes, that are not set correctly when the
 # data is imported via Pandas. This function fixes the dyptes
