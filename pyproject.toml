@@ -52,3 +52,8 @@ dev = [
 addopts = [
     "--import-mode=prepend",
 ]
+
+filterwarnings = [
+    "error",
+    "ignore::pandas.errors.PerformanceWarning",
+]
