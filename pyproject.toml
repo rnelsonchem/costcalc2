@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "costcalc2"
-version = "0.10.1"
+version = "0.10.2"
 
 description = "Calculate raw material costs for chemical synthetic route"
 keywords = [ "Chemical", "Synthesis", "Route", "Cost", "Pricing" ]
