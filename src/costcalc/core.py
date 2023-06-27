@@ -356,13 +356,12 @@ class CoreCost():
         
         # Check that all the solvent information is given
         sol_cols = [MAT_DEN, RXN_VOL]
-        sol_mask = ~self.fulldata[RXN_VOL].isna() 
-        sol_chk = self.fulldata.loc[sol_mask, MAT_DEN].isna()
+        sol_chk = self.fulldata[MAT_DEN].isna() &\
+                    ~self.fulldata[RXN_VOL].isna()
         # If anything is missing, print a note
         if sol_chk.any():
             err_line = err_lines['mis_sol']
-            sol_mask2 = sol_mask & sol_chk
-            df = self.fulldata.loc[sol_mask2, sol_cols]
+            df = self.fulldata.loc[sol_chk, sol_cols]
             raise CostError(err_line, df, self._disp_err_df)
        
     def _val_extract(self, df, idx, col):
