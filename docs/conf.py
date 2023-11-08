@@ -22,7 +22,7 @@ copyright = '2023, Ryan Nelson'
 author = 'Ryan Nelson'
 
 # The full version, including alpha/beta/rc tags
-release = '0.10.2'
+release = '0.10.3'
 
 
 # -- General configuration ---------------------------------------------------
