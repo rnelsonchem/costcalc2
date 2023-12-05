@@ -199,7 +199,7 @@ class CoreCost():
         # Setup the reaction connectivity matrix. This is done by looking at
         # each reaction product, and assigning all usages of that product to
         # the correct step number. First, create an empty column for the steps
-        self.rxns[RXN_CST] = np.nan
+        self.rxns[RXN_CST] = ''
         steps = self.rxns.groupby(RXN_STP)
         for step, rxn in steps:
             # The product is the last compound in a given, save the final
@@ -211,6 +211,9 @@ class CoreCost():
             mask = self.rxns[RXN_CPD] == rxn_prod
             # Create the new costing column, add 
             self.rxns.loc[mask, RXN_CST] = step
+        
+        empty_steps = self.rxns[RXN_CST] == ''
+        self.rxns.loc[empty_steps, RXN_CST] = np.nan
 
         # Create an OPEX column, if it does not exist
         if RXN_OPX not in self.rxns.columns:
@@ -846,8 +849,17 @@ class CoreCost():
                     fd[col] = fd[col].str.replace(r, str(n))
                     
         # Set dynamic cost for the "Cost" of calculated products
+        # There's a bit of funny business here for newer versions of Pandas
+        # The MAT_CST column is initially float64, but you can't set values of
+        # type str into a float column. So the original floating point values
+        # are saved, and the MAT_CST column is reset as an object column. Then
+        # the string values are set where needed, and the floating point
+        # values are set in the other positions.
         mask = fd[DYN_CST] != ''
+        mat_cst_save = fd[MAT_CST].copy()
+        fd[MAT_CST] = ''
         fd.loc[mask, MAT_CST] = fd.loc[mask, DYN_CST]
+        fd.loc[~mask, MAT_CST] = mat_cst_save[~mask]
         
         # Drop the non-dynamic columns
         d_cols = [DYN_CST, RXN_KG, RXN_RMC, RXN_RMP, PRD_KG, PRD_RMC, PRD_RMP,
